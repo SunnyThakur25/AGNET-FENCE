@@ -15,6 +15,20 @@
       "when": 1786893125167,
       "tag": "0001_overrated_bulldozer",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1786895407091,
+      "tag": "0002_woozy_fenris",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1786896305198,
+      "tag": "0003_daily_maelstrom",
+      "breakpoints": true
     }
   ]
 }

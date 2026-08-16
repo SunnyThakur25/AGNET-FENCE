@@ -1,6 +1,6 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { startLogin } from "@/const";
-import { Activity, BellRing, ChevronDown, ClipboardCheck, FileCheck2, KeyRound, LayoutDashboard, LockKeyhole, LogOut, Radar, ShieldAlert, ShieldCheck, TerminalSquare } from "lucide-react";
+import { Activity, BellRing, ChevronDown, ClipboardCheck, FileCheck2, KeyRound, LayoutDashboard, LockKeyhole, LogOut, Radar, Settings2, ShieldAlert, ShieldCheck, TerminalSquare } from "lucide-react";
 import { useLocation } from "wouter";
 import { AgentFenceLogo } from "./AgentFenceLogo";
 
@@ -15,6 +15,7 @@ const navigation = [
   { label: "Credential Vault", path: "/vault", icon: KeyRound },
   { label: "Attack Simulation", path: "/tests", icon: ShieldAlert },
   { label: "Compliance Evidence", path: "/compliance", icon: FileCheck2 },
+  { label: "Settings", path: "/settings", icon: Settings2 },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {

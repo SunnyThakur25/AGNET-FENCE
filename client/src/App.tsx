@@ -6,11 +6,11 @@ import DashboardLayout from "./components/DashboardLayout";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AgentFenceWorkspaceProvider } from "./contexts/AgentFenceContext";
-import { AgentRegistry, ApprovalsPage, AuditLedgerPage, CommandCenter, CompliancePage, CredentialVaultPage, DataGuardPage, PolicyEngine, SecurityTestsPage, ToolGateway } from "./pages/Console";
+import { AgentRegistry, ApprovalsPage, AuditLedgerPage, CommandCenter, CompliancePage, CredentialVaultPage, DataGuardPage, PolicyEngine, SecurityTestsPage, ToolGateway, VaultSettingsPage } from "./pages/Console";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
-  return <DashboardLayout><AgentFenceWorkspaceProvider><Switch><Route path="/" component={CommandCenter} /><Route path="/agents" component={AgentRegistry} /><Route path="/policies" component={PolicyEngine} /><Route path="/gateway" component={ToolGateway} /><Route path="/approvals" component={ApprovalsPage} /><Route path="/audit" component={AuditLedgerPage} /><Route path="/data-guard" component={DataGuardPage} /><Route path="/vault" component={CredentialVaultPage} /><Route path="/tests" component={SecurityTestsPage} /><Route path="/compliance" component={CompliancePage} /><Route path="/404" component={NotFound} /><Route component={NotFound} /></Switch></AgentFenceWorkspaceProvider></DashboardLayout>;
+  return <DashboardLayout><AgentFenceWorkspaceProvider><Switch><Route path="/" component={CommandCenter} /><Route path="/agents" component={AgentRegistry} /><Route path="/policies" component={PolicyEngine} /><Route path="/gateway" component={ToolGateway} /><Route path="/approvals" component={ApprovalsPage} /><Route path="/audit" component={AuditLedgerPage} /><Route path="/data-guard" component={DataGuardPage} /><Route path="/vault" component={CredentialVaultPage} /><Route path="/tests" component={SecurityTestsPage} /><Route path="/compliance" component={CompliancePage} /><Route path="/settings" component={VaultSettingsPage} /><Route path="/404" component={NotFound} /><Route component={NotFound} /></Switch></AgentFenceWorkspaceProvider></DashboardLayout>;
 }
 
 // NOTE: About Theme

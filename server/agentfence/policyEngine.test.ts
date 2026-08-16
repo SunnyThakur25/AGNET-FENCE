@@ -4,6 +4,14 @@ import { evaluatePolicies } from "./policyEngine";
 import { hashAuditEvent, isAuditHashValid } from "./audit";
 import { isApprovalExpired } from "./approvals";
 import { isOrganizationRoleAllowed } from "./authz";
+import { getVaultConfigurationStatus } from "./vaultStatus";
+import { isRuntimeCredentialUsable, isRuntimeNonceSafe, issueRuntimeToken, verifyRuntimeToken } from "./runtimeAuth";
+import { createVaultAppRoleClient, VaultNotConfiguredError, vaultBaseUrl } from "./vaultClient";
+import { createGatewayNonce } from "../../shared/agentfence-runtime-client";
+import { isLeaseDurationAllowed, VAULT_LEASE_CONTRACT, vaultCredentialPath } from "./vaultContract";
+import { isVaultPathForOrganization } from "./vaultContract";
+import { authorizeRuntimeGatewayRequest } from "./runtimeGatewayGuard";
+import { deriveRuntimeCredentialScope } from "./runtimeScope";
 
 describe("AgentFence enforcement core", () => {
   it("blocks by default when no policy grants access", () => {
@@ -66,5 +74,103 @@ describe("AgentFence enforcement core", () => {
     expect(isOrganizationRoleAllowed("admin", ["admin"])).toBe(true);
     expect(isApprovalExpired(new Date("2026-01-01T00:00:00.000Z"), new Date("2026-01-01T00:00:01.000Z").getTime())).toBe(true);
     expect(isApprovalExpired(new Date("2026-01-01T00:00:01.000Z"), new Date("2026-01-01T00:00:00.000Z").getTime())).toBe(false);
+  });
+
+  it("reports Vault configuration without returning secret values", () => {
+    expect(getVaultConfigurationStatus({})).toEqual({
+      connected: false,
+      endpointConfigured: false,
+      roleIdConfigured: false,
+      secretIdConfigured: false,
+      authenticationMethod: "AppRole",
+    });
+    expect(getVaultConfigurationStatus({ VAULT_ADDR: "https://vault.example.test", VAULT_ROLE_ID: "role", VAULT_SECRET_ID: "secret" })).toEqual({
+      connected: true,
+      endpointConfigured: true,
+      roleIdConfigured: true,
+      secretIdConfigured: true,
+      authenticationMethod: "AppRole",
+    });
+  });
+
+  it("issues and verifies a short-lived signed runtime credential", async () => {
+    const prior = process.env.JWT_SECRET;
+    process.env.JWT_SECRET = "a".repeat(48);
+    try {
+      const token = await issueRuntimeToken({ tokenId: "runtime-token-id", organizationId: 11, agentId: 7, vaultCredentialId: 4, allowedScopes: ["crm.read"] }, 300);
+      await expect(verifyRuntimeToken(token)).resolves.toEqual({ tokenId: "runtime-token-id", organizationId: 11, agentId: 7, vaultCredentialId: 4, allowedScopes: ["crm.read"] });
+    } finally {
+      if (prior === undefined) delete process.env.JWT_SECRET;
+      else process.env.JWT_SECRET = prior;
+    }
+  });
+
+  it("keeps the Vault client disconnected and refuses authentication without configuration", async () => {
+    const client = createVaultAppRoleClient({});
+    await expect(client.probe()).resolves.toMatchObject({ connected: false, reachable: false, detail: "not_configured" });
+    await expect(client.login()).rejects.toBeInstanceOf(VaultNotConfiguredError);
+    expect(vaultBaseUrl("https://vault.example.test/")).toBe("https://vault.example.test");
+    expect(() => vaultBaseUrl("http://vault.example.test")).toThrow("Vault must use HTTPS");
+  });
+
+  it("uses the dedicated AppRole login endpoint only when Vault is configured", async () => {
+    const calls: Array<{ url: string; options?: RequestInit }> = [];
+    const fetchMock = (async (url: string | URL | Request, options?: RequestInit) => {
+      calls.push({ url: String(url), options });
+      return new Response(JSON.stringify({ auth: { client_token: "server-only-token", accessor: "accessor", lease_duration: 600, renewable: false } }), { status: 200 });
+    }) as typeof fetch;
+    const client = createVaultAppRoleClient({ VAULT_ADDR: "https://vault.example.test", VAULT_ROLE_ID: "role", VAULT_SECRET_ID: "secret" }, fetchMock);
+    await expect(client.login()).resolves.toEqual({ clientToken: "server-only-token", accessor: "accessor", leaseDurationSeconds: 600, renewable: false });
+    expect(calls[0]?.url).toBe("https://vault.example.test/v1/auth/approle/login");
+    expect(calls[0]?.options?.method).toBe("POST");
+  });
+
+  it("uses distinct URL-safe nonces for each runtime gateway request", () => {
+    const first = createGatewayNonce();
+    const second = createGatewayNonce();
+    expect(first).not.toBe(second);
+    expect(first).toMatch(/^[a-f0-9-]{36}$/i);
+  });
+
+  it("uses tenant- and agent-scoped Vault paths with bounded lease durations", () => {
+    expect(vaultCredentialPath(12, 7, "Payments API / Production")).toBe("agentfence/tenants/12/agents/7/credentials/payments-api-production");
+    expect(isLeaseDurationAllowed(VAULT_LEASE_CONTRACT.defaultCredentialLeaseSeconds)).toBe(true);
+    expect(isLeaseDurationAllowed(VAULT_LEASE_CONTRACT.maximumCredentialLeaseSeconds + 1)).toBe(false);
+  });
+
+  it("enforces runtime credential revocation, expiry, tenant binding, and nonce requirements", () => {
+    const claims = { tokenId: "runtime-token", organizationId: 5, agentId: 9, vaultCredentialId: 3, allowedScopes: ["crm.read"] };
+    const active = { ...claims, status: "active" as const, expiresAt: new Date("2026-01-01T00:10:00.000Z") };
+    expect(isRuntimeCredentialUsable(active, claims, new Date("2026-01-01T00:00:00.000Z").getTime())).toBe(true);
+    expect(isRuntimeCredentialUsable({ ...active, status: "revoked" }, claims, new Date("2026-01-01T00:00:00.000Z").getTime())).toBe(false);
+    expect(isRuntimeCredentialUsable(active, { ...claims, organizationId: 6 }, new Date("2026-01-01T00:00:00.000Z").getTime())).toBe(false);
+    expect(isRuntimeCredentialUsable(active, claims, new Date("2026-01-01T00:20:00.000Z").getTime())).toBe(false);
+    expect(isRuntimeNonceSafe("a123456789012345")).toBe(true);
+    expect(isRuntimeNonceSafe("reused nonce with spaces")).toBe(false);
+  });
+
+  it("rejects a replayed nonce in the gateway authorization path", async () => {
+    const used = new Set<string>();
+    const reserveNonce = async (_credentialId: number, nonce: string) => {
+      if (used.has(nonce)) return false;
+      used.add(nonce);
+      return true;
+    };
+    const claims = { tokenId: "runtime-token", organizationId: 5, agentId: 9, vaultCredentialId: 3, allowedScopes: ["crm.read"] };
+    const credential = { ...claims, status: "active" as const, expiresAt: new Date("2026-01-01T00:10:00.000Z") };
+    await expect(authorizeRuntimeGatewayRequest({ runtimeCredentialId: 1, credential, claims, nonce: "a123456789012345", reserveNonce, now: new Date("2026-01-01T00:00:00.000Z").getTime() })).resolves.toBe(true);
+    await expect(authorizeRuntimeGatewayRequest({ runtimeCredentialId: 1, credential, claims, nonce: "a123456789012345", reserveNonce, now: new Date("2026-01-01T00:00:00.000Z").getTime() })).rejects.toThrow("runtime_request_replay");
+  });
+
+  it("keeps Vault references inside their organization tenant prefix", () => {
+    const path = vaultCredentialPath(12, 7, "Payments API");
+    expect(isVaultPathForOrganization(path, 12)).toBe(true);
+    expect(isVaultPathForOrganization(path, 13)).toBe(false);
+  });
+
+  it("limits issued runtime credentials to the selected Vault reference scopes and TTL", () => {
+    expect(deriveRuntimeCredentialScope({ referenceScopes: ["crm.read", "crm.write"], referenceTtlSeconds: 300, requestedScopes: ["crm.read"], requestedTtlSeconds: 180 })).toEqual({ scopes: ["crm.read"], ttlSeconds: 180 });
+    expect(() => deriveRuntimeCredentialScope({ referenceScopes: ["crm.read"], referenceTtlSeconds: 300, requestedScopes: ["billing.pay"], requestedTtlSeconds: 180 })).toThrow("runtime_scope_exceeds_reference");
+    expect(() => deriveRuntimeCredentialScope({ referenceScopes: ["crm.read"], referenceTtlSeconds: 300, requestedScopes: ["crm.read"], requestedTtlSeconds: 301 })).toThrow("runtime_ttl_exceeds_reference");
   });
 });

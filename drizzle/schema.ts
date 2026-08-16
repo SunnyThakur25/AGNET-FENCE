@@ -46,6 +46,7 @@ export const actionDecision = mysqlEnum("actionDecision", ["allowed", "blocked",
 export const approvalStatus = mysqlEnum("approvalStatus", ["pending", "approved", "rejected", "expired"]);
 export const notificationSeverity = mysqlEnum("notificationSeverity", ["info", "medium", "high", "critical"]);
 export const simulationStatus = mysqlEnum("simulationStatus", ["passed", "failed", "needs_review"]);
+export const runtimeCredentialStatus = mysqlEnum("runtimeCredentialStatus", ["active", "revoked", "expired"]);
 
 export const organizations = mysqlTable(
   "organizations",
@@ -177,6 +178,43 @@ export const toolCalls = mysqlTable(
   table => [
     index("tool_calls_org_created_idx").on(table.organizationId, table.createdAt),
     index("tool_calls_agent_idx").on(table.agentId),
+  ],
+);
+
+export const runtimeCredentials = mysqlTable(
+  "runtimeCredentials",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    organizationId: int("organizationId").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    agentId: int("agentId").notNull().references(() => agents.id, { onDelete: "cascade" }),
+    vaultCredentialId: int("vaultCredentialId").references(() => vaultCredentials.id, { onDelete: "set null" }),
+    tokenId: varchar("tokenId", { length: 64 }).notNull(),
+    allowedScopes: json("allowedScopes"),
+    status: runtimeCredentialStatus.notNull().default("active"),
+    expiresAt: timestamp("expiresAt").notNull(),
+    revokedAt: timestamp("revokedAt"),
+    issuedBy: int("issuedBy").notNull().references(() => users.id, { onDelete: "restrict" }),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  table => [
+    uniqueIndex("runtime_credentials_token_id_unique").on(table.tokenId),
+    index("runtime_credentials_org_agent_idx").on(table.organizationId, table.agentId),
+    index("runtime_credentials_vault_credential_idx").on(table.vaultCredentialId),
+  ],
+);
+
+export const runtimeNonces = mysqlTable(
+  "runtimeNonces",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    runtimeCredentialId: int("runtimeCredentialId").notNull().references(() => runtimeCredentials.id, { onDelete: "cascade" }),
+    nonce: varchar("nonce", { length: 96 }).notNull(),
+    expiresAt: timestamp("expiresAt").notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  table => [
+    uniqueIndex("runtime_nonces_credential_nonce_unique").on(table.runtimeCredentialId, table.nonce),
+    index("runtime_nonces_expiry_idx").on(table.expiresAt),
   ],
 );
 

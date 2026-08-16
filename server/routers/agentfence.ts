@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { and, desc, eq, gte, isNull, or } from "drizzle-orm";
+import { randomUUID } from "crypto";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import {
@@ -12,6 +13,8 @@ import {
   notifications,
   organizations,
   policies,
+  runtimeCredentials,
+  runtimeNonces,
   teamMemberships,
   teams,
   toolCalls,
@@ -23,10 +26,16 @@ import { requireOrganizationMembership, requireOrganizationRole } from "../agent
 import { inspectAndRedact, inspectOutboundAndRedact } from "../agentfence/dataGuard";
 import { generatePolicyExplanation, generatePolicyPatternSuggestions } from "../agentfence/llm";
 import { evaluatePolicies } from "../agentfence/policyEngine";
+import { issueRuntimeToken, scopeAllows, verifyRuntimeToken } from "../agentfence/runtimeAuth";
+import { authorizeRuntimeGatewayRequest } from "../agentfence/runtimeGatewayGuard";
+import { deriveRuntimeCredentialScope } from "../agentfence/runtimeScope";
+import { isVaultPathForOrganization } from "../agentfence/vaultContract";
+import { getVaultConfigurationStatus } from "../agentfence/vaultStatus";
+import { createVaultAppRoleClient } from "../agentfence/vaultClient";
 import { getDb } from "../db";
 import { notifyOwner } from "../_core/notification";
 import { storagePut } from "../storage";
-import { protectedProcedure, router } from "../_core/trpc";
+import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
 
 const organizationInput = z.object({ organizationId: z.number().int().positive() });
 const dataSensitivity = z.enum(["public", "internal", "pii", "phi", "payment", "secret"]);
@@ -382,6 +391,113 @@ export const agentfenceRouter = router({
       }),
   }),
 
+  runtime: router({
+    list: protectedProcedure.input(organizationInput).query(async ({ ctx, input }) => {
+      await requireOrganizationRole(input.organizationId, ctx.user.id, ["admin"]);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable." });
+      return db
+        .select({ id: runtimeCredentials.id, agentId: runtimeCredentials.agentId, vaultCredentialId: runtimeCredentials.vaultCredentialId, allowedScopes: runtimeCredentials.allowedScopes, status: runtimeCredentials.status, expiresAt: runtimeCredentials.expiresAt, revokedAt: runtimeCredentials.revokedAt, createdAt: runtimeCredentials.createdAt, agentName: agents.name, agentIdentity: agents.identity })
+        .from(runtimeCredentials)
+        .innerJoin(agents, eq(runtimeCredentials.agentId, agents.id))
+        .where(eq(runtimeCredentials.organizationId, input.organizationId))
+        .orderBy(desc(runtimeCredentials.createdAt));
+    }),
+    issueCredential: protectedProcedure
+      .input(organizationInput.extend({ agentId: z.number().int().positive(), vaultCredentialId: z.number().int().positive(), requestedScopes: z.array(z.string().min(1).max(120)).min(1).max(20).optional(), ttlSeconds: z.number().int().min(60).max(3_600).default(300) }))
+      .mutation(async ({ ctx, input }) => {
+        await requireOrganizationRole(input.organizationId, ctx.user.id, ["admin"]);
+        await requireAgentInOrganization(input.organizationId, input.agentId);
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable." });
+        const vaultReference = await db.select().from(vaultCredentials).where(and(eq(vaultCredentials.id, input.vaultCredentialId), eq(vaultCredentials.organizationId, input.organizationId), eq(vaultCredentials.status, "active"))).limit(1);
+        if (!vaultReference[0]) throw new TRPCError({ code: "NOT_FOUND", message: "Active Vault credential reference not found in this organization." });
+        let runtimeScope: { scopes: string[]; ttlSeconds: number };
+        try {
+          runtimeScope = deriveRuntimeCredentialScope({ referenceScopes: vaultReference[0].allowedScopes, referenceTtlSeconds: vaultReference[0].tokenTtlSeconds, requestedScopes: input.requestedScopes, requestedTtlSeconds: input.ttlSeconds });
+        } catch (error) {
+          throw new TRPCError({ code: "FORBIDDEN", message: error instanceof Error && error.message === "runtime_ttl_exceeds_reference" ? "Requested runtime TTL exceeds this Vault credential reference." : "Requested runtime scopes exceed this Vault credential reference." });
+        }
+        const tokenId = randomUUID();
+        const expiresAt = new Date(Date.now() + runtimeScope.ttlSeconds * 1000);
+        const credentialId = insertId(await db.insert(runtimeCredentials).values({ organizationId: input.organizationId, agentId: input.agentId, vaultCredentialId: input.vaultCredentialId, tokenId, allowedScopes: runtimeScope.scopes, expiresAt, issuedBy: ctx.user.id }));
+        const token = await issueRuntimeToken({ tokenId, organizationId: input.organizationId, agentId: input.agentId, vaultCredentialId: input.vaultCredentialId, allowedScopes: runtimeScope.scopes }, runtimeScope.ttlSeconds);
+        await appendAuditEvent({ organizationId: input.organizationId, eventType: "runtime.credential_issued", actorType: "user", actorIdentity: ctx.user.email || ctx.user.openId, agentId: input.agentId, outcome: "allowed", payload: { credentialId, vaultCredentialId: input.vaultCredentialId, scopes: runtimeScope.scopes, expiresAt: expiresAt.toISOString() } });
+        return { credentialId, token, expiresAt };
+      }),
+    revokeCredential: protectedProcedure
+      .input(organizationInput.extend({ credentialId: z.number().int().positive() }))
+      .mutation(async ({ ctx, input }) => {
+        await requireOrganizationRole(input.organizationId, ctx.user.id, ["admin"]);
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable." });
+        const credential = await db.select().from(runtimeCredentials).where(and(eq(runtimeCredentials.id, input.credentialId), eq(runtimeCredentials.organizationId, input.organizationId))).limit(1);
+        if (!credential[0]) throw new TRPCError({ code: "NOT_FOUND", message: "Runtime credential not found in this organization." });
+        await db.update(runtimeCredentials).set({ status: "revoked", revokedAt: new Date() }).where(eq(runtimeCredentials.id, input.credentialId));
+        await appendAuditEvent({ organizationId: input.organizationId, eventType: "runtime.credential_revoked", actorType: "user", actorIdentity: ctx.user.email || ctx.user.openId, agentId: credential[0].agentId, outcome: "allowed", payload: { credentialId: input.credentialId } });
+        return { success: true };
+      }),
+    evaluate: publicProcedure
+      .input(z.object({
+        token: z.string().min(30).max(8_192),
+        nonce: z.string().min(16).max(96).regex(/^[a-zA-Z0-9._-]+$/, "Nonce must be URL-safe."),
+        toolName: z.string().min(1).max(120),
+        action: z.string().min(1).max(120),
+        parameters: z.record(z.string(), z.unknown()).default({}),
+        outboundPayload: z.unknown().optional(),
+        dataSensitivity,
+        destination: z.string().min(1).max(180),
+        riskLevel,
+      }))
+      .mutation(async ({ input }) => {
+        let claims;
+        try {
+          claims = await verifyRuntimeToken(input.token);
+        } catch {
+          throw new TRPCError({ code: "UNAUTHORIZED", message: "Runtime gateway token is invalid or expired." });
+        }
+        if (!scopeAllows(claims.allowedScopes, input.toolName, input.action)) throw new TRPCError({ code: "FORBIDDEN", message: "Runtime credential does not include this tool scope." });
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable." });
+        const credential = await db.select().from(runtimeCredentials).where(and(eq(runtimeCredentials.tokenId, claims.tokenId), eq(runtimeCredentials.organizationId, claims.organizationId), eq(runtimeCredentials.agentId, claims.agentId), eq(runtimeCredentials.vaultCredentialId, claims.vaultCredentialId))).limit(1);
+        if (!credential[0]) {
+          throw new TRPCError({ code: "UNAUTHORIZED", message: "Runtime credential is not active." });
+        }
+        try {
+          await authorizeRuntimeGatewayRequest({
+            runtimeCredentialId: credential[0].id,
+            credential: credential[0],
+            claims,
+            nonce: input.nonce,
+            reserveNonce: async (runtimeCredentialId, nonce, expiresAt) => {
+              try {
+                await db.insert(runtimeNonces).values({ runtimeCredentialId, nonce, expiresAt });
+                return true;
+              } catch {
+                return false;
+              }
+            },
+          });
+        } catch (error) {
+          throw new TRPCError({ code: "UNAUTHORIZED", message: error instanceof Error && error.message === "runtime_request_replay" ? "Runtime request replay detected." : "Runtime credential is invalid or inactive." });
+        }
+        const agent = await requireAgentInOrganization(claims.organizationId, claims.agentId);
+        if (agent.status !== "active") throw new TRPCError({ code: "FORBIDDEN", message: "Paused or retired agents cannot invoke tools." });
+        const inboundGuard = inspectAndRedact(input.parameters);
+        const outboundGuard = inspectOutboundAndRedact(input.outboundPayload ?? {});
+        const effectiveSensitivity = inboundGuard.classification === "internal" ? input.dataSensitivity : inboundGuard.classification;
+        const activePolicies = await db.select().from(policies).where(and(eq(policies.organizationId, claims.organizationId), eq(policies.status, "active"), or(isNull(policies.agentId), eq(policies.agentId, claims.agentId))));
+        const evaluation = evaluatePolicies(activePolicies, { toolName: input.toolName, action: input.action, parameters: input.parameters, dataSensitivity: effectiveSensitivity, destination: input.destination });
+        const toolCallId = insertId(await db.insert(toolCalls).values({ organizationId: claims.organizationId, agentId: claims.agentId, toolName: input.toolName, action: input.action, redactedParameters: inboundGuard.redactedValue as Record<string, unknown>, dataSensitivity: effectiveSensitivity, destination: input.destination, riskLevel: input.riskLevel, decision: evaluation.decision, matchedPolicyId: evaluation.matchedPolicy?.id ?? null, initiatedBy: `runtime:${credential[0].id}` }));
+        const findings = [inboundGuard, outboundGuard];
+        for (const finding of findings) {
+          if (finding.occurrences > 0) await db.insert(dataGuardFindings).values({ organizationId: claims.organizationId, toolCallId, classification: finding.classification, detector: finding.detectors.join(",") || "runtime-data-guard", actionTaken: "redacted", occurrences: finding.occurrences, destinationApproved: evaluation.decision === "allowed" });
+        }
+        await appendAuditEvent({ organizationId: claims.organizationId, eventType: "runtime.gateway_evaluated", actorType: "agent", actorIdentity: agent.identity, agentId: claims.agentId, toolCallId, policyId: evaluation.matchedPolicy?.id ?? null, outcome: evaluation.decision, payload: { toolName: input.toolName, action: input.action, destination: input.destination, outboundRedactions: outboundGuard.occurrences } });
+        return { toolCallId, decision: evaluation.decision, allowed: evaluation.decision === "allowed", reason: evaluation.reason, redactedParameters: inboundGuard.redactedValue, redactedOutboundPayload: outboundGuard.redactedValue, outboundFindings: outboundGuard.occurrences };
+      }),
+  }),
+
   approvals: router({
     list: protectedProcedure.input(organizationInput).query(async ({ ctx, input }) => {
       await requireOrganizationRole(input.organizationId, ctx.user.id, ["admin", "operator"]);
@@ -459,6 +575,15 @@ export const agentfenceRouter = router({
   }),
 
   vault: router({
+    status: protectedProcedure.input(organizationInput).query(async ({ ctx, input }) => {
+      await requireOrganizationRole(input.organizationId, ctx.user.id, ["admin"]);
+      return getVaultConfigurationStatus();
+    }),
+    probe: protectedProcedure.input(organizationInput).mutation(async ({ ctx, input }) => {
+      await requireOrganizationRole(input.organizationId, ctx.user.id, ["admin"]);
+      const result = await createVaultAppRoleClient().probe();
+      return result;
+    }),
     list: protectedProcedure.input(organizationInput).query(async ({ ctx, input }) => {
       await requireOrganizationRole(input.organizationId, ctx.user.id, ["admin"]);
       const db = await getDb();
@@ -469,6 +594,9 @@ export const agentfenceRouter = router({
       .input(organizationInput.extend({ teamId: z.number().int().positive().nullable().optional(), name: z.string().min(2).max(120), provider: z.string().min(2).max(100), externalReference: z.string().min(4).max(255), allowedScopes: z.array(z.string().min(1).max(120)).min(1).max(20), tokenTtlSeconds: z.number().int().min(60).max(3600) }))
       .mutation(async ({ ctx, input }) => {
         await requireOrganizationRole(input.organizationId, ctx.user.id, ["admin"]);
+        if (input.provider.toLowerCase().includes("vault") && !isVaultPathForOrganization(input.externalReference, input.organizationId)) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Vault credential references must stay inside this organization’s AgentFence tenant path." });
+        }
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable." });
         const credentialId = insertId(await db.insert(vaultCredentials).values({ organizationId: input.organizationId, teamId: input.teamId ?? null, name: input.name, provider: input.provider, externalReference: input.externalReference, allowedScopes: input.allowedScopes, tokenTtlSeconds: input.tokenTtlSeconds, createdBy: ctx.user.id }));
