@@ -125,6 +125,32 @@ describe("AgentFence enforcement core", () => {
     expect(calls[0]?.options?.method).toBe("POST");
   });
 
+  it("returns Vault lease metadata without returning raw credential values", async () => {
+    const calls: Array<{ url: string; options?: RequestInit }> = [];
+    const fetchMock = (async (url: string | URL | Request, options?: RequestInit) => {
+      calls.push({ url: String(url), options });
+      if (calls.length === 1) return new Response(JSON.stringify({ auth: { client_token: "server-only-token" } }), { status: 200 });
+      return new Response(JSON.stringify({ lease_id: "lease-id", lease_duration: 300, renewable: true, data: { password: "never-returned" } }), { status: 200 });
+    }) as typeof fetch;
+    const client = createVaultAppRoleClient({ VAULT_ADDR: "https://vault.example.test", VAULT_ROLE_ID: "role", VAULT_SECRET_ID: "secret" }, fetchMock);
+    await expect(client.issueLease("agentfence/tenants/5/agents/9/credentials/crm")).resolves.toEqual({ leaseId: "lease-id", leaseDurationSeconds: 300, renewable: true });
+    expect(calls[1]?.options?.headers).toMatchObject({ "X-Vault-Token": "server-only-token" });
+  });
+
+  it("rotates a Vault lease by revoking it before requesting a replacement", async () => {
+    const calls: Array<{ url: string; options?: RequestInit }> = [];
+    const fetchMock = (async (url: string | URL | Request, options?: RequestInit) => {
+      calls.push({ url: String(url), options });
+      if (calls.length === 1 || calls.length === 3) return new Response(JSON.stringify({ auth: { client_token: "server-only-token" } }), { status: 200 });
+      if (calls.length === 2) return new Response(null, { status: 204 });
+      return new Response(JSON.stringify({ lease_id: "new-lease-id", lease_duration: 180, renewable: true }), { status: 200 });
+    }) as typeof fetch;
+    const client = createVaultAppRoleClient({ VAULT_ADDR: "https://vault.example.test", VAULT_ROLE_ID: "role", VAULT_SECRET_ID: "secret" }, fetchMock);
+    await expect(client.rotateLease("old-lease-id", "agentfence/tenants/5/agents/9/credentials/crm")).resolves.toEqual({ leaseId: "new-lease-id", leaseDurationSeconds: 180, renewable: true });
+    expect(calls[1]?.url).toBe("https://vault.example.test/v1/sys/leases/revoke");
+    expect(calls[3]?.url).toBe("https://vault.example.test/v1/agentfence/tenants/5/agents/9/credentials/crm");
+  });
+
   it("uses distinct URL-safe nonces for each runtime gateway request", () => {
     const first = createGatewayNonce();
     const second = createGatewayNonce();

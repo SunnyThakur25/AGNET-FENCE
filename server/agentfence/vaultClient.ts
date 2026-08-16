@@ -11,6 +11,12 @@ type VaultLoginResponse = {
   };
 };
 
+type VaultLeaseResponse = {
+  lease_id?: string;
+  lease_duration?: number;
+  renewable?: boolean;
+};
+
 export class VaultNotConfiguredError extends Error {
   constructor() {
     super("Dedicated Vault is not configured. Add VAULT_ADDR, VAULT_ROLE_ID, and VAULT_SECRET_ID before connecting.");
@@ -58,5 +64,35 @@ export function createVaultAppRoleClient(env: VaultEnvironment = process.env, fe
     return { ...status, reachable: response.ok || response.status === 204, detail: response.ok || response.status === 204 ? "ready" as const : "unhealthy" as const };
   }
 
-  return { status, login, probe };
+  async function issueLease(secretPath: string) {
+    const session = await login();
+    const response = await fetchImpl(`${vaultBaseUrl(env.VAULT_ADDR!)}/v1/${secretPath.replace(/^\/+/, "")}`, {
+      method: "GET",
+      headers: { "X-Vault-Token": session.clientToken },
+      signal: AbortSignal.timeout(8_000),
+    });
+    if (!response.ok) throw new Error(`Vault credential lease request failed with HTTP ${response.status}.`);
+    const payload = await response.json() as VaultLeaseResponse;
+    if (!payload.lease_id) throw new Error("Vault did not return a renewable lease for this credential reference.");
+    return { leaseId: payload.lease_id, leaseDurationSeconds: payload.lease_duration ?? 0, renewable: Boolean(payload.renewable) };
+  }
+
+  async function revokeLease(leaseId: string) {
+    const session = await login();
+    const response = await fetchImpl(`${vaultBaseUrl(env.VAULT_ADDR!)}/v1/sys/leases/revoke`, {
+      method: "POST",
+      headers: { "content-type": "application/json", "X-Vault-Token": session.clientToken },
+      body: JSON.stringify({ lease_id: leaseId }),
+      signal: AbortSignal.timeout(8_000),
+    });
+    if (!response.ok) throw new Error(`Vault lease revocation failed with HTTP ${response.status}.`);
+    return { revoked: true as const };
+  }
+
+  async function rotateLease(previousLeaseId: string, secretPath: string) {
+    await revokeLease(previousLeaseId);
+    return issueLease(secretPath);
+  }
+
+  return { status, login, probe, issueLease, revokeLease, rotateLease };
 }

@@ -33,7 +33,7 @@
 - [x] Implement signed runtime gateway requests with nonce/replay protection and automatic outbound Data Guard enforcement before delivery.
 - [x] Add tests for Vault lease scope, expiry, revocation, tenant isolation, replay rejection, and outbound redaction.
 - [x] Document the Vault deployment prerequisites, required secrets, and production hardening checklist.
-- [ ] Save a Vault-backed AgentFence checkpoint after validation.
+- [x] Save a Vault-backed AgentFence checkpoint after validation.
 
 ## Delivery notes
 
