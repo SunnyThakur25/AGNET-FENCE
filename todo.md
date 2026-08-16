@@ -1,0 +1,27 @@
+# Project TODO
+
+- [x] Define the multi-tenant data model for organizations, teams, memberships, roles, API access, and tenant-scoped resources.
+- [x] Implement protected admin and operator authorization procedures with strict tenant isolation.
+- [x] Build the Agent Registry to create, manage, and assign identities to AI agents, tracking environment, owner, risk level, and operational status.
+- [x] Build the Policy Engine to define and enforce least-privilege allow/deny rules per agent covering tools, actions, parameters, data sensitivity, and destinations.
+- [x] Build the Tool Gateway decision workflow that intercepts and evaluates agent tool calls before execution.
+- [ ] Build the Credential Vault metadata and scoped short-lived token issuance model without exposing raw secrets to agents.
+- [x] Build the Human Approval Workflow for payments, deletions, exports, and record changes with approve/reject capability and full audit capture.
+- [x] Build the Tamper-Evident Audit Ledger for agent decisions, tool calls, policy matches, approvals, outcomes, timestamps, and actor identities.
+- [x] Build the Data Guard to classify and redact PII, secrets, PHI, and payment data for approved models and destinations.
+- [x] Build the Runtime Monitoring Dashboard for current agent posture, recent enforcement decisions, risk signals, and operational activity.
+- [x] Build safe pre-deployment Attack Simulation workflows for prompt-injection, privilege-escalation, and data-exfiltration scenarios against registered agents.
+- [x] Implement Role-Based Access Control for admin and operator roles, scoped API access, multi-team use, and tenant isolation.
+- [x] Add LLM-Powered Explanations and Suggestions for policy outcomes, remediation, and audit-log patterns.
+- [x] Add Instant Notifications for high-risk blocks, pending approvals, and policy-violation thresholds.
+- [x] Add Compliance Evidence Export with durable evidence packets explicitly supporting SOC 2, ISO 27001, and insurance review use cases.
+- [x] Create refined, polished, responsive governance-console interfaces that preserve all requested feature naming and wording.
+- [x] Write and run Vitest coverage for core authorization, policy, approval, audit-integrity, and tenant-isolation rules.
+- [ ] Integrate an external KMS or secret manager for live credential material, signed credential leases, rotation, and revocation without exposing raw secrets in AgentFence.
+- [ ] Ship a signed gateway SDK or sidecar for intercepting live tool calls from customer agent runtimes outside the AgentFence console.
+- [x] Verify the rendered console, validate error states, review the TODO, and create an initial project checkpoint.
+- [x] Extend Data Guard scanning and redaction to outbound/model-output paths before external destinations.
+- [x] Add audit-log pattern analysis and policy-improvement suggestions to the LLM explanations workflow.
+- [x] Add operator-facing polling alerts and threshold-based policy-violation notifications.
+- [x] Add Vitest coverage for organization-role enforcement, approval expiration rules, and audit-integrity utilities.
+- [ ] Wire outbound/model-output Data Guard enforcement into the signed gateway SDK or sidecar so external sends are automatically scanned and redacted before delivery.
