@@ -13,6 +13,7 @@ import { isVaultPathForOrganization } from "./vaultContract";
 import { authorizeRuntimeGatewayRequest } from "./runtimeGatewayGuard";
 import { deriveRuntimeCredentialScope } from "./runtimeScope";
 import { getOwaspAgenticScenario, OWASP_AGENTIC_TOP10 } from "../../shared/owaspAgentic";
+import { buildActionTrace } from "./actionTrace";
 
 describe("AgentFence enforcement core", () => {
   it("blocks by default when no policy grants access", () => {
@@ -209,5 +210,35 @@ describe("AgentFence enforcement core", () => {
       expect(scenario.request).toMatchObject({ toolName: expect.any(String), action: expect.any(String), destination: expect.any(String) });
       expect(JSON.stringify(scenario.request)).not.toMatch(/curl|wget|powershell|rm -rf|<script/i);
     }
+  });
+
+  it("builds a privacy-safe action trace that contains a blocked action before the target boundary", () => {
+    const trace = buildActionTrace({
+      call: { id: 9, toolName: "browser", action: "form.submit", destination: "payments.internal", decision: "blocked", dataSensitivity: "secret", redactedParameters: { apiKey: "[REDACTED_SECRET]" }, targetOutcome: null, targetStatusCode: null, targetReference: null, targetRecordedAt: null, createdAt: new Date("2026-01-01T00:00:00.000Z") },
+      agent: { id: 3, name: "Finance browser agent", identity: "finance.browser.prod" },
+      policy: { id: 5, name: "Block payment secret submission" },
+      findings: [{ classification: "secret", actionTaken: "blocked", occurrences: 1, createdAt: new Date("2026-01-01T00:00:01.000Z") }],
+      approval: null,
+      auditEvents: [{ id: 2, eventType: "runtime.gateway_evaluated", outcome: "blocked", createdAt: new Date("2026-01-01T00:00:02.000Z") }],
+    });
+    expect(trace.hops.map(hop => hop.label)).toContain("Target boundary contained");
+    expect(trace.hops.at(-1)).toMatchObject({ status: "blocked" });
+    expect(JSON.stringify(trace)).not.toContain("plain-secret-value");
+    expect(JSON.stringify(trace)).toContain("[REDACTED_SECRET]");
+  });
+
+  it("includes an opaque target-system success outcome after an allowed action is released", () => {
+    const trace = buildActionTrace({
+      call: { id: 12, toolName: "crm", action: "case.update", destination: "crm.internal", decision: "allowed", dataSensitivity: "internal", redactedParameters: { status: "resolved" }, targetOutcome: "succeeded", targetStatusCode: 200, targetReference: "case-981", targetRecordedAt: new Date("2026-01-01T00:01:00.000Z"), createdAt: new Date("2026-01-01T00:00:00.000Z") },
+      agent: { id: 3, name: "Support agent", identity: "support.prod" },
+      policy: { id: 5, name: "Allow scoped case update" },
+      findings: [],
+      approval: null,
+      auditEvents: [{ id: 2, eventType: "runtime.gateway_evaluated", outcome: "allowed", createdAt: new Date("2026-01-01T00:00:02.000Z") }],
+    });
+    expect(trace.hops.at(-1)).toMatchObject({ label: "Target-system outcome recorded", status: "allowed" });
+    expect(trace.hops.at(-1)?.detail).toContain("status 200");
+    expect(trace.action).toMatchObject({ targetOutcome: "succeeded", targetReference: "case-981" });
+    expect(JSON.stringify(trace)).not.toContain("raw-target-response");
   });
 });

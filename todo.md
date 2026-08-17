@@ -81,3 +81,9 @@
 - [x] Add a public landing preview route for authenticated-session visual verification without changing the standard unauthenticated home behavior.
 - [x] Create an organization-ready architecture diagram covering cloud AI agents, local browser agents, AgentFence enforcement, enterprise systems, identity, Vault, approvals, audit, and SOC operations.
 - [x] Document the trust boundaries, request paths, allow/block/approval decisions, and deployment patterns represented by the AgentFence architecture diagram.
+- [x] Add a simple organization-wide onboarding flow for cloud agent SDK integrations and managed local browser-agent wrappers.
+- [x] Build tenant-scoped AI Action Capture with privacy-safe request metadata, policy decisions, Data Guard findings, approval states, target context, and outcomes.
+- [x] Build a graphical, traceroute-style AI Action Trace that shows every governed action hop from agent intent to target-system outcome.
+- [x] Add automated tests and interface validation for Action Capture, Action Trace, tenant isolation, and sensitive-data redaction.
+- [x] Extend AI Action Trace to capture and display downstream target-system outcome metadata for allowed cloud and browser actions without retaining raw response bodies.
+- [x] Add tests proving Action Trace includes target-system outcome details for allowed flows while preserving tenant isolation and sensitive-data redaction.

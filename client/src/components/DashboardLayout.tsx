@@ -1,6 +1,6 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { SignInPage } from "@/pages/Public";
-import { Activity, BellRing, ChevronDown, ClipboardCheck, FileCheck2, KeyRound, LayoutDashboard, LockKeyhole, LogOut, Radar, Settings2, ShieldAlert, ShieldCheck, TerminalSquare } from "lucide-react";
+import { Activity, BellRing, ChevronDown, ClipboardCheck, FileCheck2, GitBranch, KeyRound, LayoutDashboard, LockKeyhole, LogOut, Radar, ScanLine, Settings2, ShieldAlert, ShieldCheck, TerminalSquare } from "lucide-react";
 import { useLocation } from "wouter";
 import { AgentFenceLogo } from "./AgentFenceLogo";
 
@@ -9,6 +9,9 @@ const navigation = [
   { label: "Agent Registry", path: "/agents", icon: Radar },
   { label: "Policy Engine", path: "/policies", icon: ShieldCheck },
   { label: "Tool Gateway", path: "/gateway", icon: TerminalSquare },
+  { label: "Integrations", path: "/integrations", icon: TerminalSquare },
+  { label: "Action Capture", path: "/action-capture", icon: ScanLine },
+  { label: "Action Trace", path: "/action-trace", icon: GitBranch },
   { label: "Approvals", path: "/approvals", icon: ClipboardCheck },
   { label: "Audit Ledger", path: "/audit", icon: Activity },
   { label: "Data Guard", path: "/data-guard", icon: LockKeyhole },

@@ -29,6 +29,13 @@
       "when": 1786896305198,
       "tag": "0003_daily_maelstrom",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1786942997075,
+      "tag": "0004_deep_the_twelve",
+      "breakpoints": true
     }
   ]
 }

@@ -47,6 +47,7 @@ export const approvalStatus = mysqlEnum("approvalStatus", ["pending", "approved"
 export const notificationSeverity = mysqlEnum("notificationSeverity", ["info", "medium", "high", "critical"]);
 export const simulationStatus = mysqlEnum("simulationStatus", ["passed", "failed", "needs_review"]);
 export const runtimeCredentialStatus = mysqlEnum("runtimeCredentialStatus", ["active", "revoked", "expired"]);
+export const targetOutcomeStatus = mysqlEnum("targetOutcomeStatus", ["succeeded", "failed"]);
 
 export const organizations = mysqlTable(
   "organizations",
@@ -173,6 +174,10 @@ export const toolCalls = mysqlTable(
     decision: actionDecision.notNull(),
     matchedPolicyId: int("matchedPolicyId").references(() => policies.id, { onDelete: "set null" }),
     initiatedBy: varchar("initiatedBy", { length: 160 }).notNull(),
+    targetOutcome: targetOutcomeStatus,
+    targetStatusCode: int("targetStatusCode"),
+    targetReference: varchar("targetReference", { length: 160 }),
+    targetRecordedAt: timestamp("targetRecordedAt"),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
   },
   table => [

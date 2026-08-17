@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { and, desc, eq, gte, isNull, or } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNull, or } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
@@ -33,6 +33,7 @@ import { getOwaspAgenticScenario, OWASP_AGENTIC_TOP10 } from "../../shared/owasp
 import { isVaultPathForOrganization } from "../agentfence/vaultContract";
 import { getVaultConfigurationStatus } from "../agentfence/vaultStatus";
 import { createVaultAppRoleClient } from "../agentfence/vaultClient";
+import { buildActionTrace } from "../agentfence/actionTrace";
 import { getDb } from "../db";
 import { notifyOwner } from "../_core/notification";
 import { storagePut } from "../storage";
@@ -496,6 +497,136 @@ export const agentfenceRouter = router({
         }
         await appendAuditEvent({ organizationId: claims.organizationId, eventType: "runtime.gateway_evaluated", actorType: "agent", actorIdentity: agent.identity, agentId: claims.agentId, toolCallId, policyId: evaluation.matchedPolicy?.id ?? null, outcome: evaluation.decision, payload: { toolName: input.toolName, action: input.action, destination: input.destination, outboundRedactions: outboundGuard.occurrences } });
         return { toolCallId, decision: evaluation.decision, allowed: evaluation.decision === "allowed", reason: evaluation.reason, redactedParameters: inboundGuard.redactedValue, redactedOutboundPayload: outboundGuard.redactedValue, outboundFindings: outboundGuard.occurrences };
+      }),
+    reportOutcome: publicProcedure
+      .input(z.object({
+        token: z.string().min(30).max(8_192),
+        nonce: z.string().min(16).max(96).regex(/^[a-zA-Z0-9._-]+$/, "Nonce must be URL-safe."),
+        toolCallId: z.number().int().positive(),
+        outcome: z.enum(["succeeded", "failed"]),
+        targetStatusCode: z.number().int().min(100).max(599).optional(),
+        targetReference: z.string().min(1).max(160).regex(/^[a-zA-Z0-9._:-]+$/, "Target reference must be an opaque, URL-safe identifier.").optional(),
+      }))
+      .mutation(async ({ input }) => {
+        let claims;
+        try {
+          claims = await verifyRuntimeToken(input.token);
+        } catch {
+          throw new TRPCError({ code: "UNAUTHORIZED", message: "Runtime gateway token is invalid or expired." });
+        }
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable." });
+        const credential = await db.select().from(runtimeCredentials).where(and(eq(runtimeCredentials.tokenId, claims.tokenId), eq(runtimeCredentials.organizationId, claims.organizationId), eq(runtimeCredentials.agentId, claims.agentId), eq(runtimeCredentials.vaultCredentialId, claims.vaultCredentialId))).limit(1);
+        if (!credential[0]) throw new TRPCError({ code: "UNAUTHORIZED", message: "Runtime credential is not active." });
+        try {
+          await authorizeRuntimeGatewayRequest({
+            runtimeCredentialId: credential[0].id,
+            credential: credential[0],
+            claims,
+            nonce: input.nonce,
+            reserveNonce: async (runtimeCredentialId, nonce, expiresAt) => {
+              try {
+                await db.insert(runtimeNonces).values({ runtimeCredentialId, nonce, expiresAt });
+                return true;
+              } catch {
+                return false;
+              }
+            },
+          });
+        } catch (error) {
+          throw new TRPCError({ code: "UNAUTHORIZED", message: error instanceof Error && error.message === "runtime_request_replay" ? "Runtime request replay detected." : "Runtime credential is invalid or inactive." });
+        }
+        const [call] = await db.select().from(toolCalls).where(and(eq(toolCalls.id, input.toolCallId), eq(toolCalls.organizationId, claims.organizationId), eq(toolCalls.agentId, claims.agentId))).limit(1);
+        if (!call) throw new TRPCError({ code: "NOT_FOUND", message: "Governed action not found for this runtime identity." });
+        if (!["allowed", "approved"].includes(call.decision)) throw new TRPCError({ code: "FORBIDDEN", message: "A target outcome can only be reported for an allowed governed action." });
+        const recordedAt = new Date();
+        await db.update(toolCalls).set({ targetOutcome: input.outcome, targetStatusCode: input.targetStatusCode ?? null, targetReference: input.targetReference ?? null, targetRecordedAt: recordedAt }).where(eq(toolCalls.id, input.toolCallId));
+        await appendAuditEvent({ organizationId: claims.organizationId, eventType: "runtime.target_outcome_recorded", actorType: "agent", actorIdentity: `runtime:${credential[0].id}`, agentId: claims.agentId, toolCallId: input.toolCallId, outcome: input.outcome === "succeeded" ? "allowed" : "blocked", payload: { targetOutcome: input.outcome, targetStatusCode: input.targetStatusCode ?? null, targetReference: input.targetReference ?? null } });
+        return { success: true, recordedAt };
+      }),
+  }),
+
+  observability: router({
+    capture: protectedProcedure
+      .input(organizationInput.extend({ limit: z.number().int().min(1).max(200).default(100) }))
+      .query(async ({ ctx, input }) => {
+        await requireOrganizationMembership(input.organizationId, ctx.user.id);
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable." });
+        const calls = await db
+          .select({
+            id: toolCalls.id,
+            agentId: toolCalls.agentId,
+            toolName: toolCalls.toolName,
+            action: toolCalls.action,
+            redactedParameters: toolCalls.redactedParameters,
+            dataSensitivity: toolCalls.dataSensitivity,
+            destination: toolCalls.destination,
+            riskLevel: toolCalls.riskLevel,
+            decision: toolCalls.decision,
+            targetOutcome: toolCalls.targetOutcome,
+            targetStatusCode: toolCalls.targetStatusCode,
+            targetReference: toolCalls.targetReference,
+            targetRecordedAt: toolCalls.targetRecordedAt,
+            createdAt: toolCalls.createdAt,
+            agentName: agents.name,
+            agentIdentity: agents.identity,
+            policyName: policies.name,
+          })
+          .from(toolCalls)
+          .innerJoin(agents, eq(toolCalls.agentId, agents.id))
+          .leftJoin(policies, eq(toolCalls.matchedPolicyId, policies.id))
+          .where(eq(toolCalls.organizationId, input.organizationId))
+          .orderBy(desc(toolCalls.createdAt))
+          .limit(input.limit);
+        const callIds = calls.map(call => call.id);
+        const [findings, approvalRows] = callIds.length
+          ? await Promise.all([
+              db.select().from(dataGuardFindings).where(and(eq(dataGuardFindings.organizationId, input.organizationId), inArray(dataGuardFindings.toolCallId, callIds))),
+              db.select().from(approvals).where(and(eq(approvals.organizationId, input.organizationId), inArray(approvals.toolCallId, callIds))),
+            ])
+          : [[], []];
+        return calls.map(call => {
+          const approval = approvalRows.find(row => row.toolCallId === call.id);
+          return {
+            ...call,
+            dataGuardFindings: findings.filter(finding => finding.toolCallId === call.id).map(finding => ({ classification: finding.classification, actionTaken: finding.actionTaken, occurrences: finding.occurrences })),
+            approval: approval ? { status: approval.status } : null,
+          };
+        });
+      }),
+    trace: protectedProcedure
+      .input(organizationInput.extend({ toolCallId: z.number().int().positive() }))
+      .query(async ({ ctx, input }) => {
+        await requireOrganizationMembership(input.organizationId, ctx.user.id);
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable." });
+        const rows = await db
+          .select({
+            call: toolCalls,
+            agent: { id: agents.id, name: agents.name, identity: agents.identity },
+            policy: { id: policies.id, name: policies.name },
+          })
+          .from(toolCalls)
+          .innerJoin(agents, eq(toolCalls.agentId, agents.id))
+          .leftJoin(policies, eq(toolCalls.matchedPolicyId, policies.id))
+          .where(and(eq(toolCalls.id, input.toolCallId), eq(toolCalls.organizationId, input.organizationId)))
+          .limit(1);
+        const row = rows[0];
+        if (!row) throw new TRPCError({ code: "NOT_FOUND", message: "Captured action not found in this organization." });
+        const [findings, approvalRows, relatedAuditEvents] = await Promise.all([
+          db.select().from(dataGuardFindings).where(and(eq(dataGuardFindings.organizationId, input.organizationId), eq(dataGuardFindings.toolCallId, input.toolCallId))).orderBy(dataGuardFindings.createdAt),
+          db.select().from(approvals).where(and(eq(approvals.organizationId, input.organizationId), eq(approvals.toolCallId, input.toolCallId))).limit(1),
+          db.select({ id: auditEvents.id, eventType: auditEvents.eventType, outcome: auditEvents.outcome, createdAt: auditEvents.createdAt }).from(auditEvents).where(and(eq(auditEvents.organizationId, input.organizationId), eq(auditEvents.toolCallId, input.toolCallId))).orderBy(auditEvents.createdAt),
+        ]);
+        return buildActionTrace({
+          call: row.call,
+          agent: row.agent,
+          policy: row.policy?.id ? row.policy : null,
+          findings,
+          approval: approvalRows[0] ?? null,
+          auditEvents: relatedAuditEvents,
+        });
       }),
   }),
 

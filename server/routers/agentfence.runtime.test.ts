@@ -19,7 +19,13 @@ const db = {
 };
 
 vi.mock("../db", () => ({ getDb: vi.fn(async () => db) }));
-vi.mock("../agentfence/authz", () => ({ requireAgentInOrganization: vi.fn(async () => ({ id: 9 })), requireOrganizationMembership: vi.fn(async () => undefined), requireOrganizationRole: vi.fn(async () => undefined) }));
+vi.mock("../agentfence/authz", () => ({
+  requireAgentInOrganization: vi.fn(async () => ({ id: 9 })),
+  requireOrganizationMembership: vi.fn(async (organizationId: number) => {
+    if (organizationId !== 5) throw new Error("organization membership required");
+  }),
+  requireOrganizationRole: vi.fn(async () => undefined),
+}));
 vi.mock("../agentfence/audit", () => ({ appendAuditEvent: vi.fn(async (event: Record<string, unknown>) => { state.auditEvents.push(event); }) }));
 vi.mock("../agentfence/runtimeAuth", () => ({ verifyRuntimeToken: vi.fn(async () => state.claims), issueRuntimeToken: vi.fn(), scopeAllows: vi.fn(() => true), isRuntimeCredentialUsable: vi.fn(() => true) }));
 vi.mock("../agentfence/runtimeGatewayGuard", () => ({
@@ -72,6 +78,10 @@ describe("agentfence runtime procedures", () => {
   it("rejects a signed runtime credential whose stored organization does not match its token claim", async () => {
     state.credential = { ...state.credential, organizationId: 6 };
     await expect(caller().runtime.evaluate(runtimeInput)).rejects.toMatchObject({ code: "UNAUTHORIZED", message: "Runtime credential is invalid or inactive." });
+  });
+
+  it("refuses Action Capture queries outside the caller's organization before records can be read", async () => {
+    await expect(caller().observability.capture({ organizationId: 6, limit: 20 })).rejects.toThrow("organization membership required");
   });
 
   it("rejects an out-of-tenant Vault reference before any credential record is created", async () => {
