@@ -17,7 +17,7 @@
 - [x] Add Compliance Evidence Export with durable evidence packets explicitly supporting SOC 2, ISO 27001, and insurance review use cases.
 - [x] Create refined, polished, responsive governance-console interfaces that preserve all requested feature naming and wording.
 - [x] Write and run Vitest coverage for core authorization, policy, approval, audit-integrity, and tenant-isolation rules.
-- [ ] Integrate an external KMS or secret manager for live credential material, signed credential leases, rotation, and revocation without exposing raw secrets in AgentFence.
+- [x] Integrate an external KMS or secret manager for live credential material, signed credential leases, rotation, and revocation without exposing raw secrets in AgentFence; live activation remains disconnected-safe until deployment credentials are supplied.
 - [x] Ship a signed gateway SDK or sidecar for intercepting live tool calls from customer agent runtimes outside the AgentFence console.
 - [x] Verify the rendered console, validate error states, review the TODO, and create an initial project checkpoint.
 - [x] Extend Data Guard scanning and redaction to outbound/model-output paths before external destinations.
