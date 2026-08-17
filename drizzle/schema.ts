@@ -61,6 +61,9 @@ export const auditAnchorStatus = mysqlEnum("auditAnchorStatus", ["prepared", "ex
 export const siemDeliveryStatus = mysqlEnum("siemDeliveryStatus", ["queued", "delivered", "retrying", "failed", "skipped"]);
 export const resilienceStatus = mysqlEnum("resilienceStatus", ["draft", "declared", "exercise_recorded", "needs_remediation"]);
 export const resilienceExerciseOutcome = mysqlEnum("resilienceExerciseOutcome", ["passed", "failed", "partial"]);
+export const tenantUsageKind = mysqlEnum("tenantUsageKind", ["gateway_evaluations", "evidence_exports"]);
+export const auditExportScheduleStatus = mysqlEnum("auditExportScheduleStatus", ["draft", "active", "paused", "unhealthy"]);
+export const auditExportDeliveryMode = mysqlEnum("auditExportDeliveryMode", ["managed_archive", "customer_storage_activation_required"]);
 
 export const organizations = mysqlTable(
   "organizations",
@@ -217,6 +220,7 @@ export const toolCalls = mysqlTable(
     targetStatusCode: int("targetStatusCode"),
     targetReference: varchar("targetReference", { length: 160 }),
     targetRecordedAt: timestamp("targetRecordedAt"),
+    policyDecisionLatencyMs: int("policyDecisionLatencyMs"),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
   },
   table => [
@@ -352,9 +356,69 @@ export const evidenceExports = mysqlTable(
     storageUrl: varchar("storageUrl", { length: 500 }).notNull(),
     evidenceHash: varchar("evidenceHash", { length: 64 }).notNull(),
     generatedBy: int("generatedBy").notNull().references(() => users.id, { onDelete: "restrict" }),
+    scheduleId: int("scheduleId"),
+    scheduleRunKey: varchar("scheduleRunKey", { length: 32 }),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
   },
-  table => [index("evidence_exports_org_idx").on(table.organizationId)],
+  table => [
+    index("evidence_exports_org_idx").on(table.organizationId),
+    uniqueIndex("evidence_exports_schedule_run_unique").on(table.scheduleId, table.scheduleRunKey),
+  ],
+);
+
+/** Tenant-owned guardrails. Limits are enforced at the governed gateway and scheduled-export boundaries. */
+export const tenantQuotaPolicies = mysqlTable(
+  "tenantQuotaPolicies",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    organizationId: int("organizationId").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    gatewayEvaluationsPerMinute: int("gatewayEvaluationsPerMinute").notNull().default(600),
+    evidenceExportsPerDay: int("evidenceExportsPerDay").notNull().default(24),
+    updatedBy: int("updatedBy").notNull().references(() => users.id, { onDelete: "restrict" }),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  table => [uniqueIndex("tenant_quota_policies_org_unique").on(table.organizationId)],
+);
+
+/** Bounded counters retain only tenant, window, and count—never action content or runtime credentials. */
+export const tenantUsageWindows = mysqlTable(
+  "tenantUsageWindows",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    organizationId: int("organizationId").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    kind: tenantUsageKind.notNull(),
+    windowStartedAt: timestamp("windowStartedAt").notNull(),
+    usedCount: int("usedCount").notNull().default(0),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  table => [
+    uniqueIndex("tenant_usage_windows_org_kind_start_unique").on(table.organizationId, table.kind, table.windowStartedAt),
+    index("tenant_usage_windows_org_kind_idx").on(table.organizationId, table.kind),
+  ],
+);
+
+/** One scheduled managed-archive export per tenant and framework. Customer-owned storage remains an explicit activation boundary. */
+export const auditExportSchedules = mysqlTable(
+  "auditExportSchedules",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    organizationId: int("organizationId").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    framework: varchar("framework", { length: 32 }).notNull(),
+    deliveryMode: auditExportDeliveryMode.notNull().default("managed_archive"),
+    status: auditExportScheduleStatus.notNull().default("draft"),
+    scheduleCronTaskUid: varchar("scheduleCronTaskUid", { length: 65 }),
+    lastRunAt: timestamp("lastRunAt"),
+    lastRunCode: varchar("lastRunCode", { length: 80 }),
+    createdBy: int("createdBy").notNull().references(() => users.id, { onDelete: "restrict" }),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  table => [
+    uniqueIndex("audit_export_schedules_org_framework_unique").on(table.organizationId, table.framework),
+    uniqueIndex("audit_export_schedules_task_uid_unique").on(table.scheduleCronTaskUid),
+    index("audit_export_schedules_org_status_idx").on(table.organizationId, table.status),
+  ],
 );
 
 /**

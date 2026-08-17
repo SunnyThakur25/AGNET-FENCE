@@ -14,6 +14,7 @@ This release strengthens AgentFence’s ability to show what it governs, retain 
 | **Continuous Splunk delivery** | A certified HEC profile can queue privacy-safe audit envelopes, retry transient failures with a bounded schedule, and retain delivered/retrying/failed evidence. | Activation requires a production deployment, certified HEC endpoint, customer Vault AppRole, token-scoped Vault reference, and customer-approved routing/on-call model. |
 | **Resilience evidence** | Administrators can declare RTO, RPO, SLO, owner, provider, runbook reference, and record a customer-led exercise result. | A declaration or recorded result is not a provider-verified backup, successful restore, SLA, or tested DR environment. |
 | **Identity lifecycle** | The console surfaces protected OIDC/SCIM configuration readiness without revealing values. | Federation and provisioning remain inactive until customer IdP registration, redirect URI, lifecycle mapping, service principal, and production test evidence are completed. |
+| **Policy and Data Guard hardening** | Policy patterns use deterministic case-insensitive `*`/`?` glob matching; deny wins equal-priority conflicts. Data Guard recursively redacts values under secret-bearing field names in addition to existing detectors. | This does not create semantic document classification or make the guard resistant to all obfuscation and novel encodings. |
 
 ## Delivery safeguards
 

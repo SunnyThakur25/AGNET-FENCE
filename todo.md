@@ -224,10 +224,22 @@
 - [x] Implement continuous Splunk HEC delivery with durable retry, delivery-state evidence, deduplicated in-product terminal-failure alerts, and documented customer activation/operating prerequisites; do not equate connection certification with continuous delivery.
 - [x] Retain the completed policy proposal, independent review, approval, promotion, rejection, rollback, and audit workflow as the source of truth; correct any document that still lists policy governance as missing.
 - [ ] Define and test operational SLOs, backup/restore targets, disaster-recovery exercises, and an incident operating model appropriate to the chosen production hosting and database services.
-- [ ] Strengthen policy matching beyond simple wildcard equality and evolve Data Guard beyond regex-only inspection using a tested phased design with explicit false-positive and bypass-risk boundaries.
+- [x] Strengthen policy matching beyond simple wildcard equality and evolve Data Guard beyond regex-only inspection using a tested phased design with explicit false-positive and bypass-risk boundaries.
 
 ### Completed operational-readiness foundation
 
 - [x] Add a tenant-scoped operational resilience evidence workspace for customer-declared RTO/RPO/SLO targets, recovery owner/provider/runbook references, and customer-reported exercise outcomes without representing them as provider-verified backups or restores.
 - [ ] Complete a customer-owned recovery exercise with backup-provider logs, restore output, access-control checks, observed RTO/RPO comparison, remediation record, and approved incident operating model.
 - [ ] Activate the Splunk HEC schedule on a published production deployment after live Vault AppRole authentication, controlled HEC certification, alert ownership, and customer sign-off are complete.
+
+## Multi-department governance and observability expansion
+
+- [x] Extend coverage posture from integration evidence into an explicit organization and department governance inventory for governed, policy-gap, evidence-gap, and unobservable agent paths.
+- [x] Verify and refine the existing policy revision field-level diff viewer so it is discoverable from the enterprise governance workflow without creating a duplicate control path.
+- [x] Build a tenant-scoped connector-health dashboard that summarizes safe SIEM, Vault, and identity-provider readiness, status, last-check evidence, and ownership boundaries.
+- [x] Add durable, tenant-scoped scheduled audit-evidence export controls with managed archive delivery, idempotency, retention-safe metadata, and a customer-storage activation boundary.
+- [x] Add policy-gateway rate limiting and tenant quotas that protect shared control-plane capacity without weakening tenant isolation or returning sensitive state.
+- [x] Add explicit automated tenant-isolation regression tests covering governance, connector-health, export, and performance-evidence queries across organizations.
+- [x] Capture tenant-scoped policy-decision latency evidence and render bounded performance metrics without claiming an externally verified SLA.
+- [x] Expand the onboarding workflow into a pilot readiness checklist for multiple departments, agent owners, policies, connectors, and evidence ownership.
+- [x] Document the multi-department operating model and the boundary between language-level safety controls and action-level enforcement.

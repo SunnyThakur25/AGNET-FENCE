@@ -36,6 +36,8 @@ import { getVaultConfigurationStatus } from "../agentfence/vaultStatus";
 import { createVaultAppRoleClient } from "../agentfence/vaultClient";
 import { buildActionTrace } from "../agentfence/actionTrace";
 import { aggregateActionSummary } from "../agentfence/actionMetrics";
+import { createEvidenceExport } from "../agentfence/evidenceExportService";
+import { consumeTenantQuota } from "../agentfence/tenantQuotas";
 import { getDb } from "../db";
 import { notifyOwner } from "../_core/notification";
 import { storagePut } from "../storage";
@@ -337,6 +339,9 @@ export const agentfenceRouter = router({
         if (agent.status !== "active") throw new TRPCError({ code: "FORBIDDEN", message: "Paused or retired agents cannot invoke tools." });
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable." });
+        const quota = await consumeTenantQuota({ organizationId: input.organizationId, kind: "gateway_evaluations" });
+        if (!quota.allowed) throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "This organization has reached its Tool Gateway evaluation quota for the current minute." });
+        const decisionStartedAt = Date.now();
         const guardResult = inspectAndRedact(input.parameters);
         const effectiveSensitivity = strongestDataClassification(input.dataSensitivity, guardResult.classification);
         const activePolicies = await db
@@ -362,6 +367,7 @@ export const agentfenceRouter = router({
           decision: evaluation.decision,
           matchedPolicyId: evaluation.matchedPolicy?.id ?? null,
           initiatedBy: ctx.user.email || ctx.user.openId,
+          policyDecisionLatencyMs: Math.max(0, Date.now() - decisionStartedAt),
         }));
         if (guardResult.occurrences > 0) {
           await db.insert(dataGuardFindings).values({
@@ -515,14 +521,17 @@ export const agentfenceRouter = router({
         } catch (error) {
           throw new TRPCError({ code: "UNAUTHORIZED", message: error instanceof Error && error.message === "runtime_request_replay" ? "Runtime request replay detected." : "Runtime credential is invalid or inactive." });
         }
+        const quota = await consumeTenantQuota({ organizationId: claims.organizationId, kind: "gateway_evaluations" });
+        if (!quota.allowed) throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "This organization has reached its Tool Gateway evaluation quota for the current minute." });
         const agent = await requireAgentInOrganization(claims.organizationId, claims.agentId);
         if (agent.status !== "active") throw new TRPCError({ code: "FORBIDDEN", message: "Paused or retired agents cannot invoke tools." });
+        const decisionStartedAt = Date.now();
         const inboundGuard = inspectAndRedact(input.parameters);
         const outboundGuard = inspectOutboundAndRedact(input.outboundPayload ?? {});
         const effectiveSensitivity = strongestDataClassification(input.dataSensitivity, inboundGuard.classification, outboundGuard.classification);
         const activePolicies = await db.select().from(policies).where(and(eq(policies.organizationId, claims.organizationId), eq(policies.status, "active"), or(isNull(policies.agentId), eq(policies.agentId, claims.agentId))));
         const evaluation = evaluatePolicies(activePolicies, { toolName: input.toolName, action: input.action, parameters: input.parameters, dataSensitivity: effectiveSensitivity, destination: input.destination });
-        const toolCallId = insertId(await db.insert(toolCalls).values({ organizationId: claims.organizationId, agentId: claims.agentId, toolName: input.toolName, action: input.action, redactedParameters: inboundGuard.redactedValue as Record<string, unknown>, dataSensitivity: effectiveSensitivity, destination: input.destination, riskLevel: input.riskLevel, decision: evaluation.decision, matchedPolicyId: evaluation.matchedPolicy?.id ?? null, initiatedBy: `runtime:${credential[0].id}` }));
+        const toolCallId = insertId(await db.insert(toolCalls).values({ organizationId: claims.organizationId, agentId: claims.agentId, toolName: input.toolName, action: input.action, redactedParameters: inboundGuard.redactedValue as Record<string, unknown>, dataSensitivity: effectiveSensitivity, destination: input.destination, riskLevel: input.riskLevel, decision: evaluation.decision, matchedPolicyId: evaluation.matchedPolicy?.id ?? null, initiatedBy: `runtime:${credential[0].id}`, policyDecisionLatencyMs: Math.max(0, Date.now() - decisionStartedAt) }));
         const findings = [inboundGuard, outboundGuard];
         for (const finding of findings) {
           if (finding.occurrences > 0) await db.insert(dataGuardFindings).values({ organizationId: claims.organizationId, toolCallId, classification: finding.classification, detector: finding.detectors.join(",") || "runtime-data-guard", actionTaken: "redacted", occurrences: finding.occurrences, destinationApproved: evaluation.decision === "allowed" });
@@ -877,36 +886,13 @@ export const agentfenceRouter = router({
       .input(organizationInput.extend({ framework: z.enum(["SOC 2", "ISO 27001", "insurance review"]) }))
       .mutation(async ({ ctx, input }) => {
         await requireOrganizationRole(input.organizationId, ctx.user.id, ["admin"]);
-        const db = await getDb();
-        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable." });
-        const [organization] = await db.select().from(organizations).where(eq(organizations.id, input.organizationId)).limit(1);
-        if (!organization) throw new TRPCError({ code: "NOT_FOUND", message: "Organization not found." });
-        const [policyRows, auditRows, agentRows, approvalRows] = await Promise.all([
-          db.select().from(policies).where(eq(policies.organizationId, input.organizationId)),
-          db.select().from(auditEvents).where(eq(auditEvents.organizationId, input.organizationId)).orderBy(desc(auditEvents.sequence)).limit(500),
-          db.select().from(agents).where(eq(agents.organizationId, input.organizationId)),
-          db.select().from(approvals).where(eq(approvals.organizationId, input.organizationId)),
-        ]);
-        const payload = {
-          product: "AgentFence",
-          framework: input.framework,
-          generatedAt: new Date().toISOString(),
-          organization: { id: organization.id, name: organization.name, slug: organization.slug },
-          summary: { agentCount: agentRows.length, policyCount: policyRows.length, approvalCount: approvalRows.length, auditEventCount: auditRows.length },
-          agents: agentRows,
-          policies: policyRows,
-          approvals: approvalRows,
-          auditLedger: auditRows,
-          evidenceStatement: "This packet contains AgentFence policy snapshots and tamper-evident audit-ledger records. It supports evidence collection and review; it does not itself certify compliance.",
-        };
-        const serialized = JSON.stringify(payload, null, 2);
-        const evidenceHash = createHash("sha256").update(serialized).digest("hex");
-        const safeFramework = input.framework.replace(/[^a-z0-9]+/gi, "-").toLowerCase();
-        const fileName = `evidence/${input.organizationId}/${safeFramework}-${Date.now()}.json`;
-        const stored = await storagePut(fileName, Buffer.from(serialized), "application/json");
-        const exportId = insertId(await db.insert(evidenceExports).values({ organizationId: input.organizationId, framework: input.framework, storageKey: stored.key, storageUrl: stored.url, evidenceHash, generatedBy: ctx.user.id }));
-        await appendAuditEvent({ organizationId: input.organizationId, eventType: "evidence.exported", actorType: "user", actorIdentity: ctx.user.email || ctx.user.openId, outcome: "allowed", payload: { exportId, framework: input.framework, evidenceHash } });
-        return { exportId, url: stored.url, evidenceHash };
+        try {
+          return await createEvidenceExport({ organizationId: input.organizationId, framework: input.framework, generatedBy: ctx.user.id, actorIdentity: ctx.user.email || ctx.user.openId });
+        } catch (error) {
+          if (error instanceof Error && error.message === "EVIDENCE_EXPORT_QUOTA_EXCEEDED") throw new TRPCError({ code: "TOO_MANY_REQUESTS", message: "This organization has reached its daily evidence-export quota." });
+          if (error instanceof Error && error.message === "ORGANIZATION_NOT_FOUND") throw new TRPCError({ code: "NOT_FOUND", message: "Organization not found." });
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Evidence export could not be generated." });
+        }
       }),
   }),
 

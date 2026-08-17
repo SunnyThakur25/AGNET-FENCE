@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { inspectAndRedact, inspectOutboundAndRedact, strongestDataClassification } from "./dataGuard";
-import { evaluatePolicies } from "./policyEngine";
+import { evaluatePolicies, globMatch } from "./policyEngine";
 import { hashAuditEvent, isAuditHashValid } from "./audit";
 import { isApprovalExpired } from "./approvals";
 import { isOrganizationRoleAllowed } from "./authz";
@@ -55,6 +55,24 @@ describe("AgentFence enforcement core", () => {
     const guarded = inspectAndRedact({ token: "sk-live-1234567890abcdefghijkl" });
     expect(JSON.stringify(guarded.redactedValue)).not.toContain("1234567890abcdefghijkl");
     expect(guarded.classification).toBe("secret");
+  });
+
+  it("matches only bounded glob semantics and gives a same-priority deny rule deterministic precedence", () => {
+    expect(globMatch("crm.*", "crm.case.update")).toBe(true);
+    expect(globMatch("crm.?ase.update", "crm.case.update")).toBe(true);
+    expect(globMatch("crm.*", "payments.refund")).toBe(false);
+    const result = evaluatePolicies([
+      { id: 2, name: "Allow CRM writes", effect: "allow", toolPattern: "crm", actionPattern: "case.*", parameterConstraints: [], dataSensitivity: "any", destinationPattern: "crm.*", priority: 50 },
+      { id: 1, name: "Deny production record closure", effect: "deny", toolPattern: "crm", actionPattern: "case.close", parameterConstraints: [], dataSensitivity: "any", destinationPattern: "crm.production", priority: 50 },
+    ], { toolName: "crm", action: "case.close", parameters: {}, dataSensitivity: "internal", destination: "crm.production" });
+    expect(result).toMatchObject({ decision: "blocked", matchedPolicy: { id: 1 } });
+  });
+
+  it("classifies and redacts short secrets by structured field name even when regex patterns would not match", () => {
+    const guarded = inspectOutboundAndRedact({ integration: { clientSecret: "short-value", nested: [{ authorization: "x" }] }, publicLabel: "safe" });
+    expect(guarded.classification).toBe("secret");
+    expect(guarded.detectors).toContain("sensitive-field-name");
+    expect(guarded.redactedValue).toEqual({ integration: { clientSecret: "[REDACTED_SECRET]", nested: [{ authorization: "[REDACTED_SECRET]" }] }, publicLabel: "safe" });
   });
 
   it("creates different hashes when the immutable event content changes", () => {

@@ -34,6 +34,13 @@ const patterns: Array<{ classification: DataClassification; detector: string; ex
   { classification: "phi", detector: "clinical-identifier", expression: /\b(?:MRN|patient[-_ ]?id|diagnosis)\s*[:=]\s*[A-Za-z0-9-]{4,}\b/gi, replacement: "[REDACTED_PHI]" },
 ];
 
+const secretBearingKey = /(?:api[_-]?key|authorization|bearer|client[_-]?secret|credential|password|private[_-]?key|secret|session|token)/i;
+
+function mergeResults(results: DataGuardResult[], redactedValue: unknown): DataGuardResult {
+  const classification = strongestDataClassification(...results.map(result => result.classification));
+  return { classification, occurrences: results.reduce((total, result) => total + result.occurrences, 0), detectors: Array.from(new Set(results.flatMap(result => result.detectors))), redactedValue };
+}
+
 function guardString(input: string): DataGuardResult {
   let redacted = input;
   let classification: DataClassification = "internal";
@@ -55,16 +62,32 @@ function guardString(input: string): DataGuardResult {
 }
 
 export function inspectAndRedact(value: unknown): DataGuardResult {
-  const rendered = typeof value === "string" ? value : JSON.stringify(value ?? {});
-  const result = guardString(rendered);
+  return inspectStructuredValue(value, new WeakSet<object>());
+}
 
-  if (typeof value === "string") return result;
-
-  try {
-    return { ...result, redactedValue: JSON.parse(String(result.redactedValue)) };
-  } catch {
-    return result;
+function inspectStructuredValue(value: unknown, seen: WeakSet<object>): DataGuardResult {
+  if (typeof value === "string") return guardString(value);
+  if (value === null || value === undefined || typeof value !== "object") return guardString(String(value ?? ""));
+  if (seen.has(value)) return { classification: "internal", occurrences: 1, redactedValue: "[REDACTED_CIRCULAR_VALUE]", detectors: ["circular-structure"] };
+  seen.add(value);
+  if (Array.isArray(value)) {
+    const children = value.map(item => inspectStructuredValue(item, seen));
+    return mergeResults(children, children.map(child => child.redactedValue));
   }
+  const output: Record<string, unknown> = {};
+  const results: DataGuardResult[] = [];
+  for (const [key, child] of Object.entries(value as Record<string, unknown>)) {
+    if (secretBearingKey.test(key)) {
+      const result: DataGuardResult = { classification: "secret", occurrences: 1, redactedValue: "[REDACTED_SECRET]", detectors: ["sensitive-field-name"] };
+      output[key] = result.redactedValue;
+      results.push(result);
+    } else {
+      const result = inspectStructuredValue(child, seen);
+      output[key] = result.redactedValue;
+      results.push(result);
+    }
+  }
+  return mergeResults(results, output);
 }
 
 /**

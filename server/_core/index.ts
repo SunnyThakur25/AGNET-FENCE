@@ -11,6 +11,7 @@ import { httpSecurityMiddleware } from "./httpSecurity";
 import { registerStripeWebhook } from "./stripe";
 import { serveStatic, setupVite } from "./vite";
 import { registerScheduledSiemDelivery } from "../scheduledSiemDelivery";
+import { registerScheduledAuditExports } from "../scheduledAuditExports";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -44,6 +45,7 @@ async function startServer() {
   registerStorageProxy(app);
   registerOAuthRoutes(app);
   registerScheduledSiemDelivery(app);
+  registerScheduledAuditExports(app);
   // tRPC API
   app.use(
     "/api/trpc",

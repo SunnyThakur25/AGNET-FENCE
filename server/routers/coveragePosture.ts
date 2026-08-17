@@ -1,7 +1,7 @@
 import { and, eq, gte } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { agents, mcpServers, mcpTools, policies, toolCalls } from "../../drizzle/schema";
+import { agents, mcpServers, mcpTools, policies, teams, toolCalls } from "../../drizzle/schema";
 import { requireOrganizationMembership } from "../agentfence/authz";
 import { getDb } from "../db";
 import { protectedProcedure, router } from "../_core/trpc";
@@ -9,7 +9,7 @@ import { protectedProcedure, router } from "../_core/trpc";
 const organizationInput = z.object({ organizationId: z.number().int().positive() });
 const OBSERVATION_DAYS = 30;
 
-type CoverageAgent = { id: number; name: string; identity: string; environment: string; status: string; riskLevel: string };
+type CoverageAgent = { id: number; name: string; identity: string; environment: string; status: string; riskLevel: string; teamId: number; departmentName: string };
 type CoveragePolicy = { agentId: number | null };
 type CoverageCall = { agentId: number; decision: string };
 
@@ -38,9 +38,25 @@ export function deriveCoveragePosture(agentRows: CoverageAgent[], policyRows: Co
     };
   });
   const activeItems = items.filter(item => item.status === "active");
+  const departments = Array.from(new Map(items.map(item => [item.teamId, item.departmentName])).entries()).map(([teamId, departmentName]) => {
+    const departmentItems = items.filter(item => item.teamId === teamId);
+    const activeDepartmentItems = departmentItems.filter(item => item.status === "active");
+    return {
+      teamId,
+      departmentName,
+      registeredAgents: departmentItems.length,
+      activeAgents: activeDepartmentItems.length,
+      observedActiveAgents: activeDepartmentItems.filter(item => item.state === "observed").length,
+      policyGaps: activeDepartmentItems.filter(item => item.state === "policy_gap").length,
+      evidenceGaps: activeDepartmentItems.filter(item => item.state === "evidence_gap").length,
+      governedActions: departmentItems.reduce((total, item) => total + item.governedActionCount, 0),
+    };
+  });
   return {
     items,
+    departments,
     summary: {
+      departments: departments.length,
       registeredAgents: items.length,
       activeAgents: activeItems.length,
       observedActiveAgents: activeItems.filter(item => item.state === "observed").length,
@@ -58,7 +74,7 @@ export const coveragePostureRouter = router({
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable." });
     const observationStart = new Date(Date.now() - OBSERVATION_DAYS * 24 * 60 * 60 * 1000);
     const [agentRows, policyRows, callRows, mcpServerRows, mcpToolRows] = await Promise.all([
-      db.select({ id: agents.id, name: agents.name, identity: agents.identity, environment: agents.environment, status: agents.status, riskLevel: agents.riskLevel }).from(agents).where(eq(agents.organizationId, input.organizationId)),
+      db.select({ id: agents.id, name: agents.name, identity: agents.identity, environment: agents.environment, status: agents.status, riskLevel: agents.riskLevel, teamId: agents.teamId, departmentName: teams.name }).from(agents).innerJoin(teams, eq(agents.teamId, teams.id)).where(eq(agents.organizationId, input.organizationId)),
       db.select({ agentId: policies.agentId }).from(policies).where(and(eq(policies.organizationId, input.organizationId), eq(policies.status, "active"))),
       db.select({ agentId: toolCalls.agentId, decision: toolCalls.decision }).from(toolCalls).where(and(eq(toolCalls.organizationId, input.organizationId), gte(toolCalls.createdAt, observationStart))),
       db.select({ id: mcpServers.id, status: mcpServers.status }).from(mcpServers).where(eq(mcpServers.organizationId, input.organizationId)),

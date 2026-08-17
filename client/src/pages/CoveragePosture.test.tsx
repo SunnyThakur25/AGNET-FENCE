@@ -10,8 +10,9 @@ vi.mock("@/pages/Console", () => ({
 }));
 vi.mock("@/lib/trpc", () => ({ trpc: { coveragePosture: { get: { useQuery: () => ({ isLoading: false, data: {
   observation: { start: new Date("2026-08-01T00:00:00Z"), days: 30 },
-  summary: { activeAgents: 2, registeredAgents: 2, observedActiveAgents: 1, policyGaps: 0, evidenceGaps: 1 },
-  items: [{ id: 1, name: "Support agent", identity: "support.agent", environment: "production", riskLevel: "high", status: "active", state: "observed", applicablePolicyCount: 2, governedActionCount: 14, allowedCount: 11, blockedOrHeldCount: 3, explanation: "This agent has governed action evidence." }],
+  summary: { departments: 1, activeAgents: 2, registeredAgents: 2, observedActiveAgents: 1, policyGaps: 0, evidenceGaps: 1 },
+  departments: [{ teamId: 3, departmentName: "Customer Support", registeredAgents: 2, activeAgents: 2, observedActiveAgents: 1, policyGaps: 0, evidenceGaps: 1, governedActions: 14 }],
+  items: [{ id: 1, teamId: 3, departmentName: "Customer Support", name: "Support agent", identity: "support.agent", environment: "production", riskLevel: "high", status: "active", state: "observed", applicablePolicyCount: 2, governedActionCount: 14, allowedCount: 11, blockedOrHeldCount: 3, explanation: "This agent has governed action evidence." }],
   mcp: { registeredServers: 1, trustedServers: 1, enabledTools: 2 },
   limitations: ["This posture measures registered integrations and governed actions stored by AgentFence; it is not network telemetry."],
 } }) } } } }));
@@ -23,7 +24,8 @@ describe("CoveragePosturePage", () => {
     const markup = renderToStaticMarkup(<CoveragePosturePage />);
     expect(markup).toContain("Measure what AgentFence can prove—not what it cannot see");
     expect(markup).toContain("Support agent");
-    expect(markup).toContain("Evidence gaps");
+    expect(markup).toContain("Customer Support");
+    expect(markup).toContain("Policy and evidence gaps");
     expect(markup).toContain("not network telemetry");
     expect(markup).toContain("Direct-call boundary remains visible");
   });

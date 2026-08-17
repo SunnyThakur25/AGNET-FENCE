@@ -7,6 +7,7 @@ const state = vi.hoisted(() => ({
   auditEvents: [] as Array<Record<string, unknown>>,
   policyDecision: "blocked" as "blocked" | "approval_required" | "allowed",
   capturedSensitivity: null as string | null,
+  quotaAllowed: true,
 }));
 
 const db = {
@@ -37,6 +38,7 @@ vi.mock("../agentfence/runtimeGatewayGuard", () => ({
   }),
 }));
 vi.mock("../agentfence/policyEngine", () => ({ evaluatePolicies: vi.fn((_policies, request: { dataSensitivity: string }) => { state.capturedSensitivity = request.dataSensitivity; return { decision: state.policyDecision, reason: `Synthetic ${state.policyDecision} decision from the controlled assessment policy boundary.` }; }) }));
+vi.mock("../agentfence/tenantQuotas", () => ({ consumeTenantQuota: vi.fn(async () => ({ allowed: state.quotaAllowed, used: state.quotaAllowed ? 1 : 601, limit: 600, remaining: state.quotaAllowed ? 599 : 0, windowStartedAt: new Date("2030-01-01T00:00:00.000Z") })) }));
 vi.mock("../agentfence/vaultClient", () => ({
   createVaultAppRoleClient: vi.fn(() => ({
     issueLease: vi.fn(async () => ({ leaseId: "internal-lease", leaseDurationSeconds: 300, renewable: true })),
@@ -70,6 +72,7 @@ describe("agentfence runtime procedures", () => {
     state.auditEvents = [];
     state.policyDecision = "blocked";
     state.capturedSensitivity = null;
+    state.quotaAllowed = true;
   });
 
   it("returns an unauthorized error when the gateway detects a duplicate nonce replay", async () => {
@@ -86,6 +89,11 @@ describe("agentfence runtime procedures", () => {
     state.policyDecision = "blocked";
     await expect(caller().runtime.evaluate({ ...runtimeInput, outboundPayload: { authorization: "Bearer a-tenant-secret-token-123456" } })).resolves.toMatchObject({ decision: "blocked", allowed: false });
     expect(state.capturedSensitivity).toBe("secret");
+  });
+
+  it("stops a signed runtime action when the tenant gateway quota is exhausted", async () => {
+    state.quotaAllowed = false;
+    await expect(caller().runtime.evaluate(runtimeInput)).rejects.toMatchObject({ code: "TOO_MANY_REQUESTS", message: "This organization has reached its Tool Gateway evaluation quota for the current minute." });
   });
 
   it("refuses Action Capture queries outside the caller's organization before records can be read", async () => {
