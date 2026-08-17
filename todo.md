@@ -215,3 +215,19 @@
 - [x] Add automated security, tenant-isolation, and rendered-interface tests; validate full build and responsive user experience.
 - [x] Update the activation guide and product claim register, checkpoint the completed release, and push it to GitHub.
 - [ ] Complete a live customer Vault AppRole authentication and Splunk HEC event certification after the customer supplies a reachable HEC endpoint plus protected `VAULT_ADDR`, `VAULT_ROLE_ID`, and `VAULT_SECRET_ID` values.
+
+## Enterprise production-hardening gap register
+
+- [x] Add an evidence-backed coverage posture that identifies registered agent integrations and makes ungoverned or direct-bypass paths explicit rather than claiming network-level visibility.
+- [x] Design an independently retained audit-evidence anchoring/export option with documented immutability guarantees, retention ownership, and verification procedure.
+- [ ] Implement live OIDC federation and SCIM provisioning only after customer IdP endpoints, client registration, lifecycle semantics, and test identities are supplied; retain readiness-only status until then.
+- [x] Implement continuous Splunk HEC delivery with durable retry, delivery-state evidence, deduplicated in-product terminal-failure alerts, and documented customer activation/operating prerequisites; do not equate connection certification with continuous delivery.
+- [x] Retain the completed policy proposal, independent review, approval, promotion, rejection, rollback, and audit workflow as the source of truth; correct any document that still lists policy governance as missing.
+- [ ] Define and test operational SLOs, backup/restore targets, disaster-recovery exercises, and an incident operating model appropriate to the chosen production hosting and database services.
+- [ ] Strengthen policy matching beyond simple wildcard equality and evolve Data Guard beyond regex-only inspection using a tested phased design with explicit false-positive and bypass-risk boundaries.
+
+### Completed operational-readiness foundation
+
+- [x] Add a tenant-scoped operational resilience evidence workspace for customer-declared RTO/RPO/SLO targets, recovery owner/provider/runbook references, and customer-reported exercise outcomes without representing them as provider-verified backups or restores.
+- [ ] Complete a customer-owned recovery exercise with backup-provider logs, restore output, access-control checks, observed RTO/RPO comparison, remediation record, and approved incident operating model.
+- [ ] Activate the Splunk HEC schedule on a published production deployment after live Vault AppRole authentication, controlled HEC certification, alert ownership, and customer sign-off are complete.

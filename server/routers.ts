@@ -7,6 +7,10 @@ import { accountRouter } from "./routers/account";
 import { enterpriseRouter } from "./routers/enterprise";
 import { mcpGatewayRouter } from "./routers/mcpGateway";
 import { policyGovernanceRouter } from "./routers/policyGovernance";
+import { coveragePostureRouter } from "./routers/coveragePosture";
+import { auditAnchoringRouter } from "./routers/auditAnchoring";
+import { siemDeliveryRouter } from "./routers/siemDelivery";
+import { operationalReadinessRouter } from "./routers/operationalReadiness";
 import * as dbHelpers from "./db";
 import { parse as parseCookieHeader } from "cookie";
 
@@ -30,6 +34,10 @@ export const appRouter = router({
   enterprise: enterpriseRouter,
   mcpGateway: mcpGatewayRouter,
   policyGovernance: policyGovernanceRouter,
+  coveragePosture: coveragePostureRouter,
+  auditAnchoring: auditAnchoringRouter,
+  siemDelivery: siemDeliveryRouter,
+  operationalReadiness: operationalReadinessRouter,
 });
 
 export type AppRouter = typeof appRouter;

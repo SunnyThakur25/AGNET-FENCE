@@ -57,6 +57,10 @@ export const policyRevisionStatus = mysqlEnum("policyRevisionStatus", ["draft", 
 export const connectorCertificationStatus = mysqlEnum("connectorCertificationStatus", ["pending", "certified", "failed", "activation_required"]);
 export const mcpServerStatus = mysqlEnum("mcpServerStatus", ["pending_review", "trusted", "unhealthy", "disabled"]);
 export const mcpToolStatus = mysqlEnum("mcpToolStatus", ["discovered", "enabled", "disabled"]);
+export const auditAnchorStatus = mysqlEnum("auditAnchorStatus", ["prepared", "external_receipt_recorded", "verification_failed"]);
+export const siemDeliveryStatus = mysqlEnum("siemDeliveryStatus", ["queued", "delivered", "retrying", "failed", "skipped"]);
+export const resilienceStatus = mysqlEnum("resilienceStatus", ["draft", "declared", "exercise_recorded", "needs_remediation"]);
+export const resilienceExerciseOutcome = mysqlEnum("resilienceExerciseOutcome", ["passed", "failed", "partial"]);
 
 export const organizations = mysqlTable(
   "organizations",
@@ -353,6 +357,36 @@ export const evidenceExports = mysqlTable(
   table => [index("evidence_exports_org_idx").on(table.organizationId)],
 );
 
+/**
+ * Export-ready audit head checkpoints. Platform storage is not represented as
+ * independently immutable; a customer must retain the bundle under their own
+ * WORM policy and record a non-secret receipt reference.
+ */
+export const auditAnchors = mysqlTable(
+  "auditAnchors",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    organizationId: int("organizationId").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    ledgerSequence: int("ledgerSequence").notNull(),
+    ledgerEventHash: varchar("ledgerEventHash", { length: 64 }).notNull(),
+    anchorHash: varchar("anchorHash", { length: 64 }).notNull(),
+    storageKey: varchar("storageKey", { length: 255 }).notNull(),
+    storageUrl: varchar("storageUrl", { length: 500 }).notNull(),
+    status: auditAnchorStatus.notNull().default("prepared"),
+    externalProvider: varchar("externalProvider", { length: 48 }),
+    externalReference: varchar("externalReference", { length: 500 }),
+    retentionMode: varchar("retentionMode", { length: 48 }),
+    receiptRecordedBy: int("receiptRecordedBy").references(() => users.id, { onDelete: "set null" }),
+    receiptRecordedAt: timestamp("receiptRecordedAt"),
+    createdBy: int("createdBy").notNull().references(() => users.id, { onDelete: "restrict" }),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  table => [
+    index("audit_anchors_org_created_idx").on(table.organizationId, table.createdAt),
+    uniqueIndex("audit_anchors_org_sequence_unique").on(table.organizationId, table.ledgerSequence),
+  ],
+);
+
 export const attackSimulations = mysqlTable(
   "attackSimulations",
   {
@@ -432,6 +466,87 @@ export const connectorCertifications = mysqlTable(
     createdAt: timestamp("createdAt").defaultNow().notNull(),
   },
   table => [index("connector_certifications_connection_created_idx").on(table.connectionId, table.createdAt)],
+);
+
+/**
+ * One tenant-owned continuous delivery profile per Splunk HEC connection. The
+ * AppRole path and HEC token stay outside this table; the schedule task UID is
+ * the only accepted identity for a scheduled delivery callback.
+ */
+export const siemDeliverySettings = mysqlTable(
+  "siemDeliverySettings",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    organizationId: int("organizationId").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    connectionId: int("connectionId").notNull().references(() => enterpriseConnections.id, { onDelete: "cascade" }),
+    enabled: boolean("enabled").notNull().default(false),
+    scheduleCronTaskUid: varchar("scheduleCronTaskUid", { length: 65 }),
+    batchSize: int("batchSize").notNull().default(25),
+    maxAttempts: int("maxAttempts").notNull().default(5),
+    lastEnqueuedSequence: int("lastEnqueuedSequence").notNull().default(0),
+    lastDeliveryAt: timestamp("lastDeliveryAt"),
+    lastDeliveryCode: varchar("lastDeliveryCode", { length: 80 }),
+    createdBy: int("createdBy").notNull().references(() => users.id, { onDelete: "restrict" }),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  table => [
+    uniqueIndex("siem_delivery_settings_connection_unique").on(table.connectionId),
+    uniqueIndex("siem_delivery_settings_task_uid_unique").on(table.scheduleCronTaskUid),
+    index("siem_delivery_settings_org_enabled_idx").on(table.organizationId, table.enabled),
+  ],
+);
+
+/** A privacy-safe, immutable-at-creation delivery envelope. Raw audit payloads and tokens are never queued. */
+export const siemDeliveryOutbox = mysqlTable(
+  "siemDeliveryOutbox",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    organizationId: int("organizationId").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    connectionId: int("connectionId").notNull().references(() => enterpriseConnections.id, { onDelete: "cascade" }),
+    auditEventId: int("auditEventId").notNull().references(() => auditEvents.id, { onDelete: "cascade" }),
+    safeEnvelope: json("safeEnvelope").notNull(),
+    status: siemDeliveryStatus.notNull().default("queued"),
+    attempts: int("attempts").notNull().default(0),
+    nextAttemptAt: timestamp("nextAttemptAt").defaultNow().notNull(),
+    lastAttemptAt: timestamp("lastAttemptAt"),
+    deliveredAt: timestamp("deliveredAt"),
+    lastDeliveryCode: varchar("lastDeliveryCode", { length: 80 }),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  table => [
+    uniqueIndex("siem_delivery_outbox_connection_audit_unique").on(table.connectionId, table.auditEventId),
+    index("siem_delivery_outbox_due_idx").on(table.connectionId, table.status, table.nextAttemptAt),
+    index("siem_delivery_outbox_org_created_idx").on(table.organizationId, table.createdAt),
+  ],
+);
+
+/**
+ * Customer-declared resilience targets and exercise evidence. Neither declared
+ * targets nor reported exercises are provider-verifiable backup guarantees.
+ */
+export const operationalResilienceProfiles = mysqlTable(
+  "operationalResilienceProfiles",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    organizationId: int("organizationId").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    ownerName: varchar("ownerName", { length: 120 }).notNull(),
+    backupProvider: varchar("backupProvider", { length: 120 }).notNull(),
+    backupEvidenceReference: varchar("backupEvidenceReference", { length: 500 }),
+    runbookReference: varchar("runbookReference", { length: 500 }),
+    rtoMinutes: int("rtoMinutes").notNull(),
+    rpoMinutes: int("rpoMinutes").notNull(),
+    availabilitySloBasisPoints: int("availabilitySloBasisPoints").notNull(),
+    status: resilienceStatus.notNull().default("draft"),
+    lastExerciseOutcome: resilienceExerciseOutcome,
+    lastExerciseAt: timestamp("lastExerciseAt"),
+    lastExerciseEvidenceReference: varchar("lastExerciseEvidenceReference", { length: 500 }),
+    lastExerciseNotes: text("lastExerciseNotes"),
+    declaredBy: int("declaredBy").notNull().references(() => users.id, { onDelete: "restrict" }),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  table => [uniqueIndex("operational_resilience_profile_org_unique").on(table.organizationId)],
 );
 
 /**

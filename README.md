@@ -113,7 +113,7 @@ See [`vault_deployment_guide.md`](./vault_deployment_guide.md) and [`LOCAL_TESTI
 
 ### Enterprise pilot integrations, teams, and billing
 
-The authenticated **Enterprise pilot** console adds server-side, tenant-scoped profiles for **Splunk HEC**, **Microsoft Sentinel**, **PagerDuty Events v2**, **OIDC federation**, **SCIM 2.0 provisioning**, and **HashiCorp Vault AppRole**. Profiles store safe endpoint metadata and optional Vault references only. Each endpoint must use HTTPS. AgentFence supports Boolean deployment readiness, OIDC discovery preflight, Vault health, and controlled Splunk HEC certification with a Vault-held token after customer activation; continuous delivery to Splunk, Sentinel, or PagerDuty remains an activation and product-roadmap boundary.
+The authenticated **Enterprise pilot** console adds server-side, tenant-scoped profiles for **Splunk HEC**, **Microsoft Sentinel**, **PagerDuty Events v2**, **OIDC federation**, **SCIM 2.0 provisioning**, and **HashiCorp Vault AppRole**. Profiles store safe endpoint metadata and optional Vault references only. Each endpoint must use HTTPS. AgentFence supports Boolean deployment readiness, OIDC discovery preflight, Vault health, controlled Splunk HEC certification, and a privacy-safe continuous Splunk delivery outbox after production publication and customer activation. Microsoft Sentinel, PagerDuty, live OIDC federation, and SCIM provisioning remain separate customer activation and product-delivery work.
 
 Team Management provides administrator, operator, viewer, and billing-administrator roles, expiring invitation lifecycle controls, and auditable role changes. The public landing page and authenticated billing page present three feature-based plans: **Pilot ($99/workspace/month)**, **Growth ($299/workspace/month)**, and **Enterprise (custom agreement)**. Stripe Checkout is created on the server and Stripe is the source of truth for payment data; AgentFence records only the required resource identifiers and the selected operational plan.
 
@@ -186,6 +186,9 @@ The test suite covers core policy decisions, tenant safety, runtime credential b
 | [`RELEASE_READINESS.md`](./RELEASE_READINESS.md) | Release activation, monitoring, remediation, and rollback guide. |
 | [`AGENTFENCE_ARCHITECTURE_GUIDE.md`](./AGENTFENCE_ARCHITECTURE_GUIDE.md) | Integrated action-path architecture, browser-session, Vault, monitoring, and MCP boundaries. |
 | [`AGENTFENCE_CLAIM_BOUNDARIES.md`](./AGENTFENCE_CLAIM_BOUNDARIES.md) | Claim register distinguishing current controls, customer activation prerequisites, and roadmap items. |
+| [`ENTERPRISE_HARDENING_RELEASE_NOTES.md`](./ENTERPRISE_HARDENING_RELEASE_NOTES.md) | Ordered hardening release: coverage posture, audit anchoring boundary, continuous Splunk delivery, and operational resilience evidence. |
+| [`AUDIT_ANCHORING_RESEARCH_NOTES.md`](./AUDIT_ANCHORING_RESEARCH_NOTES.md) | Primary-source register for customer-controlled WORM retention and external proof boundaries. |
+| [`RESILIENCE_RESEARCH_NOTES.md`](./RESILIENCE_RESEARCH_NOTES.md) | Primary-source register for declared SLO/RTO/RPO targets and customer-led recovery-exercise evidence. |
 | [`MCP_GATEWAY_RESEARCH_NOTES.md`](./MCP_GATEWAY_RESEARCH_NOTES.md) | Official MCP protocol findings and the implemented gateway trust/authorization boundaries. |
 | [`ENTERPRISE_PILOT_DEPLOYMENT_GUIDE.md`](./ENTERPRISE_PILOT_DEPLOYMENT_GUIDE.md) | Secure SIEM/SOAR, IdP/SCIM, Vault, billing, and team-management pilot activation guide. |
 | [`ENTERPRISE_PILOT_INTEGRATIONS_RESEARCH.md`](./ENTERPRISE_PILOT_INTEGRATIONS_RESEARCH.md) | Primary-source research register for the pilot connector design. |

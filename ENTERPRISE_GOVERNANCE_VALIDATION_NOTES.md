@@ -15,3 +15,7 @@ The replacement architecture diagram was rendered from the deterministic Mermaid
 ## Native MCP and activation interfaces
 
 The preview harness requested `/mcp-gateway` and `/secure-connectors` after the new authenticated interfaces were added. Both captures stopped at the global workspace loading boundary rather than exposing page content, consistent with the harness not carrying a hydrated authenticated workspace into these routes. TypeScript compilation and rendered React tests cover the new page contracts. A signed-in administrator should complete the final operator acceptance check before entering a production MCP endpoint or activating a customer Vault AppRole.
+
+## Ordered enterprise-hardening routes
+
+The authenticated console now includes **Coverage posture**, **Evidence anchoring**, and **Operational readiness** navigation destinations. Desktop route capture confirmed the updated sidebar and the coverage-page control boundary copy: it explicitly labels direct or unregistered paths as unobservable rather than implying network-level telemetry. The concurrent full-page capture caught Evidence anchoring, Operational readiness, and Secure connectors during their protected-workspace hydration state; this is the known preview timing limitation recorded above, not a visual assertion that their final data views failed to render. Rendered React tests cover each page’s evidence and activation-boundary copy, while the complete TypeScript, unit, and production-build validation completed successfully for this release.

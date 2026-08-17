@@ -85,6 +85,27 @@
       "when": 1786964223896,
       "tag": "0011_robust_sentinel",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "5",
+      "when": 1786976069031,
+      "tag": "0012_free_changeling",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "5",
+      "when": 1786976474577,
+      "tag": "0013_uneven_bruce_banner",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "5",
+      "when": 1786976788238,
+      "tag": "0014_lame_starhawk",
+      "breakpoints": true
     }
   ]
 }

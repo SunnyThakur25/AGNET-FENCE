@@ -20,16 +20,19 @@
 | Capability | Required customer prerequisite | Restriction |
 |---|---|---|
 | **Vault AppRole** | Reachable customer Vault, constrained AppRole policy, and securely configured `VAULT_ADDR`, `VAULT_ROLE_ID`, and `VAULT_SECRET_ID`. | The disconnected-safe product must not claim a live customer Vault lease until these are configured. |
-| **Splunk HEC certification** | HTTPS HEC endpoint and tenant-safe Vault reference with a scoped HEC token. | Certification stores only a result and evidence code; it is not continuous alert/event forwarding. |
+| **Splunk HEC certification and continuous delivery** | HTTPS HEC endpoint, tenant-safe Vault reference, successful controlled certification, a published production site, and an administrator-enabled delivery schedule. | Certification stores a bounded result and evidence code. Continuous delivery queues privacy-safe envelopes, retries bounded failures, and records delivery state; it remains inactive until the customer activates the prerequisites. |
 | **OIDC / SCIM** | Customer IdP and protected deployment settings; SCIM service principal, lifecycle design, and interoperability testing. | The console exposes readiness and preflight status only; it is not a completed federation or SCIM deployment. |
-| **SIEM / SOAR operations** | Customer-selected connector, routing, alert ownership, retry behavior, and incident process. | Connection profiles do not by themselves create a production event-delivery pipeline. |
+| **SIEM / SOAR operations** | Customer-selected connector, routing, alert ownership, retry behavior, and incident process. | Splunk HEC has a bounded durable delivery implementation. Microsoft Sentinel, PagerDuty, and SOAR delivery paths still require their own integration and operating model. |
 
 ## Roadmap items
 
 | Item | Accurate current statement |
 |---|---|
 | **Native MCP gateway/proxy** | The first release supports public HTTPS remote MCP registration, `initialize`/`tools/list` discovery, administrator trust, per-tool enablement, signed runtime scope, policy/Data Guard checks, and proxied `tools/call`. STDIO, private-network endpoints, OAuth authorization-code flows, dynamic client registration, and streaming remain future work. |
-| **Continuous connector delivery** | Controlled Splunk certification is implemented. Continuous production delivery for SIEM/SOAR connectors remains future integration work. |
+| **Continuous connector delivery** | Splunk HEC can queue privacy-safe audit envelopes, retry bounded failures, retain delivery-state evidence, and run on a production-only schedule after customer certification and Vault activation. Other SIEM/SOAR connectors remain future work. |
+| **Coverage posture** | AgentFence inventories registered agents, active policy bindings, governed-action evidence, and trusted MCP controls. It labels direct or unregistered paths as unobservable rather than claiming network-level agent telemetry. |
+| **Audit anchoring** | AgentFence prepares a deterministic ledger-head proof bundle and records a customer-reported immutable-retention receipt. Provider-side WORM state must be validated in the customer storage account. |
+| **Operational resilience evidence** | Administrators can record declared RTO/RPO/SLO targets and customer-led recovery exercise evidence. These are not platform-verifiable backups, restores, or live OIDC/SCIM deployments. |
 | **Automatic per-allow Vault issuance** | AgentFence supports scoped runtime credentials and optional server-side Vault lifecycle procedures. It does not mint a new Vault lease automatically for every allow decision. |
 
 ## Evidence to retain for a customer pilot

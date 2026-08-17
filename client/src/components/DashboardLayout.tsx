@@ -1,7 +1,7 @@
 import React from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { SignInPage } from "@/pages/Public";
-import { Activity, BellRing, Building2, ChevronDown, ClipboardCheck, CreditCard, FileCheck2, GitBranch, KeyRound, LayoutDashboard, LockKeyhole, LogOut, Moon, Network, Radar, ScanLine, Settings2, ShieldAlert, ShieldCheck, Sun, TerminalSquare, UserRound, UsersRound } from "lucide-react";
+import { Activity, Archive, BellRing, Building2, ChevronDown, ClipboardCheck, CreditCard, FileCheck2, GitBranch, KeyRound, LayoutDashboard, LockKeyhole, LogOut, Moon, Network, Radar, ScanLine, Settings2, ShieldAlert, ShieldCheck, Sun, TerminalSquare, UserRound, UsersRound, Waypoints } from "lucide-react";
 import { useLocation } from "wouter";
 import { useState } from "react";
 import { AgentFenceLogo } from "./AgentFenceLogo";
@@ -18,6 +18,7 @@ const navigation = [
   { label: "Policy Governance", path: "/policy-governance", icon: GitBranch },
   { label: "Tool Gateway", path: "/gateway", icon: TerminalSquare },
   { label: "Native MCP Gateway", path: "/mcp-gateway", icon: Network },
+  { label: "Coverage posture", path: "/coverage", icon: Waypoints },
   { label: "Integrations", path: "/integrations", icon: TerminalSquare },
   { label: "Enterprise pilot", path: "/enterprise", icon: Building2 },
   { label: "Secure connectors", path: "/secure-connectors", icon: KeyRound },
@@ -27,6 +28,8 @@ const navigation = [
   { label: "Action Trace", path: "/action-trace", icon: GitBranch },
   { label: "Approvals", path: "/approvals", icon: ClipboardCheck },
   { label: "Audit Ledger", path: "/audit", icon: Activity },
+  { label: "Evidence anchoring", path: "/audit-anchoring", icon: Archive },
+  { label: "Operational readiness", path: "/operational-readiness", icon: ClipboardCheck },
   { label: "Data Guard", path: "/data-guard", icon: LockKeyhole },
   { label: "Credential Vault", path: "/vault", icon: KeyRound },
   { label: "Attack Simulation", path: "/tests", icon: ShieldAlert },

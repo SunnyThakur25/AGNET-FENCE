@@ -10,6 +10,7 @@ import { createContext } from "./context";
 import { httpSecurityMiddleware } from "./httpSecurity";
 import { registerStripeWebhook } from "./stripe";
 import { serveStatic, setupVite } from "./vite";
+import { registerScheduledSiemDelivery } from "../scheduledSiemDelivery";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -42,6 +43,7 @@ async function startServer() {
   app.use(express.urlencoded({ limit: "1mb", extended: true }));
   registerStorageProxy(app);
   registerOAuthRoutes(app);
+  registerScheduledSiemDelivery(app);
   // tRPC API
   app.use(
     "/api/trpc",

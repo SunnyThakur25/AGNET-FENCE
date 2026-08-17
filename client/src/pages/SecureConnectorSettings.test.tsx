@@ -15,6 +15,7 @@ vi.mock("@/lib/trpc", () => ({ trpc: {
   useUtils: () => ({
     enterprise: { connections: { list: { invalidate: vi.fn() }, identityReadiness: { invalidate: vi.fn() }, vaultActivation: { get: { invalidate: vi.fn() } } } },
     agentfence: { vault: { status: { invalidate: vi.fn() } } },
+    siemDelivery: { get: { invalidate: vi.fn() } },
   }),
   agentfence: {
     vault: {
@@ -34,6 +35,12 @@ vi.mock("@/lib/trpc", () => ({ trpc: {
       },
     },
   },
+  siemDelivery: {
+    get: { useQuery: () => ({ data: { connection: { id: 19, endpoint: "https://splunk.example.test/services/collector/event", status: "ready", hasVaultReference: true }, settings: { enabled: false, counts: { queued: 0, retrying: 0, delivered: 0, failed: 0 }, lastDeliveryCode: null }, recent: [] } }) },
+    activate: { useMutation: mutation },
+    deactivate: { useMutation: mutation },
+    flushNow: { useMutation: mutation },
+  },
 } }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn(), warning: vi.fn() } }));
 
@@ -49,6 +56,9 @@ describe("SecureConnectorSettingsPage", () => {
     expect(markup).toContain("OIDC federation");
     expect(markup).toContain("SCIM 2.0");
     expect(markup).toContain("VAULT_SECRET_ID");
+    expect(markup).toContain("Continuous privacy-safe audit delivery");
+    expect(markup).toContain("Activate continuous delivery");
+    expect(markup).toContain("Successful certification is required but does not by itself imply continuous delivery");
     expect(markup).not.toContain("a-tenant-hec-token");
   });
 });

@@ -63,7 +63,7 @@ AgentFence’s uniqueness is only valuable when it is **in the path of consequen
 | **Live identity lifecycle** | Customer OIDC/SAML federation plus SCIM 2.0 provisioning/deprovisioning; MFA and group-to-role mapping. | IdP test plan, joiner/mover/leaver evidence, failed-login and deprovisioning tests. |
 | **Live Vault activation** | Customer AppRole configuration, least-privilege policy, short TTL, rotation/revocation drill. | Successful health probe, scope-negative test, lease rotation/revocation evidence; no secret disclosure. |
 | **Real SIEM/SOAR delivery** | Certified Splunk/Sentinel/PagerDuty adapters using Vault-held secrets, bounded retries, dead-letter observability, and redacted event schema. | End-to-end event evidence, retry/DLQ tests, SOC acknowledgment runbook. |
-| **Policy governance** | Draft/review/approve/promote/rollback workflow with immutable policy versions and approver identity. | Policy lifecycle audit trail and separation-of-duties test. |
+| **Policy governance** | **Implemented:** draft/review/approve/promote/reject/rollback workflow with immutable policy versions, field diffs, separation of duties, and approver identity. | Maintain policy lifecycle audit evidence and add scheduled recertification/emergency-change governance where required. |
 | **Security assurance baseline** | CI SAST, dependency/license/secret scan, SBOM, container/image scan, DAST, external penetration test, vulnerability response policy. | CI reports, SBOM, remediation tickets, independent test report. |
 | **Production resilience** | SLOs, RTO/RPO, monitored backups, restore test, runbooks, incident response. | Restore and DR exercise records, on-call ownership, severity process. |
 
