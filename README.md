@@ -180,6 +180,7 @@ The test suite covers core policy decisions, tenant safety, runtime credential b
 | [`RELEASE_READINESS.md`](./RELEASE_READINESS.md) | Release activation, monitoring, remediation, and rollback guide. |
 | [`ENTERPRISE_PILOT_DEPLOYMENT_GUIDE.md`](./ENTERPRISE_PILOT_DEPLOYMENT_GUIDE.md) | Secure SIEM/SOAR, IdP/SCIM, Vault, billing, and team-management pilot activation guide. |
 | [`ENTERPRISE_PILOT_INTEGRATIONS_RESEARCH.md`](./ENTERPRISE_PILOT_INTEGRATIONS_RESEARCH.md) | Primary-source research register for the pilot connector design. |
+| [`ENTERPRISE_AUDIT_READINESS_ASSESSMENT.md`](./ENTERPRISE_AUDIT_READINESS_ASSESSMENT.md) | Candid enterprise control assessment, audit-evidence expectations, and prioritized roadmap for production-scale assurance. |
 
 ## Investor and design-partner narrative
 

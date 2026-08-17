@@ -167,3 +167,10 @@
 - [x] Validate the enterprise-pilot release, checkpoint it, and push all completed changes to SunnyThakur25/AGNET-FENCE.
 
 > Live service activation requires customer-controlled credentials, endpoints, authorization scopes, and billing configuration. AgentFence must not place raw Vault, IdP, SIEM/SOAR, or Stripe secrets in client code, the database, or audit logs.
+
+## Enterprise audit-readiness assessment
+
+- [x] Map AgentFence’s current AI-agent policy decision and enforcement capabilities to enterprise architecture, security, audit, and procurement expectations.
+- [x] Identify implementation gaps across control-plane resilience, identity, data protection, operational security, compliance evidence, and ecosystem integrations.
+- [x] Produce a prioritized enterprise-readiness roadmap that distinguishes pilot-ready controls from production-scale and audit-certification work.
+- [x] Update product documentation with the enterprise positioning and recommended assurance roadmap.
