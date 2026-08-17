@@ -8,6 +8,7 @@ import { registerStorageProxy } from "./storageProxy";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { httpSecurityMiddleware } from "./httpSecurity";
+import { registerStripeWebhook } from "./stripe";
 import { serveStatic, setupVite } from "./vite";
 
 function isPortAvailable(port: number): Promise<boolean> {
@@ -36,6 +37,7 @@ async function startServer() {
   app.set("trust proxy", 1);
   app.use(httpSecurityMiddleware);
   app.get("/healthz", (_req, res) => res.status(200).json({ status: "ok" }));
+  registerStripeWebhook(app);
   app.use(express.json({ limit: "1mb" }));
   app.use(express.urlencoded({ limit: "1mb", extended: true }));
   registerStorageProxy(app);

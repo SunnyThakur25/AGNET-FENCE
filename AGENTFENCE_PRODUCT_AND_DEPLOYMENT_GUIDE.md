@@ -104,8 +104,22 @@ When an agent action is suspected to be unsafe, the responder should pause the a
 
 The platform’s `/healthz` endpoint supports basic deployment health probing. The release-readiness guide in the repository documents supported package controls, rollback preparation, dependency checks, and production validation. Publishing is intentionally a user-controlled action: after reviewing the latest checkpoint, use the project interface’s **Publish** button to deploy.
 
+## 8. Enterprise Pilot Connections, Teams, and Billing
+
+The Enterprise Pilot console provides tenant-scoped configuration profiles for **Splunk HEC**, **Microsoft Sentinel**, **PagerDuty Events v2**, **OIDC federation**, **SCIM 2.0 provisioning**, and **HashiCorp Vault AppRole**. The profile record stores safe configuration metadata, connection state, and an optional tenant-scoped Vault reference. It does not store an HEC token, Azure client secret, PagerDuty routing key, OIDC client secret, SCIM bearer token, or AppRole Secret ID. Splunk documents HEC as a supported HTTP/HTTPS ingestion path, while Microsoft documents its Logs Ingestion API as HTTPS JSON delivery through customer-managed Azure resources.[4] [5]
+
+The Vault integration remains disconnected-safe until the customer supplies secure deployment values. The console reports that state explicitly; a live AppRole activation must be completed by the customer’s Vault administrator with a policy restricted to the AgentFence tenant path. OIDC preflight uses the provider’s HTTPS discovery metadata, which OpenID Connect defines as the location for issuer, authorization, token, and key information.[6] The SCIM readiness profile is intentionally separate from live enforcement: SCIM deployment requires a customer-authenticated service principal, lifecycle semantics, and interoperability testing under RFC 7644.[7]
+
+Enterprise teams can use four roles: administrator, operator, viewer, and billing administrator. Team invitations expire in seven days; only the invitation hash is retained and the plaintext token is surfaced once to the creating administrator for an approved delivery channel. Role changes, invitation creation, revocation, and acceptance are tenant-scoped and audit logged.
+
+The product offers feature-based **Pilot ($99/workspace/month)**, **Growth ($299/workspace/month)**, and **Enterprise (custom agreement)** plans. Server-side Stripe Checkout is used for Pilot and Growth. Stripe remains authoritative for payment methods, invoices, payment status, tax, and subscription lifecycle; AgentFence retains only essential Stripe identifiers and its local plan entitlement. Pricing describes platform access and implementation scope and is not an ROI, savings, or security-outcome guarantee. See [`ENTERPRISE_PILOT_DEPLOYMENT_GUIDE.md`](./ENTERPRISE_PILOT_DEPLOYMENT_GUIDE.md) for activation requirements and service-specific boundaries.
+
 ## References
 
 [1]: https://www.nist.gov/itl/ai-risk-management-framework "NIST AI Risk Management Framework"
 [2]: https://nvlpubs.nist.gov/nistpubs/ai/NIST.AI.600-1.pdf "NIST AI 600-1: Generative AI Profile"
 [3]: https://digital-strategy.ec.europa.eu/en/faqs/general-purpose-ai-models-ai-act-questions-answers "European Commission: General-Purpose AI Models in the AI Act"
+[4]: https://help.splunk.com/en/splunk-enterprise/get-started/get-data-in/9.4/get-data-with-http-event-collector/set-up-and-use-http-event-collector-in-splunk-web "Splunk: Set up and use HTTP Event Collector"
+[5]: https://learn.microsoft.com/en-us/azure/azure-monitor/logs/logs-ingestion-api-overview "Microsoft Learn: Logs Ingestion API"
+[6]: https://openid.net/specs/openid-connect-discovery-1_0.html "OpenID Connect Discovery 1.0"
+[7]: https://datatracker.ietf.org/doc/html/rfc7644 "RFC 7644: System for Cross-domain Identity Management Protocol"

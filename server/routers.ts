@@ -4,6 +4,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import { agentfenceRouter } from "./routers/agentfence";
 import { accountRouter } from "./routers/account";
+import { enterpriseRouter } from "./routers/enterprise";
 import * as dbHelpers from "./db";
 import { parse as parseCookieHeader } from "cookie";
 
@@ -24,6 +25,7 @@ export const appRouter = router({
 
   agentfence: agentfenceRouter,
   account: accountRouter,
+  enterprise: enterpriseRouter,
 });
 
 export type AppRouter = typeof appRouter;

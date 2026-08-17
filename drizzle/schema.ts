@@ -38,7 +38,7 @@ export const users = mysqlTable("users", {
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
-export const membershipRole = mysqlEnum("membershipRole", ["admin", "operator"]);
+export const membershipRole = mysqlEnum("membershipRole", ["admin", "operator", "viewer", "billing_admin"]);
 export const agentEnvironment = mysqlEnum("agentEnvironment", ["development", "staging", "production"]);
 export const agentRiskLevel = mysqlEnum("agentRiskLevel", ["low", "medium", "high", "critical"]);
 export const agentStatus = mysqlEnum("agentStatus", ["active", "paused", "retired"]);
@@ -50,6 +50,9 @@ export const notificationSeverity = mysqlEnum("notificationSeverity", ["info", "
 export const simulationStatus = mysqlEnum("simulationStatus", ["passed", "failed", "needs_review"]);
 export const runtimeCredentialStatus = mysqlEnum("runtimeCredentialStatus", ["active", "revoked", "expired"]);
 export const targetOutcomeStatus = mysqlEnum("targetOutcomeStatus", ["succeeded", "failed"]);
+export const enterpriseConnectionKind = mysqlEnum("enterpriseConnectionKind", ["splunk_hec", "microsoft_sentinel", "pagerduty_events", "oidc", "scim", "vault_approle"]);
+export const enterpriseConnectionStatus = mysqlEnum("enterpriseConnectionStatus", ["not_configured", "pending_activation", "ready", "unhealthy"]);
+export const subscriptionPlan = mysqlEnum("subscriptionPlan", ["pilot", "growth", "enterprise"]);
 
 export const organizations = mysqlTable(
   "organizations",
@@ -355,4 +358,76 @@ export const activeSessions = mysqlTable(
     uniqueIndex("active_sessions_hash_unique").on(table.sessionTokenHash),
     index("active_sessions_user_idx").on(table.userId),
   ],
+);
+
+/**
+ * A tenant-owned, server-side connection profile. It stores only safe metadata
+ * and optional Vault paths; raw provider tokens, application secrets, and
+ * webhook secrets must remain in deployment secrets or customer Vault.
+ */
+export const enterpriseConnections = mysqlTable(
+  "enterpriseConnections",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    organizationId: int("organizationId").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    kind: enterpriseConnectionKind.notNull(),
+    displayName: varchar("displayName", { length: 120 }).notNull(),
+    endpoint: varchar("endpoint", { length: 500 }),
+    safeConfig: json("safeConfig"),
+    vaultSecretPath: varchar("vaultSecretPath", { length: 255 }),
+    status: enterpriseConnectionStatus.notNull().default("not_configured"),
+    lastTestedAt: timestamp("lastTestedAt"),
+    lastErrorCode: varchar("lastErrorCode", { length: 64 }),
+    createdBy: int("createdBy").notNull().references(() => users.id, { onDelete: "restrict" }),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  table => [
+    uniqueIndex("enterprise_connections_org_kind_unique").on(table.organizationId, table.kind),
+    index("enterprise_connections_org_idx").on(table.organizationId),
+  ],
+);
+
+/**
+ * Invitation tokens are stored only as hashes. The plaintext token is revealed
+ * one time to the administrator who creates the invitation.
+ */
+export const teamInvitations = mysqlTable(
+  "teamInvitations",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    organizationId: int("organizationId").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    teamId: int("teamId").notNull().references(() => teams.id, { onDelete: "cascade" }),
+    email: varchar("email", { length: 320 }).notNull(),
+    role: membershipRole.notNull().default("viewer"),
+    tokenHash: varchar("tokenHash", { length: 64 }).notNull(),
+    expiresAt: timestamp("expiresAt").notNull(),
+    acceptedAt: timestamp("acceptedAt"),
+    revokedAt: timestamp("revokedAt"),
+    createdBy: int("createdBy").notNull().references(() => users.id, { onDelete: "restrict" }),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  table => [
+    uniqueIndex("team_invitations_token_hash_unique").on(table.tokenHash),
+    index("team_invitations_org_email_idx").on(table.organizationId, table.email),
+  ],
+);
+
+/**
+ * Minimal local Stripe reference state. Amounts, payment methods, invoices,
+ * and subscription lifecycle details remain the source of truth in Stripe.
+ */
+export const organizationBilling = mysqlTable(
+  "organizationBilling",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    organizationId: int("organizationId").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    stripeCustomerId: varchar("stripeCustomerId", { length: 255 }),
+    stripeSubscriptionId: varchar("stripeSubscriptionId", { length: 255 }),
+    stripePriceId: varchar("stripePriceId", { length: 255 }),
+    plan: subscriptionPlan.notNull().default("pilot"),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  table => [uniqueIndex("organization_billing_org_unique").on(table.organizationId)],
 );

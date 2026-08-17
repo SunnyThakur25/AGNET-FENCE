@@ -151,3 +151,19 @@
 - [x] Validate the presentation content, exported deck, documentation, and project build: 66 passing tests, clean TypeScript, and production build successful.
 - [x] Push the completed AgentFence source and documentation changes to the selected GitHub repository: https://github.com/SunnyThakur25/AGNET-FENCE (main at `8055768`).
 - [x] Save a checkpoint for the investor presentation and GitHub publication milestone.
+
+## Enterprise pilot integrations, billing, and team management
+
+- [x] Define configurable SIEM/SOAR delivery profiles and secure alert-forwarding controls for initial enterprise pilots.
+- [x] Define identity-provider connection profiles and tenant-aware SSO/SCIM readiness boundaries without replacing the platform’s existing authentication provider prematurely.
+- [x] Add an enterprise integration settings surface for SIEM/SOAR, identity-provider, and Vault connection health, configuration state, and test actions.
+- [x] Prepare the customer Vault AppRole activation flow with secure environment-variable validation, connection health checks, and no raw-secret exposure.
+- [x] Live customer Vault AppRole activation intentionally deferred by user for this release; the product remains disconnected-safe until `VAULT_ADDR`, `VAULT_ROLE_ID`, and `VAULT_SECRET_ID` are supplied through secure project settings.
+- [x] Add Stripe billing integration with three feature-based product tiers, server-verified checkout, subscription status, and webhook-safe state handling.
+- [x] Add feature-based pricing cards to the public landing page with a customer contact path for enterprise plans and no unsupported ROI claims.
+- [x] Implement tenant-safe enterprise team management with member roles, invitation lifecycle, access revocation, and audit events.
+- [x] Add automated tests and responsive visual validation for enterprise settings, billing, pricing, and team-management workflows.
+- [x] Update all relevant Markdown documentation with pilot integration, Vault activation, pricing, billing, team-management, and operational security guidance.
+- [x] Validate the enterprise-pilot release, checkpoint it, and push all completed changes to SunnyThakur25/AGNET-FENCE.
+
+> Live service activation requires customer-controlled credentials, endpoints, authorization scopes, and billing configuration. AgentFence must not place raw Vault, IdP, SIEM/SOAR, or Stripe secrets in client code, the database, or audit logs.

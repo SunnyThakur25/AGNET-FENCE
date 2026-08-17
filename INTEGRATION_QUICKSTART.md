@@ -82,3 +82,17 @@ The browser wrapper must be deployed where the organization controls browser aut
 | Data capture | Store only redacted action metadata and classifications. Do not collect full prompts, passwords, session cookies, raw page content, or personal data unless a separate, lawful retention design is approved. |
 | High-risk actions | Require identity-bound human approval for payments, privilege changes, large exports, destructive operations, and other defined controls. |
 | Evidence | Forward audit events and alerts to the organization’s SIEM/SOAR and use compliance evidence export for SOC 2, ISO 27001, or insurance-review packages. |
+
+## Enterprise pilot connection sequence
+
+After the first runtime path is governed, an administrator can use **Enterprise pilot** to establish controlled integration readiness without placing any token or secret in the browser.
+
+| Control | Operator workflow | Safety boundary |
+|---|---|---|
+| SIEM/SOAR profile | Configure Splunk HEC, Microsoft Sentinel, or PagerDuty endpoint metadata and an approved tenant-scoped Vault reference. | AgentFence stores endpoint metadata and a path reference only; routing keys and provider tokens remain customer-controlled. |
+| Identity readiness | Configure an OIDC issuer profile and validate discovery metadata; use SCIM readiness to plan team lifecycle synchronization. | Existing secure authentication remains active until the customer completes an IdP federation and provisioning project. |
+| Vault readiness | Open the Vault controls and perform the server-side status or health probe. | Live AppRole activation requires `VAULT_ADDR`, `VAULT_ROLE_ID`, and `VAULT_SECRET_ID` supplied through secure deployment settings. Disconnected-safe mode is intentional. |
+| Team operation | Create accountable teams and issue expiring one-time invitations with administrator, operator, viewer, or billing-administrator roles. | Invitation tokens are returned once and stored as hashes; do not send them through an unapproved channel. |
+| Billing | Select Pilot or Growth in the Billing & plans tab, or request an Enterprise design review. | Checkout is server-created and Stripe is the source of truth for payment data; the browser never receives the secret key. |
+
+For service prerequisites, activation steps, and official protocol references, see [`ENTERPRISE_PILOT_DEPLOYMENT_GUIDE.md`](./ENTERPRISE_PILOT_DEPLOYMENT_GUIDE.md).

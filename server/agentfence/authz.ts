@@ -3,7 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { getDb } from "../db";
 import { teamMemberships } from "../../drizzle/schema";
 
-export type OrganizationRole = "admin" | "operator";
+export type OrganizationRole = "admin" | "operator" | "viewer" | "billing_admin";
 
 export function isOrganizationRoleAllowed(role: OrganizationRole, allowed: OrganizationRole[]) {
   return allowed.includes(role);

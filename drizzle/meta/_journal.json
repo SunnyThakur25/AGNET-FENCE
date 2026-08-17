@@ -57,6 +57,13 @@
       "when": 1786953079088,
       "tag": "0007_far_pete_wisdom",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "5",
+      "when": 1786956703280,
+      "tag": "0008_wild_jazinda",
+      "breakpoints": true
     }
   ]
 }

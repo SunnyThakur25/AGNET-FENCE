@@ -50,6 +50,15 @@ describe("AgentFence public authentication journey", () => {
     expect(markup).toContain("Prove what happened");
   });
 
+  it("renders feature-based Pilot, Growth, and Enterprise pricing without an unsupported ROI promise", () => {
+    const markup = renderToStaticMarkup(<Router ssrPath="/"><LandingPage /></Router>);
+    expect(markup).toContain("Feature-based plans");
+    expect(markup).toContain("$99");
+    expect(markup).toContain("$299");
+    expect(markup).toContain("Custom");
+    expect(markup).toContain("It does not promise a particular ROI");
+  });
+
   it("routes all sign-in, sign-up, Google, and SSO entry controls to the secure OAuth handler", () => {
     let calls = 0;
     for (const mode of ["signin", "signup"] as const) {

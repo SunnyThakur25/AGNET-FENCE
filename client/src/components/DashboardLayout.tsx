@@ -1,7 +1,7 @@
 import React from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { SignInPage } from "@/pages/Public";
-import { Activity, BellRing, ChevronDown, ClipboardCheck, FileCheck2, GitBranch, KeyRound, LayoutDashboard, LockKeyhole, LogOut, Moon, Radar, ScanLine, Settings2, ShieldAlert, ShieldCheck, Sun, TerminalSquare, UserRound } from "lucide-react";
+import { Activity, BellRing, Building2, ChevronDown, ClipboardCheck, CreditCard, FileCheck2, GitBranch, KeyRound, LayoutDashboard, LockKeyhole, LogOut, Moon, Radar, ScanLine, Settings2, ShieldAlert, ShieldCheck, Sun, TerminalSquare, UserRound, UsersRound } from "lucide-react";
 import { useLocation } from "wouter";
 import { useState } from "react";
 import { AgentFenceLogo } from "./AgentFenceLogo";
@@ -17,6 +17,9 @@ const navigation = [
   { label: "Policy Engine", path: "/policies", icon: ShieldCheck },
   { label: "Tool Gateway", path: "/gateway", icon: TerminalSquare },
   { label: "Integrations", path: "/integrations", icon: TerminalSquare },
+  { label: "Enterprise pilot", path: "/enterprise", icon: Building2 },
+  { label: "Team management", path: "/team", icon: UsersRound },
+  { label: "Billing & plans", path: "/billing", icon: CreditCard },
   { label: "Action Capture", path: "/action-capture", icon: ScanLine },
   { label: "Action Trace", path: "/action-trace", icon: GitBranch },
   { label: "Approvals", path: "/approvals", icon: ClipboardCheck },

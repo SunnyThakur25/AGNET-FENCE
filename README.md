@@ -105,6 +105,14 @@ To activate a customer Vault deployment, provide the following through the proje
 
 See [`vault_deployment_guide.md`](./vault_deployment_guide.md) and [`LOCAL_TESTING.md`](./LOCAL_TESTING.md) for details.
 
+### Enterprise pilot integrations, teams, and billing
+
+The authenticated **Enterprise pilot** console adds server-side, tenant-scoped profiles for **Splunk HEC**, **Microsoft Sentinel**, **PagerDuty Events v2**, **OIDC federation**, **SCIM 2.0 provisioning**, and **HashiCorp Vault AppRole**. Profiles store safe endpoint metadata and optional Vault references only. Each endpoint must use HTTPS, and AgentFence validates OIDC discovery or Vault health through a controlled server-side test; live service delivery remains activation-dependent.
+
+Team Management provides administrator, operator, viewer, and billing-administrator roles, expiring invitation lifecycle controls, and auditable role changes. The public landing page and authenticated billing page present three feature-based plans: **Pilot ($99/workspace/month)**, **Growth ($299/workspace/month)**, and **Enterprise (custom agreement)**. Stripe Checkout is created on the server and Stripe is the source of truth for payment data; AgentFence records only the required resource identifiers and the selected operational plan.
+
+Read [`ENTERPRISE_PILOT_DEPLOYMENT_GUIDE.md`](./ENTERPRISE_PILOT_DEPLOYMENT_GUIDE.md) before configuring a customer connector, Vault AppRole, identity federation, SCIM lifecycle, or Stripe test activation.
+
 ### Controlled OWASP assessments
 
 `Attack Simulation` implements controlled, non-destructive assessment scenarios aligned to the OWASP Agentic Top 10 catalog. It is not an exploitation engine, does not target external systems, and does not perform live attacks. The goal is to demonstrate prevention, detection, approval, and audit behavior in a safe product context.
@@ -170,6 +178,8 @@ The test suite covers core policy decisions, tenant safety, runtime credential b
 | [`LOCAL_TESTING.md`](./LOCAL_TESTING.md) | No-Vault local testing workflow. |
 | [`vault_deployment_guide.md`](./vault_deployment_guide.md) | Vault AppRole setup guidance. |
 | [`RELEASE_READINESS.md`](./RELEASE_READINESS.md) | Release activation, monitoring, remediation, and rollback guide. |
+| [`ENTERPRISE_PILOT_DEPLOYMENT_GUIDE.md`](./ENTERPRISE_PILOT_DEPLOYMENT_GUIDE.md) | Secure SIEM/SOAR, IdP/SCIM, Vault, billing, and team-management pilot activation guide. |
+| [`ENTERPRISE_PILOT_INTEGRATIONS_RESEARCH.md`](./ENTERPRISE_PILOT_INTEGRATIONS_RESEARCH.md) | Primary-source research register for the pilot connector design. |
 
 ## Investor and design-partner narrative
 
