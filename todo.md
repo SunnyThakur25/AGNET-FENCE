@@ -101,3 +101,13 @@
 - [x] Add rendered-component Vitest coverage for Action Capture with sample action rows and assertions that visible rows change for search, decision/outcome filters, and every sort mode.
 - [x] Add rendered Action Capture tests proving visible rows change for decision and downstream outcome filters.
 - [x] Add rendered Action Capture tests proving visible row order for newest, oldest, agent, intent, policy, and outcome sort modes.
+- [x] Add a tenant-scoped dashboard widget summarizing the most frequent AI agent actions and success rates over the last 24 hours.
+- [x] Make the action-summary widget customizable without changing the underlying tenant-scoped metrics.
+- [x] Add an accessible persistent dark-mode toggle for the AgentFence dashboard with reduced-motion-safe visual transitions.
+- [x] Add automated coverage and responsive visual validation for dashboard metrics, widget customization, and dark-mode preference behavior.
+- [x] Add Vitest coverage for dashboard dark-mode toggle and ThemeProvider persistence, including stored preference and aria-pressed behavior.
+- [x] Capture and verify dashboard screenshots in both dark and light modes so the theme toggle’s visual state is explicitly validated responsively.
+- [x] Capture and verify a mobile/light-mode dashboard screenshot in addition to the existing dark-mode screenshots.
+- [x] Validate the dashboard theme toggle by switching between dark and light modes through the UI and re-checking the visual state.
+- [x] Capture and verify an authenticated dashboard screenshot at a mobile viewport in light mode, explicitly showing the action-summary widget and theme toggle.
+- [x] Use the live dashboard theme toggle in the browser to switch between dark and light modes, then re-check screenshots and visual state for both modes.

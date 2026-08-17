@@ -34,6 +34,7 @@ import { isVaultPathForOrganization } from "../agentfence/vaultContract";
 import { getVaultConfigurationStatus } from "../agentfence/vaultStatus";
 import { createVaultAppRoleClient } from "../agentfence/vaultClient";
 import { buildActionTrace } from "../agentfence/actionTrace";
+import { aggregateActionSummary } from "../agentfence/actionMetrics";
 import { getDb } from "../db";
 import { notifyOwner } from "../_core/notification";
 import { storagePut } from "../storage";
@@ -138,12 +139,14 @@ export const agentfenceRouter = router({
       await requireOrganizationMembership(input.organizationId, ctx.user.id);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable." });
-      const [agentRows, policyRows, pendingApprovals, recentEvents, guardRows] = await Promise.all([
+      const actionWindowStart = new Date(Date.now() - 24 * 60 * 60 * 1000);
+      const [agentRows, policyRows, pendingApprovals, recentEvents, guardRows, recentToolCalls] = await Promise.all([
         db.select().from(agents).where(eq(agents.organizationId, input.organizationId)),
         db.select().from(policies).where(and(eq(policies.organizationId, input.organizationId), eq(policies.status, "active"))),
         db.select().from(approvals).where(and(eq(approvals.organizationId, input.organizationId), eq(approvals.status, "pending"))),
         db.select().from(auditEvents).where(eq(auditEvents.organizationId, input.organizationId)).orderBy(desc(auditEvents.createdAt)).limit(8),
         db.select().from(dataGuardFindings).where(eq(dataGuardFindings.organizationId, input.organizationId)),
+        db.select({ toolName: toolCalls.toolName, action: toolCalls.action, decision: toolCalls.decision, targetOutcome: toolCalls.targetOutcome }).from(toolCalls).where(and(eq(toolCalls.organizationId, input.organizationId), gte(toolCalls.createdAt, actionWindowStart))).orderBy(desc(toolCalls.createdAt)).limit(500),
       ]);
       return {
         metrics: {
@@ -151,6 +154,11 @@ export const agentfenceRouter = router({
           protectedPolicies: policyRows.length,
           pendingApprovals: pendingApprovals.length,
           dataGuardFindings: guardRows.length,
+        },
+        actionSummary: {
+          windowStart: actionWindowStart,
+          totalActions: recentToolCalls.length,
+          items: aggregateActionSummary(recentToolCalls),
         },
         recentEvents,
       };

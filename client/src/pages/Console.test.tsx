@@ -1,6 +1,6 @@
 import React from "react";
 import { describe, expect, it } from "vitest";
-import { ActionCaptureControls, ActionCaptureRows, ActionTraceHopCard, captureOutcome, filterAndSortCapturedActions, isTraceLive, TraceHopTooltip } from "./Console";
+import { ActionCaptureControls, ActionCaptureRows, ActionTraceHopCard, ActionSummaryWidget, captureOutcome, filterAndSortCapturedActions, isTraceLive, TraceHopTooltip } from "./Console";
 import { renderToStaticMarkup } from "react-dom/server";
 
 const actions = [
@@ -11,6 +11,16 @@ const actions = [
 const rowFixtures = actions.map((item, index) => ({ ...item, id: index + 1, createdAt: new Date(item.createdAt), targetRecordedAt: item.targetRecordedAt ? new Date(item.targetRecordedAt) : null, targetStatusCode: null, riskLevel: "medium", dataSensitivity: "internal", dataGuardFindings: [], approval: null }));
 
 describe("AI Action Capture and Trace helpers", () => {
+  it("renders the customizable 24-hour action summary widget controls", () => {
+    const markup = renderToStaticMarkup(<ActionSummaryWidget totalActions={12} windowStart="2026-01-01T00:00:00.000Z" items={[{ key: "crm.case.update", toolName: "crm", action: "case.update", count: 7, completed: 6, succeeded: 5, failed: 1, pending: 1, successRate: 83 }]} />);
+    expect(markup).toContain("last 24 hours");
+    expect(markup).toContain("Most frequent agent actions");
+    expect(markup).toContain('aria-label="Sort action summary"');
+    expect(markup).toContain('aria-label="Visible action rows"');
+    expect(markup).toContain('aria-label="Collapse action summary"');
+    expect(markup).toContain("83% success");
+  });
+
   it("uses the downstream target outcome when it is available and falls back while pending", () => {
     expect(captureOutcome({ decision: "allowed", targetOutcome: "succeeded" })).toBe("succeeded");
     expect(captureOutcome({ decision: "approval_required", targetOutcome: null })).toBe("approval_required");

@@ -132,6 +132,25 @@ function SecondaryButton({ children, className = "", ...props }: React.ButtonHTM
   return <button {...props} className={`btn-secondary ${className}`}>{children}</button>;
 }
 
+type ActionSummaryItem = { key: string; toolName: string; action: string; count: number; completed: number; succeeded: number; failed: number; pending: number; successRate: number | null };
+type ActionSummaryConfig = { sort: "frequency" | "success"; limit: 3 | 5 | 8; collapsed: boolean };
+const defaultActionSummaryConfig: ActionSummaryConfig = { sort: "frequency", limit: 5, collapsed: false };
+
+export function ActionSummaryWidget({ totalActions, windowStart, items }: { totalActions: number; windowStart: Date | string; items: ActionSummaryItem[] }) {
+  const [config, setConfig] = useState<ActionSummaryConfig>(() => {
+    if (typeof window === "undefined") return defaultActionSummaryConfig;
+    try {
+      const stored = JSON.parse(localStorage.getItem("agentfence:action-summary-config") || "null") as Partial<ActionSummaryConfig> | null;
+      return { ...defaultActionSummaryConfig, ...stored };
+    } catch {
+      return defaultActionSummaryConfig;
+    }
+  });
+  useEffect(() => { localStorage.setItem("agentfence:action-summary-config", JSON.stringify(config)); }, [config]);
+  const orderedItems = [...items].sort((left, right) => config.sort === "success" ? (right.successRate ?? -1) - (left.successRate ?? -1) || right.count - left.count : right.count - left.count || (right.successRate ?? -1) - (left.successRate ?? -1)).slice(0, config.limit);
+  return <section className="console-card action-summary-widget" aria-labelledby="action-summary-title"><div className="card-heading"><div><p className="card-kicker">Runtime intelligence · last 24 hours</p><h2 id="action-summary-title">Most frequent agent actions</h2><p className="widget-subtitle">{totalActions} governed action{totalActions === 1 ? "" : "s"} since {formatTime(windowStart)}</p></div><div className="widget-actions"><label className="widget-select"><span className="sr-only">Sort action summary</span><select aria-label="Sort action summary" value={config.sort} onChange={event => setConfig(current => ({ ...current, sort: event.target.value as ActionSummaryConfig["sort"] }))}><option value="frequency">Most frequent</option><option value="success">Highest success rate</option></select></label><label className="widget-select"><span className="sr-only">Visible action rows</span><select aria-label="Visible action rows" value={config.limit} onChange={event => setConfig(current => ({ ...current, limit: Number(event.target.value) as ActionSummaryConfig["limit"] }))}><option value={3}>3 rows</option><option value={5}>5 rows</option><option value={8}>8 rows</option></select></label><button type="button" className="icon-button" aria-expanded={!config.collapsed} aria-controls="action-summary-list" aria-label={config.collapsed ? "Expand action summary" : "Collapse action summary"} onClick={() => setConfig(current => ({ ...current, collapsed: !current.collapsed }))}><ChevronRight size={16} className={config.collapsed ? "" : "rotate-90 transition-transform"} /></button></div></div>{!config.collapsed && (orderedItems.length ? <div className="action-summary-list" id="action-summary-list">{orderedItems.map(item => <div className="action-summary-row" key={item.key}><div className="action-summary-icon"><Activity size={14} /></div><div className="action-summary-main"><div className="action-summary-title"><strong>{item.toolName}.{item.action}</strong><span>{item.count} call{item.count === 1 ? "" : "s"}</span></div><div className="action-summary-track" aria-label={`${item.successRate === null ? "No completed outcomes" : `${item.successRate}% success rate`}`}><span style={{ width: `${item.successRate ?? 0}%` }} /></div><div className="action-summary-meta"><span>{item.successRate === null ? "No completed outcomes" : `${item.successRate}% success`}</span><span>{item.succeeded} succeeded · {item.failed} failed · {item.pending} pending</span></div></div><Badge tone={item.successRate === null ? "neutral" : item.successRate >= 80 ? "good" : item.successRate >= 50 ? "warn" : "danger"}>{item.successRate === null ? "Pending" : `${item.successRate}%`}</Badge></div>)}</div> : <EmptyState icon={Activity} title="No governed actions yet" detail="Route a cloud or browser-agent action through the gateway to populate this 24-hour summary." />)}</section>;
+}
+
 export function CommandCenter() {
   const { organizationId, ready } = useAgentFenceWorkspace();
   const overview = trpc.agentfence.dashboard.overview.useQuery({ organizationId: organizationId ?? 0 }, { enabled: ready });
@@ -158,6 +177,8 @@ export function CommandCenter() {
           </article>
         ))}
       </section>
+
+      <ActionSummaryWidget totalActions={overview.data?.actionSummary?.totalActions ?? 0} windowStart={overview.data?.actionSummary?.windowStart ?? new Date()} items={overview.data?.actionSummary?.items ?? []} />
 
       <section className="agent-fence-explainer">
         <div className="explainer-copy"><p className="eyebrow">Agent firewall, explained</p><h2>AgentFence governs actions—not conversations.</h2><p>Before an agent can call a tool, AgentFence checks its identity, the policy scope, data sensitivity, destination, and whether a human must approve the action.</p></div>

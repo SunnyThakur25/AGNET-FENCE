@@ -10,6 +10,15 @@ interface ThemeContextType {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
+export function readStoredTheme(defaultTheme: Theme, storage?: Pick<Storage, "getItem">): Theme {
+  const stored = storage?.getItem("theme");
+  return stored === "light" || stored === "dark" ? stored : defaultTheme;
+}
+
+export function persistThemePreference(theme: Theme, storage?: Pick<Storage, "setItem">) {
+  storage?.setItem("theme", theme);
+}
+
 interface ThemeProviderProps {
   children: React.ReactNode;
   defaultTheme?: Theme;
@@ -23,8 +32,7 @@ export function ThemeProvider({
 }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(() => {
     if (switchable) {
-      const stored = localStorage.getItem("theme");
-      return (stored as Theme) || defaultTheme;
+      return readStoredTheme(defaultTheme, localStorage);
     }
     return defaultTheme;
   });
@@ -38,7 +46,7 @@ export function ThemeProvider({
     }
 
     if (switchable) {
-      localStorage.setItem("theme", theme);
+      persistThemePreference(theme, localStorage);
     }
   }, [theme, switchable]);
 
