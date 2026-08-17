@@ -13,6 +13,7 @@ import {
   notifications,
   organizations,
   policies,
+  policyRevisions,
   runtimeCredentials,
   runtimeNonces,
   teamMemberships,
@@ -269,22 +270,45 @@ export const agentfenceRouter = router({
           dataSensitivity: input.dataSensitivity,
           destinationPattern: input.destinationPattern,
           priority: input.priority,
-          status: "active",
+          status: "disabled",
+          currentRevision: 0,
           createdBy: ctx.user.id,
         }));
+        await db.insert(policyRevisions).values({
+          organizationId: input.organizationId,
+          policyId,
+          revision: 1,
+          baseRevision: 0,
+          status: "pending_review",
+          changeSummary: "Initial policy proposal created from the Policy Engine.",
+          snapshot: {
+            teamId: input.teamId ?? null,
+            agentId: input.agentId ?? null,
+            name: input.name,
+            description: input.description ?? null,
+            effect: input.effect,
+            toolPattern: input.toolPattern,
+            actionPattern: input.actionPattern,
+            parameterConstraints: input.parameterConstraints ?? [],
+            dataSensitivity: input.dataSensitivity,
+            destinationPattern: input.destinationPattern,
+            priority: input.priority,
+          },
+          createdBy: ctx.user.id,
+        });
         await appendAuditEvent({
           organizationId: input.organizationId,
-          eventType: "policy.created",
+          eventType: "policy.revision_proposed",
           actorType: "user",
           actorIdentity: ctx.user.email || ctx.user.openId,
           policyId,
-          outcome: "allowed",
-          payload: { name: input.name, effect: input.effect, toolPattern: input.toolPattern, actionPattern: input.actionPattern },
+          outcome: "approval_required",
+          payload: { revision: 1, baseRevision: 0, name: input.name, effect: input.effect, toolPattern: input.toolPattern, actionPattern: input.actionPattern },
         });
         return { policyId };
       }),
     setStatus: protectedProcedure
-      .input(organizationInput.extend({ policyId: z.number().int().positive(), status: z.enum(["active", "disabled"]) }))
+      .input(organizationInput.extend({ policyId: z.number().int().positive(), status: z.literal("disabled") }))
       .mutation(async ({ ctx, input }) => {
         await requireOrganizationRole(input.organizationId, ctx.user.id, ["admin"]);
         const db = await getDb();

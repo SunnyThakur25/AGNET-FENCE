@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { BILLING_PLANS, isBillingPlanKey } from "./agentfence/billing";
-import { isEnterpriseSecretReferenceAllowed, normalizeEnterpriseHttpsEndpoint } from "./routers/enterprise";
+import { extractSplunkHecToken, isEnterpriseSecretReferenceAllowed, normalizeEnterpriseHttpsEndpoint, safeConfigContainsSecret } from "./routers/enterprise";
 
 describe("enterprise-pilot security contracts", () => {
   it("accepts only feature-based billing plan keys and preserves the custom enterprise boundary", () => {
@@ -21,5 +21,17 @@ describe("enterprise-pilot security contracts", () => {
     expect(isEnterpriseSecretReferenceAllowed("agentfence/tenants/9/integrations/splunk_hec/primary", 9, "splunk_hec")).toBe(true);
     expect(isEnterpriseSecretReferenceAllowed("agentfence/tenants/10/integrations/splunk_hec/primary", 9, "splunk_hec")).toBe(false);
     expect(isEnterpriseSecretReferenceAllowed("agentfence/tenants/9/integrations/pagerduty_events/primary", 9, "splunk_hec")).toBe(false);
+  });
+
+  it("rejects credential-shaped safe metadata and accepts ordinary routing metadata", () => {
+    expect(safeConfigContainsSecret({ index: "agentfence_audit", region: "us-east-1" })).toBe(false);
+    expect(safeConfigContainsSecret({ apiKey: "not-allowed" })).toBe(true);
+    expect(safeConfigContainsSecret({ routing_key: "not-allowed" })).toBe(true);
+  });
+
+  it("extracts only approved HEC token fields and fails closed for malformed Vault records", () => {
+    expect(extractSplunkHecToken({ hec_token: "a-tenant-hec-token" })).toBe("a-tenant-hec-token");
+    expect(extractSplunkHecToken({ token: "alternate-hec-token" })).toBe("alternate-hec-token");
+    expect(() => extractSplunkHecToken({ password: "not-a-token" })).toThrow("HEC token");
   });
 });

@@ -64,6 +64,20 @@
       "when": 1786956703280,
       "tag": "0008_wild_jazinda",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "5",
+      "when": 1786960095744,
+      "tag": "0009_clear_the_hand",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1786960173025,
+      "tag": "0010_unknown_norrin_radd",
+      "breakpoints": true
     }
   ]
 }

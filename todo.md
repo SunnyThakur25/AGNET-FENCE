@@ -174,3 +174,18 @@
 - [x] Identify implementation gaps across control-plane resilience, identity, data protection, operational security, compliance evidence, and ecosystem integrations.
 - [x] Produce a prioritized enterprise-readiness roadmap that distinguishes pilot-ready controls from production-scale and audit-certification work.
 - [x] Update product documentation with the enterprise positioning and recommended assurance roadmap.
+
+## Enterprise policy governance and certified integrations
+
+- [x] Implement immutable policy draft versions with a visual field-level diff before production promotion.
+- [x] Add administrator review, approve, reject, promotion, rollback, and audit events for policy changes.
+- [x] Create a dedicated secure connector settings page that manages safe SIEM/SOAR metadata and Vault reference paths without raw-secret browser entry or persistence.
+- [x] Add secure deployment-credential readiness controls for Vault, OIDC, and SCIM, including explicit activation prerequisites and server-side validation only.
+- [x] Implement a SIEM certification workflow that verifies a configured profile uses an approved tenant Vault reference and records a controlled certification result.
+- [x] Add automated tests and authenticated responsive visual verification for policy change governance and secure connector settings.
+- [x] Update enterprise deployment documentation with policy approval, IdP/SCIM activation, and SIEM certification procedures.
+- [x] Validate, checkpoint, and push the completed enterprise control-governance milestone to GitHub.
+
+> Customer raw secrets must only be supplied through secure project secret settings or customer Vault. The app may display safe readiness state and a Vault path reference, but must never collect, return, store, log, or render raw Vault, SIEM, OIDC, or SCIM credential values.
+
+**Delivery note:** The workflow now records a real controlled certification result once a customer provides a reachable Splunk HEC endpoint and Vault AppRole deployment credentials. No customer credential or live endpoint was supplied for this release, so the visible `activation_required` state is intentional and no live SIEM certification is claimed.

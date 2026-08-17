@@ -53,6 +53,8 @@ export const targetOutcomeStatus = mysqlEnum("targetOutcomeStatus", ["succeeded"
 export const enterpriseConnectionKind = mysqlEnum("enterpriseConnectionKind", ["splunk_hec", "microsoft_sentinel", "pagerduty_events", "oidc", "scim", "vault_approle"]);
 export const enterpriseConnectionStatus = mysqlEnum("enterpriseConnectionStatus", ["not_configured", "pending_activation", "ready", "unhealthy"]);
 export const subscriptionPlan = mysqlEnum("subscriptionPlan", ["pilot", "growth", "enterprise"]);
+export const policyRevisionStatus = mysqlEnum("policyRevisionStatus", ["draft", "pending_review", "approved", "rejected", "promoted", "superseded"]);
+export const connectorCertificationStatus = mysqlEnum("connectorCertificationStatus", ["pending", "certified", "failed", "activation_required"]);
 
 export const organizations = mysqlTable(
   "organizations",
@@ -135,6 +137,7 @@ export const policies = mysqlTable(
     destinationPattern: varchar("destinationPattern", { length: 180 }).notNull().default("*"),
     priority: int("priority").notNull().default(100),
     status: policyStatus.notNull().default("active"),
+    currentRevision: int("currentRevision").notNull().default(0),
     createdBy: int("createdBy").notNull().references(() => users.id, { onDelete: "restrict" }),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
     updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -142,6 +145,31 @@ export const policies = mysqlTable(
   table => [
     index("policies_org_idx").on(table.organizationId),
     index("policies_agent_idx").on(table.agentId),
+  ],
+);
+
+/** Immutable proposal snapshot; only a promoted, approved revision may change an active policy. */
+export const policyRevisions = mysqlTable(
+  "policyRevisions",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    organizationId: int("organizationId").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    policyId: int("policyId").notNull().references(() => policies.id, { onDelete: "cascade" }),
+    revision: int("revision").notNull(),
+    baseRevision: int("baseRevision").notNull(),
+    status: policyRevisionStatus.notNull().default("draft"),
+    changeSummary: varchar("changeSummary", { length: 500 }).notNull(),
+    snapshot: json("snapshot").notNull(),
+    createdBy: int("createdBy").notNull().references(() => users.id, { onDelete: "restrict" }),
+    reviewedBy: int("reviewedBy").references(() => users.id, { onDelete: "set null" }),
+    reviewComment: text("reviewComment"),
+    reviewedAt: timestamp("reviewedAt"),
+    promotedAt: timestamp("promotedAt"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  table => [
+    uniqueIndex("policy_revisions_policy_revision_unique").on(table.policyId, table.revision),
+    index("policy_revisions_org_status_idx").on(table.organizationId, table.status),
   ],
 );
 
@@ -386,6 +414,22 @@ export const enterpriseConnections = mysqlTable(
     uniqueIndex("enterprise_connections_org_kind_unique").on(table.organizationId, table.kind),
     index("enterprise_connections_org_idx").on(table.organizationId),
   ],
+);
+
+/** Controlled SIEM certification evidence; no raw secret, provider response body, or event payload is retained. */
+export const connectorCertifications = mysqlTable(
+  "connectorCertifications",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    organizationId: int("organizationId").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    connectionId: int("connectionId").notNull().references(() => enterpriseConnections.id, { onDelete: "cascade" }),
+    status: connectorCertificationStatus.notNull().default("pending"),
+    evidenceCode: varchar("evidenceCode", { length: 80 }).notNull(),
+    certifiedBy: int("certifiedBy").references(() => users.id, { onDelete: "set null" }),
+    certifiedAt: timestamp("certifiedAt"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  table => [index("connector_certifications_connection_created_idx").on(table.connectionId, table.createdAt)],
 );
 
 /**

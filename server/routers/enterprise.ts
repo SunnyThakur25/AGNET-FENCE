@@ -2,7 +2,7 @@ import { createHash, randomBytes } from "crypto";
 import { and, desc, eq, gt, isNull, sql } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { enterpriseConnections, organizationBilling, organizations, teamInvitations, teamMemberships, teams, users } from "../../drizzle/schema";
+import { connectorCertifications, enterpriseConnections, organizationBilling, organizations, teamInvitations, teamMemberships, teams, users } from "../../drizzle/schema";
 import { appendAuditEvent } from "../agentfence/audit";
 import { requireOrganizationMembership, requireOrganizationRole } from "../agentfence/authz";
 import { isVaultPathForOrganization } from "../agentfence/vaultContract";
@@ -56,6 +56,16 @@ function toSafeConnection(row: typeof enterpriseConnections.$inferSelect) {
   };
 }
 
+export function extractSplunkHecToken(secret: Record<string, unknown>) {
+  const value = secret.hec_token ?? secret.token;
+  if (typeof value !== "string" || value.trim().length < 12) throw new Error("Vault record does not contain an approved Splunk HEC token field.");
+  return value.trim();
+}
+
+export function safeConfigContainsSecret(config: Record<string, string> | undefined) {
+  return Boolean(config && Object.keys(config).some(key => /(secret|token|password|api[_-]?key|routing[_-]?key)/i.test(key)));
+}
+
 async function organizationAdmin(organizationId: number, userId: number) {
   await requireOrganizationRole(organizationId, userId, ["admin"]);
 }
@@ -79,6 +89,9 @@ export const enterpriseRouter = router({
       vaultSecretPath: z.string().trim().min(10).max(255).optional(),
     })).mutation(async ({ ctx, input }) => {
       await organizationAdmin(input.organizationId, ctx.user.id);
+      if (safeConfigContainsSecret(input.safeConfig)) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Safe connector metadata cannot contain credential-like keys. Store provider secrets only in the customer Vault path or secure deployment settings." });
+      }
       const endpoint = input.endpoint ? normalizeEnterpriseHttpsEndpoint(input.endpoint) : null;
       if (input.vaultSecretPath && !isEnterpriseSecretReferenceAllowed(input.vaultSecretPath, input.organizationId, input.kind)) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Integration secret references must stay in this organization’s integration Vault path." });
@@ -133,6 +146,49 @@ export const enterpriseRouter = router({
       await db.update(enterpriseConnections).set({ status, lastTestedAt: new Date(), lastErrorCode: code }).where(eq(enterpriseConnections.id, connection.id));
       await appendAuditEvent({ organizationId: input.organizationId, eventType: "enterprise_connection.tested", actorType: "user", actorIdentity: ctx.user.email || ctx.user.openId, outcome: status === "ready" ? "allowed" : "approval_required", payload: { kind: input.kind, status, code } });
       return { status, code, detail: status === "ready" ? "Connection preflight completed." : "Endpoint profile is saved; customer-controlled credentials or service activation is still required." };
+    }),
+    identityReadiness: protectedProcedure.input(organizationInput).query(async ({ ctx, input }) => {
+      await organizationAdmin(input.organizationId, ctx.user.id);
+      const configured = (name: "OIDC_ISSUER" | "OIDC_CLIENT_ID" | "OIDC_CLIENT_SECRET" | "SCIM_BASE_URL" | "SCIM_BEARER_TOKEN") => Boolean(process.env[name]);
+      return {
+        oidc: { issuerConfigured: configured("OIDC_ISSUER"), clientIdConfigured: configured("OIDC_CLIENT_ID"), clientSecretConfigured: configured("OIDC_CLIENT_SECRET"), ready: configured("OIDC_ISSUER") && configured("OIDC_CLIENT_ID") && configured("OIDC_CLIENT_SECRET") },
+        scim: { baseUrlConfigured: configured("SCIM_BASE_URL"), bearerTokenConfigured: configured("SCIM_BEARER_TOKEN"), ready: configured("SCIM_BASE_URL") && configured("SCIM_BEARER_TOKEN") },
+        detail: "Credential values are intentionally not returned to the browser. Configure them only through secure deployment settings.",
+      };
+    }),
+    certifySplunkHec: protectedProcedure.input(organizationInput.extend({ connectionId: z.number().int().positive() })).mutation(async ({ ctx, input }) => {
+      await organizationAdmin(input.organizationId, ctx.user.id);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable." });
+      const [connection] = await db.select().from(enterpriseConnections).where(and(eq(enterpriseConnections.id, input.connectionId), eq(enterpriseConnections.organizationId, input.organizationId), eq(enterpriseConnections.kind, "splunk_hec"))).limit(1);
+      if (!connection) throw new TRPCError({ code: "NOT_FOUND", message: "A Splunk HEC profile was not found in this organization." });
+      let certificationStatus: "certified" | "failed" | "activation_required" = "activation_required";
+      let evidenceCode = "VAULT_REFERENCE_REQUIRED";
+      if (connection.endpoint && connection.vaultSecretPath && isEnterpriseSecretReferenceAllowed(connection.vaultSecretPath, input.organizationId, "splunk_hec")) {
+        const vault = createVaultAppRoleClient();
+        if (!vault.status.connected) {
+          evidenceCode = "VAULT_NOT_CONFIGURED";
+        } else {
+          try {
+            const secret = await vault.readSecret(connection.vaultSecretPath) as Record<string, unknown>;
+            const response = await fetch(connection.endpoint, {
+              method: "POST",
+              headers: { authorization: `Splunk ${extractSplunkHecToken(secret)}`, "content-type": "application/json" },
+              body: JSON.stringify({ source: "agentfence", sourcetype: "agentfence:certification", event: { eventType: "agentfence.connector.certification", organizationId: input.organizationId, timestamp: new Date().toISOString() } }),
+              signal: AbortSignal.timeout(8_000),
+            });
+            certificationStatus = response.ok ? "certified" : "failed";
+            evidenceCode = response.ok ? "HEC_DELIVERY_ACKNOWLEDGED" : `HEC_HTTP_${response.status}`;
+          } catch {
+            certificationStatus = "failed";
+            evidenceCode = "HEC_OR_VAULT_UNREACHABLE";
+          }
+        }
+      }
+      await db.insert(connectorCertifications).values({ organizationId: input.organizationId, connectionId: connection.id, status: certificationStatus, evidenceCode, certifiedBy: ctx.user.id, certifiedAt: new Date() });
+      await db.update(enterpriseConnections).set({ status: certificationStatus === "certified" ? "ready" : certificationStatus === "failed" ? "unhealthy" : "pending_activation", lastTestedAt: new Date(), lastErrorCode: certificationStatus === "certified" ? null : evidenceCode }).where(eq(enterpriseConnections.id, connection.id));
+      await appendAuditEvent({ organizationId: input.organizationId, eventType: "enterprise_connection.splunk_certification", actorType: "user", actorIdentity: ctx.user.email || ctx.user.openId, outcome: certificationStatus === "certified" ? "allowed" : "approval_required", payload: { connectionId: connection.id, status: certificationStatus, evidenceCode, hasVaultReference: Boolean(connection.vaultSecretPath) } });
+      return { status: certificationStatus, evidenceCode, certified: certificationStatus === "certified" };
     }),
   }),
 

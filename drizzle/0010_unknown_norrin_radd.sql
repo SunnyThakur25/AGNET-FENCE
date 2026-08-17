@@ -1,0 +1,1 @@
+ALTER TABLE `policies` MODIFY COLUMN `currentRevision` int NOT NULL DEFAULT 0;

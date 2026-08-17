@@ -14,10 +14,19 @@ AgentFence governs actions that travel through its signed cloud SDK or managed b
 |---|---|---|---|
 | **1. Select a bounded workflow** | Business owner and security owner | Register a cloud or managed-browser agent, then write a narrow first policy. | Agent identity, policy, and baseline Action Trace. |
 | **2. Establish accountable access** | Workspace administrator | Create a team; assign administrators, operators, viewers, and billing administrators; use expiring, one-time invitation tokens. | Team membership review and invitation audit events. |
-| **3. Configure observability** | SOC or security engineering | Save a tenant-scoped SIEM/SOAR profile with an HTTPS endpoint and Vault reference. | Connection profile and controlled test result. |
-| **4. Configure identity readiness** | IAM team | Save an OIDC issuer profile and validate discovery metadata; prepare SCIM lifecycle requirements. | OIDC discovery preflight; team/provisioning design review. |
-| **5. Activate Vault when approved** | Vault administrator | Supply secure deployment values for `VAULT_ADDR`, `VAULT_ROLE_ID`, and `VAULT_SECRET_ID`; run a server-side health probe. | Ready Vault state and scoped lease test. |
-| **6. Select commercial access** | Billing administrator | Use Stripe Checkout for Pilot or Growth, or request an Enterprise design review. | Server-recorded Stripe identifiers and Stripe-side subscription confirmation. |
+| **3. Govern the policy change** | Two different workspace administrators | Submit an immutable policy revision; collect an independent approval before promotion. | Field-level diff, reviewer comment, promotion event, and audit-ledger record. |
+| **4. Configure observability** | SOC or security engineering | Save a tenant-scoped SIEM/SOAR profile with an HTTPS endpoint and Vault reference. | Connection profile and controlled test result. |
+| **5. Configure identity readiness** | IAM team | Check deployment-only OIDC/SCIM readiness; validate OIDC discovery after issuer configuration. | Boolean readiness state, OIDC discovery preflight, and team/provisioning design review. |
+| **6. Activate Vault when approved** | Vault administrator | Supply secure deployment values for `VAULT_ADDR`, `VAULT_ROLE_ID`, and `VAULT_SECRET_ID`; run a server-side health probe. | Ready Vault state and scoped lease test. |
+| **7. Select commercial access** | Billing administrator | Use Stripe Checkout for Pilot or Growth, or request an Enterprise design review. | Server-recorded Stripe identifiers and Stripe-side subscription confirmation. |
+
+## Policy approval and promotion
+
+The **Policy Governance** page enforces a controlled lifecycle for every production policy change. A workspace administrator proposes a revision from the current policy state and provides a change rationale. AgentFence stores an immutable snapshot and field-level diff; it does not update the live policy at this point.
+
+> **Separation-of-duties boundary:** The proposal author cannot review their own revision. A different administrator must approve or reject it with a comment. Promotion then rechecks the recorded base revision before atomically applying the approved snapshot. A stale approval is rejected rather than overwriting a newer live policy.
+
+To restore an earlier approved policy, use **Create rollback proposal** from a promoted revision. The rollback is itself a new pending revision that requires independent review; no direct overwrite or one-click re-enablement exists. Proposal, review, rejection, promotion, and rollback-proposal actions each generate tenant-scoped audit events.
 
 ## SIEM and SOAR profiles
 
@@ -25,11 +34,17 @@ AgentFence stores one connection profile per tenant and connector type. A profil
 
 | Profile | Purpose | Customer prerequisites | Activation boundary |
 |---|---|---|---|
-| **Splunk HEC** | Delivers privacy-safe governance alerts and audit references to a Splunk HTTP Event Collector. | HTTPS HEC endpoint, approved index/source policy, and a scoped HEC token held outside the browser. Splunk documents HEC as an HTTP/HTTPS ingestion mechanism.[1] | Save endpoint and metadata; provide a Vault reference before live outbound delivery. |
+| **Splunk HEC** | Delivers privacy-safe governance alerts and audit references to a Splunk HTTP Event Collector. | HTTPS HEC endpoint, approved index/source policy, and a scoped HEC token held outside the browser. Splunk documents HEC as an HTTP/HTTPS ingestion mechanism.[1] | Save endpoint and metadata, then use **Certify Splunk HEC** after the approved Vault reference is available. |
 | **Microsoft Sentinel** | Prepares an Azure Monitor Logs Ingestion path suitable for Sentinel investigation. | Data Collection Endpoint/Rule, app registration with narrowly scoped permissions, and customer-controlled credentials. Microsoft documents Logs Ingestion as HTTPS JSON delivery to a Log Analytics workspace.[2] | Save DCE/DCR metadata and a Vault reference; activate after Azure credentials and data schema are approved. |
 | **PagerDuty Events v2** | Prepares incident routing for selected high-severity governance events. | A dedicated service integration and a routing key held in Vault or secure deployment configuration. PagerDuty describes the Events API as asynchronous and recommends retry behavior for transient errors.[3] | Save endpoint/reference; configure routing policy and retry review before live use. |
 
 > A successful endpoint-level acknowledgement is a **delivery attempt**, not proof that a downstream SOC or on-call responder completed remediation.
+
+### Controlled Splunk HEC certification
+
+Use **Secure connector settings** to enter only the HEC HTTPS endpoint, non-secret metadata, and a tenant-scoped Vault reference in the form `agentfence/tenants/<organizationId>/integrations/splunk_hec/<name>`. Credential-shaped metadata keys such as `token`, `secret`, `password`, `apiKey`, and `routing_key` are rejected. The referenced Vault record must contain either `hec_token` or `token`; this value is read only by server code for the certification attempt.
+
+Certification emits a single bounded `agentfence.connector.certification` event to the configured HEC endpoint. It stores a certification status and evidence code, such as `HEC_DELIVERY_ACKNOWLEDGED`, `HEC_HTTP_<status>`, `VAULT_NOT_CONFIGURED`, or `HEC_OR_VAULT_UNREACHABLE`. The raw HEC token, the Vault response, and any remote response body are neither returned to the browser nor written to the database or audit payload.
 
 ## Identity and provisioning readiness
 
@@ -39,6 +54,8 @@ The current product retains its existing secure sign-in provider and adds standa
 |---|---|---|
 | **OIDC federation** | Server-side OIDC discovery preflight validates an HTTPS issuer and required discovery endpoints. OpenID Connect Discovery defines retrieval of provider metadata such as authorization, token, and JWKS endpoints.[4] | Configure client registration, redirect URIs, user/role mapping, claims policy, key rotation, and tenant access review. |
 | **SCIM 2.0** | AgentFence provides a tenant-safe team, membership, role, and invitation model as the lifecycle target. | Complete authenticated SCIM endpoint design, stable identifiers, user/group semantics, deprovisioning behavior, and interoperability testing. RFC 7644 defines SCIM as an HTTP-based provisioning protocol and calls out security and multi-tenancy requirements.[5] |
+
+The Secure Connector Settings page reports only Boolean deployment-readiness values for `OIDC_ISSUER`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`, `SCIM_BASE_URL`, and `SCIM_BEARER_TOKEN`. The settings surface does not accept, display, or persist any of these values. Configure them through protected deployment secret settings only.
 
 ## Vault AppRole activation
 
@@ -74,6 +91,9 @@ The Team Management surface supports **administrator**, **operator**, **viewer**
 | `pnpm check` | TypeScript has no errors. |
 | `pnpm build` | Production client and server bundles compile successfully. |
 | Enterprise Connections | Profile data is tenant-scoped; any endpoint is HTTPS; no token can be entered or rendered. |
+| Policy Governance | Every live policy promotion has an independently approved immutable revision and a matching audit event. |
+| Splunk HEC certification | The profile has a tenant-safe Vault reference; the recorded evidence code is reviewed; raw HEC material is absent from the UI, database, and audit logs. |
+| OIDC / SCIM | Readiness is Boolean-only in the console; customer identity credentials exist only in secure deployment settings. |
 | Vault | Disconnected-safe status is explicit until secure configuration is supplied. |
 | Stripe | Checkout is server-created; webhook signatures are checked; the browser never reads the secret key. |
 | Teams | Invitation token is copied only through an approved channel; role and revocation changes are audited. |

@@ -17,6 +17,10 @@ type VaultLeaseResponse = {
   renewable?: boolean;
 };
 
+type VaultSecretResponse = {
+  data?: { data?: Record<string, unknown> } | Record<string, unknown>;
+};
+
 export class VaultNotConfiguredError extends Error {
   constructor() {
     super("Dedicated Vault is not configured. Add VAULT_ADDR, VAULT_ROLE_ID, and VAULT_SECRET_ID before connecting.");
@@ -77,6 +81,20 @@ export function createVaultAppRoleClient(env: VaultEnvironment = process.env, fe
     return { leaseId: payload.lease_id, leaseDurationSeconds: payload.lease_duration ?? 0, renewable: Boolean(payload.renewable) };
   }
 
+  async function readSecret(secretPath: string) {
+    const session = await login();
+    const response = await fetchImpl(`${vaultBaseUrl(env.VAULT_ADDR!)}/v1/${secretPath.replace(/^\/+/, "")}`, {
+      method: "GET",
+      headers: { "X-Vault-Token": session.clientToken },
+      signal: AbortSignal.timeout(8_000),
+    });
+    if (!response.ok) throw new Error(`Vault connector secret read failed with HTTP ${response.status}.`);
+    const payload = await response.json() as VaultSecretResponse;
+    const data = payload.data && "data" in payload.data ? payload.data.data : payload.data;
+    if (!data || typeof data !== "object") throw new Error("Vault connector secret record was empty or invalid.");
+    return data;
+  }
+
   async function revokeLease(leaseId: string) {
     const session = await login();
     const response = await fetchImpl(`${vaultBaseUrl(env.VAULT_ADDR!)}/v1/sys/leases/revoke`, {
@@ -94,5 +112,5 @@ export function createVaultAppRoleClient(env: VaultEnvironment = process.env, fe
     return issueLease(secretPath);
   }
 
-  return { status, login, probe, issueLease, revokeLease, rotateLease };
+  return { status, login, probe, issueLease, readSecret, revokeLease, rotateLease };
 }
