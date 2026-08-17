@@ -311,6 +311,19 @@ class SDKServer {
       throw ForbiddenError("User not found");
     }
 
+    if (sessionToken && await db.isSessionRevoked(user.id, sessionToken)) {
+      throw ForbiddenError("Session has been revoked");
+    }
+    if (sessionToken) {
+      await db.ensureActiveSession({
+        userId: user.id,
+        token: sessionToken,
+        deviceInfo: typeof req.headers["user-agent"] === "string" ? req.headers["user-agent"].slice(0, 220) : null,
+        ipAddress: typeof req.headers["x-forwarded-for"] === "string" ? req.headers["x-forwarded-for"].split(",")[0]?.trim() ?? req.ip ?? null : req.ip ?? null,
+        expiresAt: new Date(Date.now() + ONE_YEAR_MS),
+      });
+    }
+
     await db.upsertUser({
       openId: user.openId,
       lastSignedIn: signedInAt,

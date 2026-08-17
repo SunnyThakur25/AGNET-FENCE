@@ -1,0 +1,1 @@
+ALTER TABLE `activeSessions` ADD `revokedAt` timestamp;

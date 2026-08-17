@@ -24,8 +24,10 @@ export const users = mysqlTable("users", {
   id: int("id").autoincrement().primaryKey(),
   /** Manus OAuth identifier (openId) returned from the OAuth callback. Unique per user. */
   openId: varchar("openId", { length: 64 }).notNull().unique(),
-  name: text("name"),
-  email: varchar("email", { length: 320 }),
+    name: text("name"),
+    email: varchar("email", { length: 320 }),
+    avatarUrl: varchar("avatarUrl", { length: 500 }),
+    avatarStorageKey: varchar("avatarStorageKey", { length: 255 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
   role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -334,4 +336,23 @@ export const attackSimulations = mysqlTable(
     createdAt: timestamp("createdAt").defaultNow().notNull(),
   },
   table => [index("attack_simulations_org_idx").on(table.organizationId)],
+);
+
+export const activeSessions = mysqlTable(
+  "activeSessions",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    userId: int("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+    sessionTokenHash: varchar("sessionTokenHash", { length: 64 }).notNull(),
+    deviceInfo: varchar("deviceInfo", { length: 255 }),
+    ipAddress: varchar("ipAddress", { length: 45 }),
+    lastActiveAt: timestamp("lastActiveAt").defaultNow().notNull(),
+    expiresAt: timestamp("expiresAt").notNull(),
+    revokedAt: timestamp("revokedAt"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  table => [
+    uniqueIndex("active_sessions_hash_unique").on(table.sessionTokenHash),
+    index("active_sessions_user_idx").on(table.userId),
+  ],
 );

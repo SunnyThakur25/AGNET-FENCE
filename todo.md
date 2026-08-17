@@ -122,3 +122,23 @@
 - [ ] Produce a concise product demo video that shows the governed agent-action workflow and labels controlled-assessment limits clearly. **Blocked:** the available free-plan video-generation quota is exhausted; the approved 60-second script and production prompt are ready in `AGENTFENCE_DEMO_VIDEO_SCRIPT.md`.
 - [x] Add automated coverage and visual validation for the onboarding and landing-page changes, then validate the research-grounded documentation deliverables.
 - [ ] After the demo video is generated, validate the final media artifact against the approved script and compliance note.
+
+## Profile and account security
+
+- [x] Add Profile & account, Security & connections, and Sign out options to the authenticated profile bar.
+- [x] Implement a secure password-management handoff in Security & connections; password changes remain provider-managed because AgentFence never stores local passwords.
+- [x] Implement active-session management with tenant-safe session listing, current-session identification, and revoke controls.
+- [x] Add avatar upload and profile-avatar persistence using the existing storage boundary, with MIME and 1 MB limits.
+- [x] Add a secure Delete Account confirmation modal and tenant/user data deletion workflow with shared-workspace safeguards.
+- [x] Add automated tests and responsive visual verification for profile and account security flows; authenticated route capture remains login-gated in the preview harness.
+- [x] Save a checkpoint for the completed profile and account security milestone.
+
+> Account-security implementation must never expose raw passwords, session tokens, or uploaded file bytes in the UI or audit logs.
+
+<!-- end profile and account security -->
+
+## Account-security validation follow-up
+
+- [x] Add rendered UI tests for the profile-bar menu, security-page session controls, avatar-upload validation flow, and Delete Account confirmation modal.
+- [x] Perform authenticated My Browser desktop visual verification of `/profile` and `/security`; verify mobile layout behavior through the responsive media rules and rendered component coverage because the connected browser exposes no viewport-resize control.
+- [x] Mark account-security visual validation complete after rendered interaction coverage and authenticated route evidence became available.

@@ -137,7 +137,7 @@ function PrimaryButton({ children, className = "", ...props }: React.ButtonHTMLA
   return <button {...props} className={`btn-primary ${className}`}>{children}</button>;
 }
 
-function SecondaryButton({ children, className = "", ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+export function SecondaryButton({ children, className = "", ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
   return <button {...props} className={`btn-secondary ${className}`}>{children}</button>;
 }
 
