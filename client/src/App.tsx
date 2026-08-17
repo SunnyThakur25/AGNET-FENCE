@@ -23,6 +23,7 @@ function RouteSurface({ children }: { children: React.ReactNode }) {
 
 function SignInRoute() { return <RouteSurface><SignInPage /></RouteSurface>; }
 function SignUpRoute() { return <RouteSurface><SignUpPage /></RouteSurface>; }
+function LandingPreviewRoute() { return <RouteSurface><LandingPage /></RouteSurface>; }
 
 function ApplicationEntry() {
   const { user, loading } = useAuth();
@@ -33,7 +34,7 @@ function ApplicationEntry() {
 }
 
 function Router() {
-  return <Switch><Route path="/signin" component={SignInRoute} /><Route path="/signup" component={SignUpRoute} /><Route component={ApplicationEntry} /></Switch>;
+  return <Switch><Route path="/landing" component={LandingPreviewRoute} /><Route path="/signin" component={SignInRoute} /><Route path="/signup" component={SignUpRoute} /><Route component={ApplicationEntry} /></Switch>;
 }
 
 // NOTE: About Theme

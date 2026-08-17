@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { Router } from "wouter";
-import { AuthPanel } from "./Public";
+import { AuthPanel, LandingPage } from "./Public";
 
 function textContent(node: React.ReactNode): string {
   if (typeof node === "string" || typeof node === "number") return String(node);
@@ -29,6 +29,15 @@ describe("AgentFence public authentication journey", () => {
     const markup = renderToStaticMarkup(<Router ssrPath="/"><AuthPanel mode="signup" onAuthenticate={() => undefined} /></Router>);
     expect(markup).toContain("Create your security workspace");
     expect(markup).toContain("isolated organization");
+  });
+
+  it("renders the containment-led AI-agent firewall landing story and workspace conversion path", () => {
+    const markup = renderToStaticMarkup(<Router ssrPath="/"><LandingPage /></Router>);
+    expect(markup).toContain("The red line between");
+    expect(markup).toContain("agents and consequences.");
+    expect(markup).toContain("AI agent containment layer");
+    expect(markup).toContain("Build your control plane");
+    expect(markup).toContain("Human gate");
   });
 
   it("routes all sign-in, sign-up, Google, and SSO entry controls to the secure OAuth handler", () => {

@@ -43,3 +43,9 @@ Use a disposable development Vault, a dedicated AppRole, narrow tenant and agent
 The OWASP assessment dashboard was reviewed at desktop and mobile widths. The desktop experience presents all ten controlled ASI cases in a two-column coverage map, while the mobile layout changes to a readable single-column sequence. Both views state that assessment requests are synthetic, do not execute payloads, and do not contact external infrastructure.
 
 The final verification also confirmed that the detailed prevention, detection, approval, and audit matrix is visible below the assessment catalog on desktop and remains horizontally scrollable on narrow mobile screens without obscuring the case cards or safety limitations.
+
+The red containment refresh was reviewed on the sign-in experience and authenticated OWASP assessment console at desktop width. The implementation maintains readable light text on dark burgundy glass panels; red is used for containment, boundary, and risk context, while cyan remains reserved for verified signals and actionable technical labels.
+
+At mobile width, the sign-in card preserves its hierarchy and tap targets, while the OWASP assessment catalog remains a single-column containment sequence. The wide matrix continues to scroll within its table container rather than forcing the page layout beyond the viewport.
+
+The dedicated public landing preview was verified at desktop and mobile widths after the red containment refresh. The desktop composition preserves a clear containment-led hero, tool-decision visual, control-flow progression, use cases, and primary conversion path; the mobile layout stacks those same sections into readable, touch-friendly cards without horizontal overflow.

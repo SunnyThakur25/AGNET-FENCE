@@ -74,3 +74,8 @@
 - [x] Add router-level tests that exercise controlled OWASP scenario assessments, their audit events, and non-destructive policy-decision outcomes.
 - [x] Add representative ASI01, ASI05, and ASI10 router-level controlled-assessment cases with audit-event assertions.
 - [x] Add controlled policy-decision outcome coverage for passed, needs-review, and failed assessment statuses without external execution.
+- [x] Establish a red-glassmorphic containment visual system with accessible contrast and a clear operational color hierarchy.
+- [x] Redesign the public landing page to communicate AgentFence as an AI-agent firewall with a more memorable containment-led hero and conversion path.
+- [x] Apply restrained red risk/boundary signals and subtle reduced-motion-aware animations across the authenticated console.
+- [x] Add and run focused public landing render/content tests, then verify desktop and mobile screenshots for the red containment refresh.
+- [x] Add a public landing preview route for authenticated-session visual verification without changing the standard unauthenticated home behavior.
