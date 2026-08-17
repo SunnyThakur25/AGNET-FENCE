@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Security demand is becoming a standards issue</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    :root { --bg:#E8ECEF; --ink:#0B0C10; --body:#2C3539; --red:#990000; --line:#B7BEC2; --muted:#5F6669; --paper:#F7F8F8; }
+    .slide-container { width:1280px; min-height:720px; background:var(--bg); color:var(--ink); font-family:Georgia,'Times New Roman',serif; }
+    .frame { min-height:720px; padding-top:51px; padding-left:76px; padding-right:76px; display:flex; flex-direction:column; }
+    .meta { display:flex; justify-content:space-between; color:var(--red); font:700 12px Arial,sans-serif; letter-spacing:2px; text-transform:uppercase; }
+    .rule { height:1px; background:var(--line); margin-top:17px; }
+    .heading { display:grid; grid-template-columns:1.15fr .85fr; gap:58px; padding-top:27px; }
+    h1 { font-size:43px; line-height:1.02; letter-spacing:-1.5px; }
+    .lede { color:var(--body); font-size:17px; line-height:1.42; padding-top:5px; }
+    .lede strong { color:var(--red); }
+    /* reduced spacing to fix overflow */
+    .matrix { flex:1; margin-top:10px; border-top:4px solid var(--ink); border-bottom:1px solid var(--ink); }
+    .head, .row { display:grid; grid-template-columns:260px 340px 1fr; gap:25px; }
+    .head { padding-top:13px; padding-bottom:13px; color:var(--muted); font:700 11px Arial,sans-serif; letter-spacing:1.45px; text-transform:uppercase; border-bottom:1px solid var(--line); }
+    .row { min-height:96px; align-items:center; border-bottom:1px solid var(--line); }
+    .row:last-child { border-bottom:0; }
+    .source { font:700 18px/1.18 Arial,sans-serif; color:var(--ink); }
+    .source span { display:block; font:400 12px/1.33 Arial,sans-serif; color:var(--muted); padding-top:7px; }
+    .need { font-size:17px; line-height:1.3; color:var(--body); }
+    .control { min-height:74px; border-top:4px solid var(--red); background:var(--paper); padding-top:12px; padding-left:14px; padding-right:12px; font:700 15px/1.3 Arial,sans-serif; }
+    .control small { display:block; color:var(--body); font:400 12px/1.32 Arial,sans-serif; padding-top:5px; }
+    .note { display:grid; grid-template-columns:32px 1fr; gap:14px; border-top:1px solid var(--line); margin-top:8px; padding-top:8px; color:var(--muted); font:12px/1.34 Arial,sans-serif; }
+    .note b { color:var(--red); font:700 19px Georgia,serif; }
+    .footer { border-top:1px solid var(--line); padding-top:11px; color:var(--muted); font:11px/1.35 Arial,sans-serif; margin-top:6px; }
+  </style>
+</head>
+<body>
+  <div class="slide-container">
+    <div class="frame">
+      <div class="meta"><span>07 / Standards alignment</span><span>AgentFence investor brief</span></div>
+      <div class="rule"></div>
+      <div class="heading">
+        <h1>Security demand is becoming a standards and operating-model issue.</h1>
+        <p class="lede">NIST is emphasizing trusted, interoperable, and secure agent ecosystems—including identity and authorization—while OWASP provides an actionable risk framework for autonomous systems. <strong>AgentFence translates those expectations into action-level controls and evidence.</strong></p>
+      </div>
+      <section class="matrix" aria-label="Standards alignment matrix">
+        <div class="head"><div>External signal</div><div>Operational need</div><div>AgentFence action control</div></div>
+        <div class="row">
+          <div class="source">NIST AI Agent Standards Initiative<span>Secure agent identity, authentication, authorization, and security evaluation</span></div>
+          <div class="need">Establish which workload may act, within which tenant, on which authorized scope.</div>
+          <div class="control">Agent Registry + Role-Based Access Control + signed runtime credentials<small>Bind a governed request to tenant-scoped workload identity and permission context.</small></div>
+        </div>
+        <div class="row">
+          <div class="source">OWASP Top 10 for Agentic Applications<span>Critical risks for systems that plan, act, and decide across workflows</span></div>
+          <div class="need">Reduce tool misuse, excessive agency, sensitive-data leakage, and uncontrolled multi-step consequences.</div>
+          <div class="control">Policy Engine + Tool Gateway + Data Guard + Human Approval Workflow<small>Make an allow, block, or approval-required decision before release of an integrated action.</small></div>
+        </div>
+        <div class="row">
+          <div class="source">Enterprise assurance expectation<span>Operational proof for risk, compliance, incident review, and insurance questions</span></div>
+          <div class="need">Inspect what occurred and demonstrate that policy-operated controls were applied.</div>
+          <div class="control">Tamper-Evident Audit Ledger + AI Action Capture + AI Action Trace + Compliance Evidence Export<small>Create privacy-safe action records and evidence packets for SOC 2, ISO 27001, insurance, and internal review.</small></div>
+        </div>
+      </section>
+      <div class="note"><b>×</b><span>Positioning boundary: AgentFence is not a certification claim or a substitute for organizational governance. It operationalizes controls on integrated action paths and supports evidence collection for customer-defined assurance programs.</span></div>
+      <div class="footer">Sources: [3] NIST, <em>AI Agent Standards Initiative</em> (updated Aug. 14, 2026). [4] OWASP, <em>Top 10 for Agentic Applications for 2026</em> (Dec. 9, 2025).</div>
+    </div>
+  </div>
+</body>
+</html>

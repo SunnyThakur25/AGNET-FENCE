@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Govern the action, not only the model</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    :root { --bg:#E8ECEF; --ink:#0B0C10; --body:#2C3539; --red:#990000; --line:#B7BEC2; --paper:#F7F8F8; --muted:#5F6669; }
+    .slide-container { width:1280px; min-height:720px; background:var(--bg); color:var(--ink); font-family:Georgia,'Times New Roman',serif; }
+    .frame { min-height:720px; padding-top:52px; padding-left:76px; padding-right:76px; display:flex; flex-direction:column; }
+    .meta { display:flex; justify-content:space-between; color:var(--red); font:700 12px Arial,sans-serif; letter-spacing:2px; text-transform:uppercase; }
+    .rule { height:1px; background:var(--line); margin-top:16px; }
+    .heading { display:grid; grid-template-columns:1.15fr .85fr; gap:48px; padding-top:29px; }
+    h1 { font-size:46px; line-height:1.01; letter-spacing:-1.8px; }
+    .heading p { color:var(--body); font-size:17px; line-height:1.38; padding-top:4px; }
+    .body { display:grid; grid-template-columns:340px 42px 1fr; gap:30px; flex:1; align-items:center; }
+    .thesis { min-height:328px; border-top:5px solid var(--ink); padding-top:24px; }
+    .thesis .label { color:var(--red); font:700 12px Arial,sans-serif; letter-spacing:1.7px; text-transform:uppercase; }
+    .thesis .big { font-size:31px; line-height:1.09; letter-spacing:-.7px; margin-top:13px; }
+    .thesis .big strong { color:var(--red); }
+    .thesis .copy { color:var(--body); font:16px/1.38 Arial,sans-serif; margin-top:22px; }
+    .boundary { width:5px; height:350px; background:var(--red); position:relative; }
+    .boundary:before { content:'CONTAINMENT'; position:absolute; left:-49px; top:137px; width:102px; color:#fff; text-align:center; font:700 10px Arial,sans-serif; letter-spacing:1.4px; transform:rotate(-90deg); }
+    .pillars { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+    .pillar { min-height:156px; border-top:3px solid var(--ink); background:var(--paper); padding-top:16px; padding-left:17px; padding-right:15px; }
+    .pillar:nth-child(2) { border-top-color:var(--red); }
+    .pnum { color:var(--red); font:700 11px Arial,sans-serif; letter-spacing:1.5px; }
+    .pillar h2 { font-size:21px; line-height:1.02; margin-top:9px; letter-spacing:-.4px; }
+    .pillar p { color:var(--body); font:13px/1.33 Arial,sans-serif; margin-top:10px; }
+    .scope { border-top:1px solid var(--line); padding-top:10px; color:var(--muted); font:12px/1.35 Arial,sans-serif; margin-top:16px; }
+    .footer { border-top:1px solid var(--line); padding-top:12px; color:var(--muted); font:11px/1.35 Arial,sans-serif; }
+  </style>
+</head>
+<body>
+  <div class="slide-container">
+    <div class="frame">
+      <div class="meta"><span>10 / Differentiation</span><span>AgentFence investor brief</span></div>
+      <div class="rule"></div>
+      <div class="heading">
+        <h1>Govern the action, not only the model.</h1>
+        <p>Model safety and output guardrails remain necessary. AgentFence’s differentiated product thesis begins when an AI system gains authority to invoke tools, touch data, or create an operational consequence.</p>
+      </div>
+      <div class="body">
+        <section class="thesis">
+          <div class="label">The wedge</div>
+          <p class="big">A verified agent requests a specific action. AgentFence decides whether it is <strong>permitted, blocked, or escalated</strong> before release.</p>
+          <p class="copy">That shifts the control question from “was the model response safe?” to “was this consequential action authorized, appropriately scoped, and provable?”</p>
+        </section>
+        <div class="boundary" aria-hidden="true"></div>
+        <section>
+          <div class="pillars" aria-label="AgentFence differentiated capabilities">
+            <article class="pillar"><div class="pnum">01 / ACTION-LEVEL CONTROL</div><h2>Specific, signed decisions</h2><p>Evaluate a real agent, tool, destination, data context, credential scope, and intended outcome—not only a generic prompt or model output.</p></article>
+            <article class="pillar"><div class="pnum">02 / HYBRID RUNTIME</div><h2>Cloud + browser coverage</h2><p>Apply one policy-and-evidence model to cloud SDK integrations and managed browser actions.</p></article>
+            <article class="pillar"><div class="pnum">03 / EVIDENCE BY DESIGN</div><h2>Traceable consequences</h2><p>Action Capture, graphical Action Trace, and tamper-evident ledger events are core product primitives.</p></article>
+            <article class="pillar"><div class="pnum">04 / ADOPTION PATH</div><h2>Start with one real action</h2><p>The first-agent wizard creates a tenant-scoped identity and first boundary before a customer expands authority.</p></article>
+          </div>
+          <p class="scope">Enforcement scope: explicit cloud SDK and managed browser integrations. Bypassed calls must be constrained through surrounding identity, environment, and target-system controls.</p>
+        </section>
+      </div>
+      <div class="footer">Differentiation claim: AgentFence organizes pre-execution authorization, human escalation, and audit-ready action evidence around an integrated agent-to-target path.</div>
+    </div>
+  </div>
+</body>
+</html>

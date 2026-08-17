@@ -142,3 +142,12 @@
 - [x] Add rendered UI tests for the profile-bar menu, security-page session controls, avatar-upload validation flow, and Delete Account confirmation modal.
 - [x] Perform authenticated My Browser desktop visual verification of `/profile` and `/security`; verify mobile layout behavior through the responsive media rules and rendered component coverage because the connected browser exposes no viewport-resize control.
 - [x] Mark account-security visual validation complete after rendered interaction coverage and authenticated route evidence became available.
+
+## Investor presentation and GitHub publication
+
+- [x] Research and cite current market framing, competitors, and value drivers for an AgentFence investor presentation without presenting unsupported market-cap claims.
+- [x] Prepare a visual, detailed slide presentation explaining the product, problem, differentiated controls, benefits, competitive position, commercial value, and roadmap.
+- [x] Update the repository README with an accurate AgentFence product overview, architecture, feature set, deployment guidance, and links to the investor materials.
+- [x] Validate the presentation content, exported deck, documentation, and project build: 66 passing tests, clean TypeScript, and production build successful.
+- [ ] Push the completed AgentFence source and documentation changes to the selected GitHub repository.
+- [x] Save a checkpoint for the investor presentation and GitHub publication milestone.

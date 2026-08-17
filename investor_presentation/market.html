@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Market framing: a growing control-plane category</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    :root { --bg:#E8ECEF; --ink:#0B0C10; --body:#2C3539; --red:#990000; --line:#B7BEC2; --paper:#F7F8F8; --muted:#5F6669; }
+    .slide-container { width:1280px; min-height:720px; background:var(--bg); color:var(--ink); font-family:Georgia,'Times New Roman',serif; }
+    .frame { min-height:720px; padding-top:53px; padding-left:76px; padding-right:76px; display:flex; flex-direction:column; }
+    .meta { display:flex; justify-content:space-between; color:var(--red); font:700 12px Arial,sans-serif; letter-spacing:2px; text-transform:uppercase; }
+    .rule { height:1px; background:var(--line); margin-top:16px; }
+    .heading { display:grid; grid-template-columns:1.08fr .92fr; gap:50px; padding-top:27px; align-items:end; }
+    h1 { font-size:44px; line-height:1.01; letter-spacing:-1.6px; }
+    .heading p { color:var(--body); font:17px/1.38 Arial,sans-serif; }
+    .main { display:grid; grid-template-columns:390px 1fr; gap:49px; flex:1; align-items:center; }
+    .definition { border-top:5px solid var(--red); padding-top:20px; }
+    .tag { color:var(--red); font:700 11px Arial,sans-serif; letter-spacing:1.6px; text-transform:uppercase; }
+    .definition h2 { font-size:30px; line-height:1.08; letter-spacing:-.8px; margin-top:10px; }
+    .definition p { color:var(--body); font-size:17px; line-height:1.4; margin-top:10px; }
+    .definition strong { color:var(--red); }
+    .note { color:var(--muted); font:13px/1.35 Arial,sans-serif; border-top:1px solid var(--line); margin-top:8px; padding-top:6px; }
+    .map { min-height:315px; background:var(--paper); border-top:1px solid var(--ink); border-bottom:1px solid var(--ink); position:relative; }
+    .center { position:absolute; left:239px; top:97px; width:180px; height:112px; background:var(--red); color:#fff; text-align:center; padding-top:29px; font:700 20px Arial,sans-serif; letter-spacing:.5px; }
+    .center small { display:block; font:400 11px Arial,sans-serif; letter-spacing:.6px; text-transform:uppercase; padding-top:8px; }
+    .domain { position:absolute; width:172px; min-height:54px; background:var(--bg); border:1px solid var(--line); padding-top:12px; text-align:center; color:var(--body); font:700 12px/1.18 Arial,sans-serif; letter-spacing:.45px; }
+    .d1 { left:16px; top:24px; }.d2 { left:248px; top:20px; }.d3 { right:16px; top:24px; }.d4 { left:47px; bottom:25px; }.d5 { right:47px; bottom:25px; }
+    .link { position:absolute; height:1px; background:#778085; transform-origin:left center; }
+    .l1{left:174px;top:74px;width:101px;transform:rotate(31deg)}.l2{left:333px;top:74px;width:1px;transform:rotate(90deg)}.l3{left:416px;top:74px;width:102px;transform:rotate(149deg)}.l4{left:188px;top:238px;width:102px;transform:rotate(-31deg)}.l5{left:410px;top:238px;width:102px;transform:rotate(-149deg)}
+    .market-strip { display:grid; grid-template-columns:1.05fr 1.05fr .9fr; gap:22px; border-top:1px solid var(--line); padding-top:8px; }
+    .strip h3 { font:700 12px Arial,sans-serif; color:var(--red); letter-spacing:1.4px; text-transform:uppercase; }
+    .strip p { color:var(--body); font:14px/1.34 Arial,sans-serif; padding-top:8px; }
+    .footer { color:var(--muted); font:11px/1.35 Arial,sans-serif; border-top:1px solid var(--line); padding-top:10px; margin-top:8px; }
+  </style>
+</head>
+<body>
+  <div class="slide-container">
+    <div class="frame">
+      <div class="meta"><span>08 / Market framing</span><span>AgentFence investor brief</span></div>
+      <div class="rule"></div>
+      <div class="heading">
+        <h1>Market framing: a growing control-plane category.</h1>
+        <p>The opportunity is not a single, speculative market-size number. It is the security and governance requirement created where enterprise agents gain authority to affect systems, data, and workflows.</p>
+      </div>
+      <div class="main">
+        <section class="definition">
+          <div class="tag">Use precise language</div>
+          <h2><strong>Market capitalization</strong> is not an early-stage product metric.</h2>
+          <p>Market capitalization describes a public company’s equity value. It does not define the addressable opportunity for AgentFence and should not be used as a proxy for product value.</p>
+          <p>The defensible commercial framing is the intersection of enterprise AI adoption with the control domains required to safely scale consequential agent actions.</p>
+          <p class="note">No TAM, ARR, savings, or ROI number is stated here without a transparent methodology and customer validation.</p>
+        </section>
+        <section class="map" aria-label="Market opportunity intersection map">
+          <div class="domain d1">ENTERPRISE<br>AI ADOPTION</div>
+          <div class="domain d2">IDENTITY &amp;<br>ACCESS</div>
+          <div class="domain d3">DATA<br>GOVERNANCE</div>
+          <div class="domain d4">WORKFLOW<br>AUTOMATION</div>
+          <div class="domain d5">COMPLIANCE<br>EVIDENCE</div>
+          <div class="link l1"></div><div class="link l2"></div><div class="link l3"></div><div class="link l4"></div><div class="link l5"></div>
+          <div class="center">AGENTFENCE<small>action governance</small></div>
+        </section>
+      </div>
+      <section class="market-strip">
+        <div class="strip"><h3>Initial serviceable buyer</h3><p>Regulated and security-conscious organizations already deploying action-taking agents or preparing to move from pilot to production.</p></div>
+        <div class="strip"><h3>Beachhead workflows</h3><p>IT service management, customer support, finance operations, healthcare administration, and internal knowledge workflows.</p></div>
+        <div class="strip"><h3>Commercial measure</h3><p>Validate pricing by governed production agent, protected environment, action volume, and evidence requirements—not broad model-token consumption.</p></div>
+      </section>
+      <div class="footer">Evidence context: McKinsey reports broad AI use and growing agent experimentation; AgentFence’s commercial sizing must be built from named buyers, pricing assumptions, and design-partner evidence.</div>
+    </div>
+  </div>
+</body>
+</html>

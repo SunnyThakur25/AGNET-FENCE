@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>One governed path across cloud and browser agents</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    :root { --bg:#E8ECEF; --ink:#0B0C10; --body:#2C3539; --red:#990000; --line:#B7BEC2; --paper:#F7F8F8; }
+    .slide-container { width:1280px; min-height:720px; background:var(--bg); color:var(--ink); font-family:Georgia,'Times New Roman',serif; }
+    .frame { min-height:720px; padding-top:52px; padding-left:76px; padding-right:76px; display:flex; flex-direction:column; }
+    .meta { display:flex; justify-content:space-between; color:var(--red); font:700 12px Arial,sans-serif; letter-spacing:2px; text-transform:uppercase; }
+    .rule { height:1px; background:var(--line); margin-top:16px; }
+    h1 { font-size:45px; letter-spacing:-1.7px; line-height:1.02; margin-top:24px; }
+    .lede { max-width:780px; color:var(--body); font-size:18px; line-height:1.35; margin-top:12px; }
+    .flow { flex:1; display:grid; grid-template-columns:235px 235px 88px 280px 88px 280px; align-items:center; gap:0; margin-top:22px; }
+    .lane { min-height:148px; border-top:4px solid var(--ink); background:var(--paper); padding-top:20px; padding-left:19px; padding-right:19px; }
+    .lane.browser { border-top-color:var(--red); }
+    .tag { color:var(--red); font:700 11px Arial,sans-serif; letter-spacing:1.5px; text-transform:uppercase; }
+    .lane h2 { font-size:23px; line-height:1.05; margin-top:9px; }
+    .lane p { color:var(--body); font:15px/1.32 Arial,sans-serif; margin-top:12px; }
+    .inputs { display:flex; flex-direction:column; gap:22px; }
+    .join { width:2px; height:180px; background:var(--ink); position:relative; margin:auto; }
+    .join:before, .join:after { content:''; position:absolute; width:38px; height:2px; background:var(--ink); left:-38px; }
+    .join:before { top:34px; }
+    .join:after { bottom:34px; }
+    .join .head { position:absolute; right:-6px; top:83px; width:0; height:0; border-top:7px solid transparent; border-bottom:7px solid transparent; border-left:9px solid var(--ink); }
+    .fence { min-height:208px; background:var(--red); color:#fff; padding-top:28px; padding-left:27px; padding-right:27px; }
+    .fence .tag { color:#fff; opacity:.82; }
+    .fence h2 { font-size:30px; line-height:1.02; margin-top:10px; }
+    .fence p { font:16px/1.4 Arial,sans-serif; margin-top:18px; }
+    .arrow { height:2px; background:var(--ink); position:relative; }
+    .arrow:after { content:''; position:absolute; right:-1px; top:-5px; width:0; height:0; border-top:6px solid transparent; border-bottom:6px solid transparent; border-left:9px solid var(--ink); }
+    .target { min-height:208px; border-top:4px solid var(--ink); padding-top:25px; padding-left:23px; padding-right:23px; background:var(--paper); }
+    .target h2 { font-size:27px; line-height:1.03; margin-top:10px; }
+    .target p { color:var(--body); font:16px/1.4 Arial,sans-serif; margin-top:17px; }
+    .evidence { display:flex; gap:12px; margin-top:18px; }
+    .evidence span { font:700 11px Arial,sans-serif; letter-spacing:.6px; text-transform:uppercase; border-top:1px solid var(--line); padding-top:7px; color:var(--body); }
+    .boundary { color:#5F6669; font:13px/1.35 Arial,sans-serif; border-top:1px solid var(--line); padding-top:10px; margin-top:10px; }
+    .footer { color:#5F6669; font:11px/1.35 Arial,sans-serif; border-top:1px solid var(--line); padding-top:12px; margin-top:10px; }
+  </style>
+</head>
+<body>
+  <div class="slide-container">
+    <div class="frame">
+      <div class="meta"><span>04 / Hybrid runtime</span><span>AgentFence investor brief</span></div>
+      <div class="rule"></div>
+      <h1>One governed path across cloud and browser agents.</h1>
+      <p class="lede">Different runtimes, one explicit decision model: authorize the action before execution, then retain evidence of the decision and downstream outcome.</p>
+      <section class="flow" aria-label="Cloud and browser runtime convergence diagram">
+        <div class="inputs">
+          <article class="lane"><div class="tag">Cloud runtime</div><h2>Signed SDK</h2><p>Cloud agents submit a signed, replay-protected request before a governed tool call.</p></article>
+          <article class="lane browser"><div class="tag">Managed browser</div><h2>Action wrapper</h2><p>Browser agents are intercepted before navigation, forms, uploads, downloads, or browser-backed API behavior.</p></article>
+        </div>
+        <div></div>
+        <div class="join"><span class="head"></span></div>
+        <article class="fence"><div class="tag">Containment boundary</div><h2>AgentFence decision path</h2><p>Verify identity and tenant. Evaluate policy, destination, data sensitivity, credential scope, and approval requirement.</p><p><strong>ALLOW · BLOCK · REQUIRE APPROVAL</strong></p></article>
+        <div class="arrow"></div>
+        <article class="target"><div class="tag">Released consequence</div><h2>Enterprise target + evidence plane</h2><p>Only permitted requests reach approved systems. Privacy-safe Action Capture, graphical Action Trace, and tamper-evident audit events preserve the path.</p><div class="evidence"><span>Capture</span><span>Trace</span><span>Ledger</span></div></article>
+      </section>
+      <p class="boundary">Control boundary: calls that bypass the SDK or managed browser wrapper are outside AgentFence’s enforcement path and must be constrained by environment design, target permissions, and organizational policy.</p>
+      <div class="footer">Implemented product surfaces: signed runtime gateway, managed browser action wrapper, Policy Engine, Data Guard, approvals, Action Capture, Action Trace, and Audit Ledger.</div>
+    </div>
+  </div>
+</body>
+</html>

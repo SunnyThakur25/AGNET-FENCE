@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>AgentFence Control Stack</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    :root { --bg:#E8ECEF; --ink:#0B0C10; --body:#2C3539; --red:#990000; --line:#B7BEC2; --paper:#F7F8F8; }
+    .slide-container { width:1280px; min-height:720px; background:var(--bg); color:var(--ink); font-family:Georgia, 'Times New Roman', serif; }
+    .frame { min-height:720px; padding-top:52px; padding-left:76px; padding-right:76px; display:flex; flex-direction:column; }
+    .meta { display:flex; justify-content:space-between; color:var(--red); font:700 12px Arial,sans-serif; letter-spacing:2px; text-transform:uppercase; }
+    .rule { height:1px; background:var(--line); margin-top:16px; }
+    .heading { display:grid; grid-template-columns:1.3fr .7fr; gap:50px; padding-top:30px; align-items:end; }
+    h1 { font-size:42px; line-height:1.02; letter-spacing:-1.4px; max-width:760px; }
+    .intro { font:16px/1.38 Arial,sans-serif; color:var(--body); max-width:330px; }
+    .stack { display:grid; grid-template-columns:repeat(3, 1fr); gap:18px; flex:1; align-items:center; padding-top:26px; }
+    .layer { min-height:350px; border-top:6px solid var(--ink); background:var(--paper); padding-top:22px; padding-left:22px; padding-right:22px; display:flex; flex-direction:column; }
+    .layer.enforce { border-top-color:var(--red); }
+    .number { font:700 12px Arial,sans-serif; letter-spacing:1.8px; color:var(--red); }
+    .layer h2 { font-size:27px; line-height:1; letter-spacing:-.8px; margin-top:12px; }
+    .outcome { font:700 15px/1.25 Arial,sans-serif; color:var(--body); margin-top:13px; min-height:42px; }
+    .items { border-top:1px solid var(--line); margin-top:20px; padding-top:14px; display:flex; flex-direction:column; gap:8px; font:14px/1.24 Arial,sans-serif; color:var(--body); }
+    .items span { display:block; }
+    .accent { color:var(--red); font-weight:700; }
+    .implementation { font:700 13px/1.35 Arial,sans-serif; text-align:center; color:#5F6669; padding-top:10px; }
+    .footer { border-top:1px solid var(--line); padding-top:12px; color:#5F6669; font:11px/1.35 Arial,sans-serif; }
+  </style>
+</head>
+<body>
+  <div class="slide-container">
+    <div class="frame">
+      <div class="meta"><span>05 / Product system</span><span>AgentFence investor brief</span></div>
+      <div class="rule"></div>
+      <div class="heading">
+        <h1>The control stack is built around real operational needs.</h1>
+        <p class="intro">AgentFence combines a pre-execution decision path with evidence operators can inspect and export—not a collection of disconnected point controls.</p>
+      </div>
+      <div class="stack">
+        <section class="layer">
+          <div class="number">01 / IDENTITY &amp; AUTHORITY</div>
+          <h2>Know who may act.</h2>
+          <p class="outcome">Bind every action to verified, tenant-scoped authority.</p>
+          <div class="items">
+            <span>Agent Registry</span>
+            <span>Role-Based Access Control</span>
+            <span>Policy Engine</span>
+            <span>Tool Gateway</span>
+            <span>Credential Vault</span>
+          </div>
+        </section>
+        <section class="layer enforce">
+          <div class="number">02 / RISK &amp; INTERVENTION</div>
+          <h2>Decide before release.</h2>
+          <p class="outcome">Constrain data, consequences, and escalation paths at execution time.</p>
+          <div class="items">
+            <span>Data Guard</span>
+            <span>Human Approval Workflow</span>
+            <span>Runtime Monitoring Dashboard</span>
+            <span>Attack Simulation <em>(controlled)</em></span>
+          </div>
+        </section>
+        <section class="layer">
+          <div class="number">03 / EVIDENCE &amp; OPERATIONS</div>
+          <h2>Prove what happened.</h2>
+          <p class="outcome">Turn governed actions into inspectable, exportable operational evidence.</p>
+          <div class="items">
+            <span>Tamper-Evident Audit Ledger</span>
+            <span>LLM Explanations</span>
+            <span>Notifications</span>
+            <span>Compliance Evidence Export</span>
+          </div>
+        </section>
+      </div>
+      <div class="implementation"><span class="accent">13 implemented capabilities</span> · One action-governance control plane · Multi-tenant by design</div>
+      <div class="footer">Product scope: AgentFence current release. Controlled Attack Simulation supports non-destructive OWASP Agentic Top 10 assessments; it does not execute attacks against customer systems.</div>
+    </div>
+  </div>
+</body>
+</html>

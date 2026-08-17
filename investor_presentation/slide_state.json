@@ -1,0 +1,144 @@
+{
+  "project_info": {
+    "title": "AgentFence",
+    "created": 1786955453.01,
+    "last_updated": 1786955676.406,
+    "total_slides": 12
+  },
+  "slides": [
+    {
+      "id": "cover",
+      "state": "edited",
+      "pageNum": 1
+    },
+    {
+      "id": "value",
+      "state": "edited",
+      "pageNum": 2
+    },
+    {
+      "id": "gap",
+      "state": "edited",
+      "pageNum": 3
+    },
+    {
+      "id": "decision",
+      "state": "edited",
+      "pageNum": 4
+    },
+    {
+      "id": "hybrid",
+      "state": "edited",
+      "pageNum": 5
+    },
+    {
+      "id": "controls",
+      "state": "edited",
+      "pageNum": 6
+    },
+    {
+      "id": "buyer",
+      "state": "edited",
+      "pageNum": 7
+    },
+    {
+      "id": "standards",
+      "state": "edited",
+      "pageNum": 8
+    },
+    {
+      "id": "market",
+      "state": "edited",
+      "pageNum": 9
+    },
+    {
+      "id": "competition",
+      "state": "edited",
+      "pageNum": 10
+    },
+    {
+      "id": "wedge",
+      "state": "edited",
+      "pageNum": 11
+    },
+    {
+      "id": "commercial",
+      "state": "edited",
+      "pageNum": 12
+    }
+  ],
+  "outline": [
+    {
+      "id": "cover",
+      "title": "AgentFence",
+      "summary": "Cover slide introducing AgentFence as the zero-trust control plane for AI agents that take real actions.",
+      "image_plan": "Use a suitable image if needed"
+    },
+    {
+      "id": "value",
+      "title": "AI’s value arrives when systems can act",
+      "summary": "Cited market context: generative-AI value potential and enterprise agent experimentation create demand for trustworthy controls.",
+      "image_plan": "Use a suitable image if needed"
+    },
+    {
+      "id": "gap",
+      "title": "The enterprise gap: authority outpaces control",
+      "summary": "Explain the governance gap introduced by action-taking agents and fragmented existing controls.",
+      "image_plan": "Use a suitable image if needed"
+    },
+    {
+      "id": "decision",
+      "title": "AgentFence is the decision point before execution",
+      "summary": "Show AgentFence’s action-governance control point and allow/block/approval outcomes.",
+      "image_plan": "Use a suitable image if needed"
+    },
+    {
+      "id": "hybrid",
+      "title": "One governed path across cloud and browser agents",
+      "summary": "Show cloud SDK and managed browser wrapper convergence on a common policy and evidence model.",
+      "image_plan": "Use a suitable image if needed"
+    },
+    {
+      "id": "controls",
+      "title": "The control stack is built around real operational needs",
+      "summary": "Present the 13 implemented product capabilities as three operational layers.",
+      "image_plan": "Use a suitable image if needed"
+    },
+    {
+      "id": "buyer",
+      "title": "Buyer value: scale autonomy without surrendering accountability",
+      "summary": "Map buyer roles to current pains and AgentFence outcomes.",
+      "image_plan": "Use a suitable image if needed"
+    },
+    {
+      "id": "standards",
+      "title": "Security demand is becoming a standards issue",
+      "summary": "Map NIST and OWASP agentic guidance to implemented action controls.",
+      "image_plan": "Use a suitable image if needed"
+    },
+    {
+      "id": "market",
+      "title": "Market framing: a growing control-plane category",
+      "summary": "Clarify market capitalization versus addressable opportunity and define initial buyer segments.",
+      "image_plan": "Use a suitable image if needed"
+    },
+    {
+      "id": "competition",
+      "title": "The landscape validates the category",
+      "summary": "Provide a fair category-based comparison of AI security platforms, guardrails, native controls, and existing enterprise tooling.",
+      "image_plan": "Use a suitable image if needed"
+    },
+    {
+      "id": "wedge",
+      "title": "Govern the action, not only the model",
+      "summary": "Describe AgentFence’s action-level, hybrid-runtime, evidence-by-design, and adoption-path differentiation.",
+      "image_plan": "Use a suitable image if needed"
+    },
+    {
+      "id": "commercial",
+      "title": "Commercial model, expansion loop, and roadmap",
+      "summary": "Present validation-bound commercial hypothesis, expansion flywheel, implemented capabilities, near-term integrations, and extended vision.",
+      "image_plan": "Use a suitable image if needed"
+    }
+  ]
+}

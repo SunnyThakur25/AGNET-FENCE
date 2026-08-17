@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>AgentFence — Investor Presentation</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root { --bg:#E8ECEF; --ink:#0B0C10; --body:#2C3539; --red:#990000; --pale:#F7F8F8; --line:#B7BEC2; }
+    .slide-container { width:1280px; min-height:720px; background:var(--bg); color:var(--ink); position:relative; font-family:Georgia, 'Times New Roman', serif; }
+    .frame { min-height:720px; padding-top:66px; padding-left:76px; padding-right:76px; display:flex; flex-direction:column; }
+    .eyebrow { color:var(--red); font:700 14px Arial, sans-serif; letter-spacing:2.5px; text-transform:uppercase; }
+    .hairline { height:1px; background:var(--line); margin-top:24px; }
+    .main { display:grid; grid-template-columns: 1.7fr .8fr; gap:54px; flex:1; align-items:center; }
+    h1 { font-size:72px; line-height:.95; letter-spacing:-3px; max-width:680px; }
+    .subtitle { margin-top:28px; font-size:26px; line-height:1.25; color:var(--body); max-width:660px; }
+    .descriptor { margin-top:36px; border-top:5px solid var(--red); padding-top:13px; font-size:17px; line-height:1.4; max-width:590px; }
+    .control { border:1px solid var(--ink); background:var(--pale); min-height:420px; padding-top:34px; padding-left:28px; padding-right:28px; display:flex; flex-direction:column; justify-content:center; gap:25px; }
+    .node { border:1px solid var(--line); background:var(--bg); padding-top:16px; padding-left:18px; padding-right:18px; font:700 15px Arial, sans-serif; letter-spacing:.4px; }
+    .node.agent { border-color:var(--ink); }
+    .node.fence { color:white; background:var(--red); border-color:var(--red); }
+    .node.target { border-color:var(--ink); }
+    .arrow { width:2px; height:34px; background:var(--ink); margin:auto; position:relative; }
+    .arrow:after { content:''; position:absolute; left:-5px; bottom:-1px; border-left:6px solid transparent; border-right:6px solid transparent; border-top:8px solid var(--ink); }
+    .fence-label { font:700 11px Arial, sans-serif; letter-spacing:1.6px; text-transform:uppercase; margin-bottom:5px; opacity:.88; }
+    .footer { display:flex; justify-content:space-between; align-items:end; font:12px Arial, sans-serif; color:#5F6669; letter-spacing:.6px; padding-top:18px; }
+    .mark { color:var(--red); font-weight:700; }
+  </style>
+</head>
+<body>
+  <div class="slide-container">
+    <div class="frame">
+      <div class="eyebrow">Enterprise AI security · August 2026</div>
+      <div class="hairline"></div>
+      <div class="main">
+        <section>
+          <h1>AgentFence</h1>
+          <p class="subtitle">The zero-trust control plane for AI agents that take real actions.</p>
+          <p class="descriptor">Enterprise security, authority, and evidence between an agent’s intent and a real-world consequence.</p>
+        </section>
+        <aside class="control" aria-label="AgentFence control path">
+          <div class="node agent">AI AGENT<br><span style="font-weight:400;color:#5F6669">intent + delegated authority</span></div>
+          <div class="arrow"></div>
+          <div class="node fence"><div class="fence-label">containment boundary</div>AGENTFENCE<br><span style="font-weight:400">verify · decide · record</span></div>
+          <div class="arrow"></div>
+          <div class="node target">ENTERPRISE SYSTEM<br><span style="font-weight:400;color:#5F6669">approved consequence only</span></div>
+        </aside>
+      </div>
+      <div class="footer"><span>INVESTOR &amp; ENTERPRISE BRIEF</span><span class="mark">AGENTFENCE / ACTION GOVERNANCE</span></div>
+    </div>
+  </div>
+</body>
+</html>

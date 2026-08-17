@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>The landscape validates the category</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    :root { --bg:#E8ECEF; --ink:#0B0C10; --body:#2C3539; --red:#990000; --line:#B7BEC2; --pale:#F7F8F8; --muted:#5F6669; }
+    .slide-container { width:1280px; min-height:720px; background:var(--bg); color:var(--ink); font-family:Georgia,'Times New Roman',serif; }
+    .frame { min-height:720px; padding-top:52px; padding-left:76px; padding-right:76px; display:flex; flex-direction:column; }
+    .meta { display:flex; justify-content:space-between; color:var(--red); font:700 12px Arial,sans-serif; letter-spacing:2px; text-transform:uppercase; }
+    .rule { height:1px; background:var(--line); margin-top:16px; }
+    .heading { display:grid; grid-template-columns:1.25fr .75fr; gap:46px; padding-top:25px; align-items:end; }
+    h1 { font-size:44px; line-height:1.02; letter-spacing:-1.5px; }
+    .framing { color:var(--body); font:16px/1.38 Arial,sans-serif; }
+    .framing strong { color:var(--red); }
+    .matrix { flex:1; margin-top:24px; border-top:1px solid var(--ink); border-bottom:1px solid var(--ink); }
+    .head, .row { display:grid; grid-template-columns:175px 192px 242px 1fr; gap:20px; }
+    .head { color:var(--muted); font:700 10px Arial,sans-serif; letter-spacing:1.45px; text-transform:uppercase; padding-top:12px; padding-bottom:11px; border-bottom:1px solid var(--line); }
+    .row { min-height:74px; align-items:center; border-bottom:1px solid var(--line); }
+    .row:last-child { border-bottom:0; }
+    .row.agentfence { background:var(--pale); border-top:4px solid var(--red); min-height:94px; }
+    .category { font:700 15px/1.2 Arial,sans-serif; color:var(--ink); }
+    .row.agentfence .category { color:var(--red); padding-left:13px; }
+    .examples { font:14px/1.32 Arial,sans-serif; color:var(--body); }
+    .emphasis { font-size:15px; line-height:1.3; color:var(--body); }
+    .fit { font-size:15px; line-height:1.3; }
+    .fit strong { color:var(--red); }
+    .note { color:var(--muted); font:12px/1.32 Arial,sans-serif; padding-top:10px; }
+    .footer { border-top:1px solid var(--line); color:var(--muted); font:10.5px/1.35 Arial,sans-serif; padding-top:11px; margin-top:11px; }
+  </style>
+</head>
+<body>
+  <div class="slide-container">
+    <div class="frame">
+      <div class="meta"><span>09 / Competitive landscape</span><span>Category map, not a vendor ranking</span></div>
+      <div class="rule"></div>
+      <div class="heading">
+        <h1>The landscape validates the category—and leaves a focused wedge.</h1>
+        <p class="framing">AgentFence does not claim a benchmarked lead over these products. The comparison identifies <strong>where control categories overlap</strong> and why an action-level governance path can complement an enterprise security stack.</p>
+      </div>
+      <section class="matrix" aria-label="AI agent security competitive category matrix">
+        <div class="head"><div>Category</div><div>Illustrative products</div><div>Typical emphasis</div><div>AgentFence perspective</div></div>
+        <div class="row"><div class="category">Broad AI-security platforms</div><div class="examples">F5, Palo Alto Networks, Cisco</div><div class="emphasis">AI discovery, runtime protection, policy controls, portfolio integration, and AI application security.</div><div class="fit">Large-platform coverage is valuable. <strong>AgentFence focuses on an explicit pre-execution decision path</strong> for governed cloud and managed browser agent actions.</div></div>
+        <div class="row"><div class="category">AI reliability / guardrails</div><div class="examples">Guardrails AI and similar frameworks</div><div class="emphasis">Output safety, quality, evaluation, policy-violation detection, and runtime response filtering.</div><div class="fit">Reliability controls address what reaches a user. <strong>AgentFence adds consequence-aware authorization</strong> for the tool action itself.</div></div>
+        <div class="row"><div class="category">Native cloud / model controls</div><div class="examples">Cloud and model-provider safeguards</div><div class="emphasis">Provider-specific model guardrails, access posture, managed agent services, and environment controls.</div><div class="fit">Native controls are essential foundations. <strong>AgentFence is designed for a model- and runtime-agnostic policy decision path.</strong></div></div>
+        <div class="row"><div class="category">Existing enterprise controls</div><div class="examples">IAM, API gateway, DLP, SIEM, vault</div><div class="emphasis">Individual control domains: identity, ingress/egress, data handling, monitoring, and secrets.</div><div class="fit">These remain required. <strong>AgentFence orchestrates the agent-specific action decision</strong> across their relevant context.</div></div>
+        <div class="row agentfence"><div class="category">AgentFence</div><div class="examples">Zero-trust action-governance control plane</div><div class="emphasis">Signed action requests, identity and policy evaluation, data context, approval routing, privacy-safe traceability, and evidence export.</div><div class="fit"><strong>Focused wedge:</strong> govern the action before it reaches a real enterprise consequence; retain the decision path as operational evidence.</div></div>
+      </section>
+      <p class="note">Illustrative vendor examples are based on public product descriptions and do not constitute a performance benchmark, feature-completeness audit, or pricing comparison.</p>
+      <div class="footer">Sources: F5, <em>AI Security Platform</em> [5]; Palo Alto Networks, <em>Best Agentic AI Security Solutions for 2026</em> [6]; Guardrails AI, <em>The AI Reliability Platform</em> [7].</div>
+    </div>
+  </div>
+</body>
+</html>
