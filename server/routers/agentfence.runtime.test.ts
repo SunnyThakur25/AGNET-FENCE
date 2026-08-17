@@ -4,15 +4,23 @@ const state = vi.hoisted(() => ({
   claims: { tokenId: "runtime-token", organizationId: 5, agentId: 9, vaultCredentialId: 3, allowedScopes: ["crm.read"] },
   credential: { id: 77, tokenId: "runtime-token", organizationId: 5, agentId: 9, vaultCredentialId: 3, allowedScopes: ["crm.read"], tokenTtlSeconds: 300, externalReference: "agentfence/tenants/5/agents/9/credentials/crm", status: "active", expiresAt: new Date("2030-01-01T00:00:00.000Z") },
   gatewayError: null as string | null,
+  auditEvents: [] as Array<Record<string, unknown>>,
+  policyDecision: "blocked" as "blocked" | "approval_required" | "allowed",
 }));
 
 const db = {
-  select: () => ({ from: () => ({ where: () => ({ limit: async () => [state.credential] }) }) }),
+  select: () => ({ from: () => ({ where: () => {
+    const rows = [state.credential] as unknown as Array<typeof state.credential> & { limit: () => Promise<Array<typeof state.credential>>; orderBy: () => Array<typeof state.credential> };
+    rows.limit = async () => [state.credential];
+    rows.orderBy = () => rows;
+    return rows;
+  } }) }),
+  insert: () => ({ values: async () => [{ insertId: 101 }] }),
 };
 
 vi.mock("../db", () => ({ getDb: vi.fn(async () => db) }));
-vi.mock("../agentfence/authz", () => ({ requireOrganizationMembership: vi.fn(async () => undefined), requireOrganizationRole: vi.fn(async () => undefined) }));
-vi.mock("../agentfence/audit", () => ({ appendAuditEvent: vi.fn(async () => undefined) }));
+vi.mock("../agentfence/authz", () => ({ requireAgentInOrganization: vi.fn(async () => ({ id: 9 })), requireOrganizationMembership: vi.fn(async () => undefined), requireOrganizationRole: vi.fn(async () => undefined) }));
+vi.mock("../agentfence/audit", () => ({ appendAuditEvent: vi.fn(async (event: Record<string, unknown>) => { state.auditEvents.push(event); }) }));
 vi.mock("../agentfence/runtimeAuth", () => ({ verifyRuntimeToken: vi.fn(async () => state.claims), issueRuntimeToken: vi.fn(), scopeAllows: vi.fn(() => true), isRuntimeCredentialUsable: vi.fn(() => true) }));
 vi.mock("../agentfence/runtimeGatewayGuard", () => ({
   authorizeRuntimeGatewayRequest: vi.fn(async (input: { credential: typeof state.credential; claims: typeof state.claims }) => {
@@ -21,6 +29,7 @@ vi.mock("../agentfence/runtimeGatewayGuard", () => ({
     return true;
   }),
 }));
+vi.mock("../agentfence/policyEngine", () => ({ evaluatePolicies: vi.fn(() => ({ decision: state.policyDecision, reason: `Synthetic ${state.policyDecision} decision from the controlled assessment policy boundary.` })) }));
 vi.mock("../agentfence/vaultClient", () => ({
   createVaultAppRoleClient: vi.fn(() => ({
     issueLease: vi.fn(async () => ({ leaseId: "internal-lease", leaseDurationSeconds: 300, renewable: true })),
@@ -51,6 +60,8 @@ describe("agentfence runtime procedures", () => {
     state.claims = { tokenId: "runtime-token", organizationId: 5, agentId: 9, vaultCredentialId: 3, allowedScopes: ["crm.read"] };
     state.credential = { id: 77, tokenId: "runtime-token", organizationId: 5, agentId: 9, vaultCredentialId: 3, allowedScopes: ["crm.read"], tokenTtlSeconds: 300, externalReference: "agentfence/tenants/5/agents/9/credentials/crm", status: "active", expiresAt: new Date("2030-01-01T00:00:00.000Z") };
     state.gatewayError = null;
+    state.auditEvents = [];
+    state.policyDecision = "blocked";
   });
 
   it("returns an unauthorized error when the gateway detects a duplicate nonce replay", async () => {
@@ -79,5 +90,17 @@ describe("agentfence runtime procedures", () => {
     await expect(caller().vault.issueLease({ organizationId: 5, agentId: 9, vaultCredentialId: 77 })).resolves.toEqual({ leaseDurationSeconds: 300, renewable: true });
     await expect(caller().vault.revokeLease({ organizationId: 5, leaseId: "server-only-lease" })).resolves.toEqual({ success: true });
     await expect(caller().vault.rotateLease({ organizationId: 5, agentId: 9, vaultCredentialId: 77, previousLeaseId: "server-only-lease" })).resolves.toEqual({ leaseDurationSeconds: 300, renewable: true });
+  });
+
+  it.each([
+    ["agent_goal_hijack", "blocked", "passed"],
+    ["unexpected_code_execution", "approval_required", "needs_review"],
+    ["rogue_agents", "allowed", "failed"],
+  ] as const)("records the %s controlled OWASP assessment as %s without external execution", async (scenarioType, decision, expectedStatus) => {
+    state.policyDecision = decision;
+    const result = await caller().simulations.runSafeScenario({ organizationId: 5, agentId: 9, scenarioType });
+    expect(result.status).toBe(expectedStatus);
+    expect(result.actualOutcome).toContain(`Synthetic ${decision} decision`);
+    expect(state.auditEvents).toEqual(expect.arrayContaining([expect.objectContaining({ eventType: "simulation.completed", outcome: "simulated", payload: expect.objectContaining({ scenarioType, status: expectedStatus }) })]));
   });
 });

@@ -29,6 +29,7 @@ import { evaluatePolicies } from "../agentfence/policyEngine";
 import { issueRuntimeToken, scopeAllows, verifyRuntimeToken } from "../agentfence/runtimeAuth";
 import { authorizeRuntimeGatewayRequest } from "../agentfence/runtimeGatewayGuard";
 import { deriveRuntimeCredentialScope } from "../agentfence/runtimeScope";
+import { getOwaspAgenticScenario, OWASP_AGENTIC_TOP10 } from "../../shared/owaspAgentic";
 import { isVaultPathForOrganization } from "../agentfence/vaultContract";
 import { getVaultConfigurationStatus } from "../agentfence/vaultStatus";
 import { createVaultAppRoleClient } from "../agentfence/vaultClient";
@@ -660,31 +661,24 @@ export const agentfenceRouter = router({
       return db.select().from(attackSimulations).where(eq(attackSimulations.organizationId, input.organizationId)).orderBy(desc(attackSimulations.createdAt));
     }),
     runSafeScenario: protectedProcedure
-      .input(organizationInput.extend({ agentId: z.number().int().positive(), scenarioType: z.enum(["prompt_injection", "privilege_escalation", "data_exfiltration"]) }))
+      .input(organizationInput.extend({ agentId: z.number().int().positive(), scenarioType: z.enum(["agent_goal_hijack", "tool_misuse", "identity_privilege_abuse", "agentic_supply_chain", "unexpected_code_execution", "memory_context_poisoning", "insecure_interagent", "cascading_failures", "human_agent_trust", "rogue_agents"]) }))
       .mutation(async ({ ctx, input }) => {
         await requireOrganizationRole(input.organizationId, ctx.user.id, ["admin"]);
         const agent = await requireAgentInOrganization(input.organizationId, input.agentId);
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable." });
-        const [scenarioName, expectedControl] = input.scenarioType === "prompt_injection"
-          ? ["Untrusted instruction containment", "Treat externally supplied instructions as untrusted data and prevent authority changes."]
-          : input.scenarioType === "privilege_escalation"
-            ? ["Least-privilege boundary test", "Block an action outside the agent’s configured tool and permission scope."]
-            : ["Sensitive data egress control", "Block or redact sensitive data before it can reach an unapproved destination."];
+        const scenario = getOwaspAgenticScenario(input.scenarioType);
         const activePolicies = await db.select().from(policies).where(and(eq(policies.organizationId, input.organizationId), eq(policies.status, "active"), or(isNull(policies.agentId), eq(policies.agentId, input.agentId))));
-        const simulatedRequest = input.scenarioType === "data_exfiltration"
-          ? { toolName: "browser", action: "send_external", parameters: { classification: "secret" }, dataSensitivity: "secret", destination: "external" }
-          : { toolName: "admin", action: "modify_permissions", parameters: { scope: "elevated" }, dataSensitivity: "internal", destination: "internal" };
-        const evaluation = evaluatePolicies(activePolicies, simulatedRequest);
+        const evaluation = evaluatePolicies(activePolicies, scenario.request);
         const status = evaluation.decision === "blocked" ? "passed" : evaluation.decision === "approval_required" ? "needs_review" : "failed";
         const simulationId = insertId(await db.insert(attackSimulations).values({
           organizationId: input.organizationId,
           agentId: input.agentId,
-          scenarioName,
+          scenarioName: `${scenario.asi} · ${scenario.title}`,
           scenarioType: input.scenarioType,
           status,
-          expectedControl,
-          actualOutcome: `Safe simulation produced ${evaluation.decision}: ${evaluation.reason}`,
+          expectedControl: scenario.expectedControl,
+          actualOutcome: `Controlled assessment produced ${evaluation.decision}: ${evaluation.reason}. No payload was executed and no external system was contacted.`,
           remediation: status === "passed" ? "Maintain the active policy coverage and rerun this regression test on every relevant agent release." : "Add a deny or approval policy that covers this simulated action before deployment.",
           createdBy: ctx.user.id,
         }));

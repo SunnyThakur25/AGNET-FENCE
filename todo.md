@@ -65,3 +65,12 @@
 - [x] Add and run focused UI/auth-flow Vitest coverage, then verify desktop and mobile screenshots for the redesign.
 - [x] Add route-level reduced-motion-aware transitions between the public landing, sign-in, sign-up, and protected console experiences.
 - [x] Add interactive Vitest coverage proving sign-in, sign-up, and Google sign-in controls invoke the secure OAuth entry handler.
+- [x] Create a no-Vault local testing guide that explains safe disconnected-mode workflows and validation commands.
+- [x] Map the OWASP Agentic Top 10 categories to AgentFence prevention, detection, approval, and audit controls with transparent limitations.
+- [x] Upgrade Attack Simulation into a controlled, non-destructive assessment workflow that evaluates policy and guardrail outcomes instead of executing hostile payloads or real attacks.
+- [x] Add a vibrant blue/cyan/red security visualization, sparking risk signals, smooth transitions, and animated AgentFence identity motion with reduced-motion support.
+- [x] Add Vitest coverage for OWASP assessment scenarios and verify desktop/mobile visualization screenshots.
+- [x] Add a documented and in-product OWASP Agentic Top 10 matrix showing prevention, detection, approval, audit, and simulation limitations for every ASI category.
+- [x] Add router-level tests that exercise controlled OWASP scenario assessments, their audit events, and non-destructive policy-decision outcomes.
+- [x] Add representative ASI01, ASI05, and ASI10 router-level controlled-assessment cases with audit-event assertions.
+- [x] Add controlled policy-decision outcome coverage for passed, needs-review, and failed assessment statuses without external execution.

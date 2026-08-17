@@ -12,6 +12,7 @@ import { isLeaseDurationAllowed, VAULT_LEASE_CONTRACT, vaultCredentialPath } fro
 import { isVaultPathForOrganization } from "./vaultContract";
 import { authorizeRuntimeGatewayRequest } from "./runtimeGatewayGuard";
 import { deriveRuntimeCredentialScope } from "./runtimeScope";
+import { getOwaspAgenticScenario, OWASP_AGENTIC_TOP10 } from "../../shared/owaspAgentic";
 
 describe("AgentFence enforcement core", () => {
   it("blocks by default when no policy grants access", () => {
@@ -198,5 +199,15 @@ describe("AgentFence enforcement core", () => {
     expect(deriveRuntimeCredentialScope({ referenceScopes: ["crm.read", "crm.write"], referenceTtlSeconds: 300, requestedScopes: ["crm.read"], requestedTtlSeconds: 180 })).toEqual({ scopes: ["crm.read"], ttlSeconds: 180 });
     expect(() => deriveRuntimeCredentialScope({ referenceScopes: ["crm.read"], referenceTtlSeconds: 300, requestedScopes: ["billing.pay"], requestedTtlSeconds: 180 })).toThrow("runtime_scope_exceeds_reference");
     expect(() => deriveRuntimeCredentialScope({ referenceScopes: ["crm.read"], referenceTtlSeconds: 300, requestedScopes: ["crm.read"], requestedTtlSeconds: 301 })).toThrow("runtime_ttl_exceeds_reference");
+  });
+
+  it("maps each OWASP Agentic Top 10 category to a synthetic policy request without executable payload content", () => {
+    expect(OWASP_AGENTIC_TOP10).toHaveLength(10);
+    expect(OWASP_AGENTIC_TOP10.map(scenario => scenario.asi)).toEqual(["ASI01", "ASI02", "ASI03", "ASI04", "ASI05", "ASI06", "ASI07", "ASI08", "ASI09", "ASI10"]);
+    for (const scenario of OWASP_AGENTIC_TOP10) {
+      expect(getOwaspAgenticScenario(scenario.id)).toEqual(scenario);
+      expect(scenario.request).toMatchObject({ toolName: expect.any(String), action: expect.any(String), destination: expect.any(String) });
+      expect(JSON.stringify(scenario.request)).not.toMatch(/curl|wget|powershell|rm -rf|<script/i);
+    }
   });
 });
