@@ -79,3 +79,5 @@
 - [x] Apply restrained red risk/boundary signals and subtle reduced-motion-aware animations across the authenticated console.
 - [x] Add and run focused public landing render/content tests, then verify desktop and mobile screenshots for the red containment refresh.
 - [x] Add a public landing preview route for authenticated-session visual verification without changing the standard unauthenticated home behavior.
+- [x] Create an organization-ready architecture diagram covering cloud AI agents, local browser agents, AgentFence enforcement, enterprise systems, identity, Vault, approvals, audit, and SOC operations.
+- [x] Document the trust boundaries, request paths, allow/block/approval decisions, and deployment patterns represented by the AgentFence architecture diagram.

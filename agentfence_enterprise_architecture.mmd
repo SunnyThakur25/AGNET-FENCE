@@ -1,0 +1,91 @@
+flowchart TB
+    %% AgentFence enterprise deployment architecture
+    subgraph ACTORS[Enterprise users and operators]
+        U[Employees / customers]
+        SEC[Security administrators]
+        APR[Authorized approvers]
+        SOC[SOC / compliance team]
+    end
+
+    subgraph AGENT_PLANE[AI agent execution plane]
+        direction LR
+        CLOUD[Cloud AI agents<br/>copilots · workflows · serverless agents]
+        LOCAL[Local browser agent<br/>managed laptop or VDI]
+        WRAPPER[AgentFence browser wrapper<br/>extension · proxy · automation adapter]
+        CLOUD -->|tool intent| GATEWAY
+        LOCAL -->|navigation · form · upload · API intent| WRAPPER
+        WRAPPER -->|intercepted browser action| GATEWAY
+    end
+
+    subgraph FENCE[AgentFence control plane and runtime enforcement]
+        direction TB
+        GATEWAY[Tool Gateway / signed runtime SDK<br/>single action decision point]
+        IDENTITY[Agent Registry and workload identity<br/>tenant · owner · environment · risk]
+        POLICY[Policy Engine<br/>allow · block · approval]
+        GUARD[Data Guard<br/>PII · PHI · payment data · secrets]
+        APPROVAL[Human Approval Workflow<br/>payments · deletes · exports · record changes]
+        CREDS[Credential Broker<br/>scoped short-lived credentials]
+        AUDIT[Tamper-Evident Audit Ledger<br/>decision · actor · tool · outcome]
+        MONITOR[Runtime Monitoring and Notifications]
+        SIM[Controlled OWASP assessment<br/>synthetic only · no payload execution]
+
+        GATEWAY -->|resolve agent| IDENTITY
+        GATEWAY -->|evaluate requested action| POLICY
+        GATEWAY -->|classify input / output| GUARD
+        POLICY -->|high-impact action| APPROVAL
+        POLICY -->|allowed action scope| CREDS
+        GATEWAY -->|all decisions| AUDIT
+        AUDIT --> MONITOR
+        SIM -->|tests policy boundary| POLICY
+        SIM --> AUDIT
+    end
+
+    subgraph TRUST[Corporate trust services]
+        IDP[Corporate IdP / SSO<br/>workforce and workload identity]
+        VAULT[Dedicated Vault / secret manager<br/>AppRole · leases · rotation · revocation]
+        SIEM[SIEM / SOAR / compliance evidence]
+        IDP -->|authenticated user and agent claims| GATEWAY
+        VAULT -->|server-side dynamic lease| CREDS
+        AUDIT -->|immutable events| SIEM
+        MONITOR -->|alerts| SOC
+    end
+
+    subgraph ENTERPRISE[Approved enterprise systems and data]
+        direction LR
+        SAAS[CRM · ERP · ITSM · HRIS<br/>approved SaaS applications]
+        API[Internal APIs and microservices]
+        DATA[Databases · data warehouse · file storage]
+        PAY[Payments · banking · regulated workflows]
+        WEB[Approved business websites / browser portals]
+        CREDS -->|scoped credential, only after allow| SAAS
+        CREDS -->|scoped credential, only after allow| API
+        CREDS -->|scoped credential, only after allow| DATA
+        CREDS -->|scoped credential, only after allow| PAY
+        GATEWAY -->|approved browser action only| WEB
+    end
+
+    subgraph GOVERNANCE[Administration and governance]
+        CONSOLE[AgentFence Console<br/>registry · policies · approvals · evidence]
+        SEC --> CONSOLE
+        APR -->|approve or reject| APPROVAL
+        CONSOLE --> IDENTITY
+        CONSOLE --> POLICY
+        CONSOLE --> APPROVAL
+        CONSOLE --> AUDIT
+        CONSOLE --> SIM
+    end
+
+    U --> CLOUD
+    U --> LOCAL
+
+    classDef agent fill:#1d2939,stroke:#77d9ef,color:#eef9ff,stroke-width:2px
+    classDef control fill:#4a1024,stroke:#ff849e,color:#fff3f6,stroke-width:3px
+    classDef security fill:#17233a,stroke:#8adff0,color:#edfaff,stroke-width:2px
+    classDef system fill:#182319,stroke:#74d7a5,color:#effff5,stroke-width:2px
+    classDef people fill:#281b32,stroke:#c7a7ff,color:#fbf6ff,stroke-width:2px
+
+    class CLOUD,LOCAL,WRAPPER agent
+    class GATEWAY,IDENTITY,POLICY,GUARD,APPROVAL,CREDS,AUDIT,MONITOR,SIM control
+    class IDP,VAULT,SIEM security
+    class SAAS,API,DATA,PAY,WEB system
+    class U,SEC,APR,SOC,CONSOLE people
