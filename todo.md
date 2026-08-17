@@ -119,9 +119,9 @@
 - [x] Enhance the public landing page with a clear operational “how AgentFence works” journey and the supplied enterprise architecture visual.
 - [x] Create research-grounded Markdown documentation for product development, enterprise production deployment, and investor evaluation of AgentFence.
 - [x] Create an investor narrative explaining the problem, market context, differentiated USP, operating model, and realistic value thesis without unsupported market-cap claims.
-- [ ] Produce a concise product demo video that shows the governed agent-action workflow and labels controlled-assessment limits clearly. **Blocked:** the available free-plan video-generation quota is exhausted; the approved 60-second script and production prompt are ready in `AGENTFENCE_DEMO_VIDEO_SCRIPT.md`.
+- [x] Demo video intentionally waived by user; retain the approved 60-second script and production prompt in `AGENTFENCE_DEMO_VIDEO_SCRIPT.md` as optional future material.
 - [x] Add automated coverage and visual validation for the onboarding and landing-page changes, then validate the research-grounded documentation deliverables.
-- [ ] After the demo video is generated, validate the final media artifact against the approved script and compliance note.
+- [x] Final media validation intentionally waived because the user requested presentation-only delivery; no video artifact is part of this release.
 
 ## Profile and account security
 
