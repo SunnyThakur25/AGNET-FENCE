@@ -106,6 +106,8 @@ export function buildActionTrace(input: {
       targetRecordedAt: input.call.targetRecordedAt,
       agent: input.agent,
     },
+    policy: input.policy,
+    dataGuardFindings: input.findings.map(finding => ({ classification: finding.classification, actionTaken: finding.actionTaken, occurrences: finding.occurrences })),
     hops,
     auditEvents: input.auditEvents,
   };

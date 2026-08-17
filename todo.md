@@ -87,3 +87,17 @@
 - [x] Add automated tests and interface validation for Action Capture, Action Trace, tenant isolation, and sensitive-data redaction.
 - [x] Extend AI Action Trace to capture and display downstream target-system outcome metadata for allowed cloud and browser actions without retaining raw response bodies.
 - [x] Add tests proving Action Trace includes target-system outcome details for allowed flows while preserving tenant isolation and sensitive-data redaction.
+- [x] Add interactive hover/focus tooltips to graphical AI Action Trace steps with policy, intent, Data Guard, approval, and target-outcome detail.
+- [x] Add Action Capture search, decision/outcome filters, and sortable log columns for intent, policy, agent, destination, and time.
+- [x] Add real-time trace status indicators and smooth reduced-motion-safe transitions for active execution states.
+- [x] Add automated coverage for Action Capture filtering/sorting and accessible Action Trace tooltip/status behavior.
+
+**Delivery note:** These UI refinements are scoped to the existing tenant-scoped observability model and do not collect raw secrets, prompts, page content, or response bodies.
+
+- [x] Add UI-level Vitest coverage for Action Capture search, decision/outcome filtering, and each sort mode against rendered log data.
+- [x] Add accessibility-focused tests proving Action Trace hop cards expose tooltip details on focus/hover and that live-status indicators render correctly for pending target outcomes.
+- [x] Add rendered UI tests for Action Capture controls and visible action rows covering search, decision/outcome filtering, and each sort mode.
+- [x] Add rendered accessibility tests for Action Trace hop cards proving aria-describedby tooltip linkage and live pending-target indicators.
+- [x] Add rendered-component Vitest coverage for Action Capture with sample action rows and assertions that visible rows change for search, decision/outcome filters, and every sort mode.
+- [x] Add rendered Action Capture tests proving visible rows change for decision and downstream outcome filters.
+- [x] Add rendered Action Capture tests proving visible row order for newest, oldest, agent, intent, policy, and outcome sort modes.
