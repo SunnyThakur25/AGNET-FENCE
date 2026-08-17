@@ -204,3 +204,14 @@
 - [x] Tighten investor, product, architecture, and deployment documentation to distinguish implemented controls, integration boundaries, optional activation, and roadmap items such as native MCP governance.
 - [x] Update the investor presentation wording to use the same audit-defensible claims.
 - [x] Validate, checkpoint, and push the completed claim-hardening implementation to GitHub.
+
+## Native MCP gateway and live integration activation
+
+- [x] Define native MCP gateway registration, server-trust, tool-discovery, and per-tool policy-enforcement contracts without retaining raw upstream credentials.
+- [x] Implement tenant-scoped MCP server registration and native policy-gated tool invocation through the AgentFence control path.
+- [x] Add a secure customer Vault AppRole activation procedure that validates deployment-only configuration, health, tenant scope, and server-side authentication without accepting secrets in the browser.
+- [x] Build a complete Splunk HEC connection and certification workflow using HTTPS endpoint metadata plus a tenant-safe Vault reference, with controlled evidence results and no raw token exposure.
+- [x] Add governed configuration interfaces for MCP servers, Vault activation, and Splunk HEC connection/certification.
+- [x] Add automated security, tenant-isolation, and rendered-interface tests; validate full build and responsive user experience.
+- [x] Update the activation guide and product claim register, checkpoint the completed release, and push it to GitHub.
+- [ ] Complete a live customer Vault AppRole authentication and Splunk HEC event certification after the customer supplies a reachable HEC endpoint plus protected `VAULT_ADDR`, `VAULT_ROLE_ID`, and `VAULT_SECRET_ID` values.

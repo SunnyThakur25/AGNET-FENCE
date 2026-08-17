@@ -55,6 +55,8 @@ export const enterpriseConnectionStatus = mysqlEnum("enterpriseConnectionStatus"
 export const subscriptionPlan = mysqlEnum("subscriptionPlan", ["pilot", "growth", "enterprise"]);
 export const policyRevisionStatus = mysqlEnum("policyRevisionStatus", ["draft", "pending_review", "approved", "rejected", "promoted", "superseded"]);
 export const connectorCertificationStatus = mysqlEnum("connectorCertificationStatus", ["pending", "certified", "failed", "activation_required"]);
+export const mcpServerStatus = mysqlEnum("mcpServerStatus", ["pending_review", "trusted", "unhealthy", "disabled"]);
+export const mcpToolStatus = mysqlEnum("mcpToolStatus", ["discovered", "enabled", "disabled"]);
 
 export const organizations = mysqlTable(
   "organizations",
@@ -430,6 +432,63 @@ export const connectorCertifications = mysqlTable(
     createdAt: timestamp("createdAt").defaultNow().notNull(),
   },
   table => [index("connector_certifications_connection_created_idx").on(table.connectionId, table.createdAt)],
+);
+
+/**
+ * Native remote MCP server registry. Servers are explicitly trusted by an
+ * organization administrator before a discovered tool may be enabled or used.
+ * Upstream authorization values never appear in this table; only a tenant-safe
+ * Vault reference is stored when a remote server requires a bearer token.
+ */
+export const mcpServers = mysqlTable(
+  "mcpServers",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    organizationId: int("organizationId").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    displayName: varchar("displayName", { length: 120 }).notNull(),
+    endpoint: varchar("endpoint", { length: 500 }).notNull(),
+    transport: varchar("transport", { length: 32 }).notNull().default("streamable_http"),
+    status: mcpServerStatus.notNull().default("pending_review"),
+    vaultSecretPath: varchar("vaultSecretPath", { length: 255 }),
+    protocolVersion: varchar("protocolVersion", { length: 32 }),
+    toolsDigest: varchar("toolsDigest", { length: 64 }),
+    lastDiscoveredAt: timestamp("lastDiscoveredAt"),
+    lastErrorCode: varchar("lastErrorCode", { length: 64 }),
+    createdBy: int("createdBy").notNull().references(() => users.id, { onDelete: "restrict" }),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  table => [
+    uniqueIndex("mcp_servers_org_endpoint_unique").on(table.organizationId, table.endpoint),
+    index("mcp_servers_org_status_idx").on(table.organizationId, table.status),
+  ],
+);
+
+/**
+ * A reviewable catalog copied from an upstream MCP `tools/list` response.
+ * The schemas are upstream metadata, not trust assertions, and a tool remains
+ * non-invocable until an organization administrator explicitly enables it.
+ */
+export const mcpTools = mysqlTable(
+  "mcpTools",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    organizationId: int("organizationId").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    serverId: int("serverId").notNull().references(() => mcpServers.id, { onDelete: "cascade" }),
+    name: varchar("name", { length: 160 }).notNull(),
+    title: varchar("title", { length: 240 }),
+    description: text("description"),
+    inputSchema: json("inputSchema").notNull(),
+    outputSchema: json("outputSchema"),
+    status: mcpToolStatus.notNull().default("discovered"),
+    lastDiscoveredAt: timestamp("lastDiscoveredAt").defaultNow().notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  table => [
+    uniqueIndex("mcp_tools_server_name_unique").on(table.serverId, table.name),
+    index("mcp_tools_org_server_idx").on(table.organizationId, table.serverId),
+  ],
 );
 
 /**

@@ -26,7 +26,7 @@ For cloud agents, developers use the signed runtime SDK around each tool connect
 
 ## MCP boundary
 
-MCP-capable agent tools can be governed when the calling application wraps each tool invocation with the signed runtime SDK. AgentFence does **not** currently provide a native MCP server proxy, automatic MCP tool discovery layer, or independent MCP transport interceptor. A native MCP gateway with server trust policy and per-tool enforcement is a roadmap item, not a current claim.
+The Native MCP Gateway now governs customer-approved public HTTPS MCP servers. It initializes the remote server, discovers `tools/list` metadata for review, requires explicit administrator trust and per-tool enablement, verifies a signed runtime credential and tool scope, applies Data Guard and policy evaluation, then proxies an allowed `tools/call`. It does not claim STDIO transport, private-network reachability, OAuth authorization-code handoff, dynamic client registration, or streaming transport; those remain roadmap capabilities.
 
 ## Deployment sequence
 

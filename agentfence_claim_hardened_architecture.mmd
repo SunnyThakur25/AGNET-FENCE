@@ -18,13 +18,14 @@ flowchart TB
     direction LR
     Cloud[Cloud agent<br/>signed runtime SDK]:::boundary
     Browser[Managed browser agent<br/>wrapper / extension / RPA adapter]:::boundary
-    MCP[MCP-capable agent<br/>integrated through signed SDK<br/>no native MCP proxy]:::optional
+    MCP[MCP-capable agent<br/>signed runtime credential]:::boundary
   end
 
   subgraph AgentFence[AgentFence governed action path]
     direction TB
     Registry[Agent Registry & workload identity<br/>tenant · owner · environment · risk]:::control
     Gateway[Tool Gateway<br/>signed identity · nonce/replay check<br/>one decision per integrated action]:::control
+    MCPGateway[Native MCP Gateway<br/>public HTTPS discovery · trust · proxy<br/>per-tool runtime scope]:::control
     Guard[Data Guard<br/>inbound + outbound inspection<br/>strongest sensitivity + redaction]:::control
     Policy[Policy Engine<br/>tool · action · parameters · data · destination]:::control
     Approval[Human Approval Workflow<br/>high-impact action holds]:::control
@@ -33,6 +34,7 @@ flowchart TB
     Ledger[Tamper-Evident Audit Ledger<br/>decisions · changes · approvals · outcomes]:::evidence
     Owasp[Controlled OWASP assessment<br/>synthetic policy-path test only<br/>no external payload execution]:::optional
     Registry --> Gateway --> Guard --> Policy
+    MCPGateway --> Guard
     Policy -->|allow| Broker
     Policy -->|approval required| Approval -->|approved action| Broker
     Owasp -. tests same policy boundary .-> Policy
@@ -59,7 +61,9 @@ flowchart TB
   Operator -->|integrated browser intent| Browser
   Cloud --> Gateway
   Browser --> Gateway
-  MCP -->|SDK-wrapped tool intent| Gateway
+  MCPServer[Customer-approved remote MCP server<br/>public HTTPS only<br/>STDIO/private/OAuth/streaming excluded]:::optional
+  MCP -->|runtime-scoped tools/call| MCPGateway
+  MCPGateway -->|reviewed tool invocation| MCPServer
   Broker -->|scoped target call| APIs
   Vault -. customer-connected lease/read only after activation .-> Broker
   Gateway -->|browser action allowed only| Portal

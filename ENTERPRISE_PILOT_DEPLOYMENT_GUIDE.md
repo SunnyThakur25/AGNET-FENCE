@@ -15,10 +15,11 @@ AgentFence governs actions that travel through its signed cloud SDK or managed b
 | **1. Select a bounded workflow** | Business owner and security owner | Register a cloud or managed-browser agent, then write a narrow first policy. | Agent identity, policy, and baseline Action Trace. |
 | **2. Establish accountable access** | Workspace administrator | Create a team; assign administrators, operators, viewers, and billing administrators; use expiring, one-time invitation tokens. | Team membership review and invitation audit events. |
 | **3. Govern the policy change** | Two different workspace administrators | Submit an immutable policy revision; collect an independent approval before promotion. | Field-level diff, reviewer comment, promotion event, and audit-ledger record. |
-| **4. Configure observability** | SOC or security engineering | Save a tenant-scoped SIEM/SOAR profile with an HTTPS endpoint and Vault reference. | Connection profile and controlled test result. |
-| **5. Configure identity readiness** | IAM team | Check deployment-only OIDC/SCIM readiness; validate OIDC discovery after issuer configuration. | Boolean readiness state, OIDC discovery preflight, and team/provisioning design review. |
-| **6. Activate Vault when approved** | Vault administrator | Supply secure deployment values for `VAULT_ADDR`, `VAULT_ROLE_ID`, and `VAULT_SECRET_ID`; run a server-side health probe. | Ready Vault state and scoped lease test. |
-| **7. Select commercial access** | Billing administrator | Use Stripe Checkout for Pilot or Growth, or request an Enterprise design review. | Server-recorded Stripe identifiers and Stripe-side subscription confirmation. |
+| **4. Register MCP tool boundaries** | Security engineering and application owner | Register a customer-approved remote HTTPS MCP endpoint, discover its tool catalog, then trust the server and enable only reviewed tools. | Catalog digest, per-tool state, policy scope, and audit events. |
+| **5. Configure observability** | SOC or security engineering | Save a tenant-scoped SIEM/SOAR profile with an HTTPS endpoint and Vault reference. | Connection profile and controlled test result. |
+| **6. Configure identity readiness** | IAM team | Check deployment-only OIDC/SCIM readiness; validate OIDC discovery after issuer configuration. | Boolean readiness state, OIDC discovery preflight, and team/provisioning design review. |
+| **7. Activate Vault when approved** | Vault administrator | Supply secure deployment values for `VAULT_ADDR`, `VAULT_ROLE_ID`, and `VAULT_SECRET_ID`; authenticate the configured AppRole from the server. | Ready Vault profile and safe AppRole evidence code. |
+| **8. Select commercial access** | Billing administrator | Use Stripe Checkout for Pilot or Growth, or request an Enterprise design review. | Server-recorded Stripe identifiers and Stripe-side subscription confirmation. |
 
 ## Policy approval and promotion
 
@@ -42,9 +43,17 @@ AgentFence stores one connection profile per tenant and connector type. A profil
 
 ### Controlled Splunk HEC certification
 
-Use **Secure connector settings** to enter only the HEC HTTPS endpoint, non-secret metadata, and a tenant-scoped Vault reference in the form `agentfence/tenants/<organizationId>/integrations/splunk_hec/<name>`. Credential-shaped metadata keys such as `token`, `secret`, `password`, `apiKey`, and `routing_key` are rejected. The referenced Vault record must contain either `hec_token` or `token`; this value is read only by server code for the certification attempt.
+Use **Secure connector settings** to enter only the specific HEC HTTPS event endpoint ending in `/services/collector/event`, non-secret metadata, and a tenant-scoped Vault reference in the form `agentfence/tenants/<organizationId>/integrations/splunk_hec/<name>`. Credential-shaped metadata keys such as `token`, `secret`, `password`, `apiKey`, and `routing_key` are rejected. Only `index`, `source`, `sourcetype`, and `host` are copied into the bounded certification event. The referenced Vault record must contain either `hec_token` or `token`; this value is read only by server code for the certification attempt.
 
-Certification emits a single bounded `agentfence.connector.certification` event to the configured HEC endpoint. It stores a certification status and evidence code, such as `HEC_DELIVERY_ACKNOWLEDGED`, `HEC_HTTP_<status>`, `VAULT_NOT_CONFIGURED`, or `HEC_OR_VAULT_UNREACHABLE`. The raw HEC token, the Vault response, and any remote response body are neither returned to the browser nor written to the database or audit payload.
+Certification emits a single bounded `agentfence.connector.certification` event to the configured HEC endpoint. A response is recorded as certified only when the endpoint returns HTTP success and the HEC response body contains `code: 0`. It stores a safe evidence code, such as `HEC_EVENT_ACCEPTED`, `HEC_HTTP_<status>`, `VAULT_NOT_CONFIGURED`, or `HEC_OR_VAULT_UNREACHABLE`. The raw HEC token, the Vault response, and any remote response body are neither returned to the browser nor written to the database or audit payload.
+
+## Native MCP gateway
+
+AgentFence now provides a tenant-scoped **Native MCP Gateway** for customer-approved remote HTTPS MCP servers. It uses MCP JSON-RPC initialization followed by `tools/list` to create a reviewable catalog. Tool names, descriptions, schemas, and upstream annotations are treated as untrusted metadata until an administrator explicitly trusts the server and enables an individual tool. The gateway records a catalog digest and audit event on discovery.[6]
+
+An agent invokes an enabled MCP tool only through a signed AgentFence runtime credential whose scope includes `mcp:<serverId>.<toolName>`. The gateway validates the runtime credential and nonce, applies Data Guard to arguments, evaluates the tenant and agent policy, creates the normal allow/block/approval record, then proxies an allowed `tools/call`. Returned result content is bounded and Data Guard-redacted before delivery to the runtime. Direct calls from an agent to an upstream MCP server are outside the AgentFence enforcement claim.
+
+> **Initial release boundary:** The gateway accepts public HTTPS MCP endpoints. It intentionally rejects local and private-network endpoints and does not yet implement STDIO transport, OAuth authorization-code handling, dynamic client registration, or upstream event streaming. An upstream bearer token may be referenced only through `agentfence/tenants/<organizationId>/integrations/mcp/<name>` in customer Vault; browser forms never accept this token.
 
 ## Identity and provisioning readiness
 
@@ -67,7 +76,9 @@ AgentFence is deliberately usable in **disconnected-safe mode**. The Enterprise 
 | `VAULT_ROLE_ID` | Least-privilege AppRole identity for the server integration. | Restrict policy to `agentfence/tenants/<organizationId>/...`. |
 | `VAULT_SECRET_ID` | AppRole authentication secret. | Distribute through a controlled, short-lived or response-wrapped process where supported. |
 
-The server probes Vault health and issues or revokes leases only from server code. The browser receives status and lease metadata, never raw secrets. See [`vault_deployment_guide.md`](./vault_deployment_guide.md) for the complete AppRole policy, lease, rotation, and rollback guidance.
+Use **Secure connector settings → Activate Vault AppRole** to save the customer Vault HTTPS address and execute the server-side authentication check. The UI requires no Role ID or Secret ID. Activation succeeds only when the safe UI address exactly matches `VAULT_ADDR` in protected deployment settings and an AppRole login using `VAULT_ROLE_ID` and `VAULT_SECRET_ID` succeeds. The console records only a Boolean readiness state and a safe code such as `VAULT_APPROLE_AUTHENTICATED`, `VAULT_ENDPOINT_MISMATCH`, or `VAULT_APPROLE_AUTH_FAILED`.
+
+The server probes Vault health, authenticates AppRole, and issues or revokes leases only from server code. The browser receives status and lease metadata, never raw secrets. See [`vault_deployment_guide.md`](./vault_deployment_guide.md) for the complete AppRole policy, lease, rotation, and rollback guidance.
 
 ## Billing and feature plans
 
@@ -93,6 +104,7 @@ The Team Management surface supports **administrator**, **operator**, **viewer**
 | Enterprise Connections | Profile data is tenant-scoped; any endpoint is HTTPS; no token can be entered or rendered. |
 | Policy Governance | Every live policy promotion has an independently approved immutable revision and a matching audit event. |
 | Splunk HEC certification | The profile has a tenant-safe Vault reference; the recorded evidence code is reviewed; raw HEC material is absent from the UI, database, and audit logs. |
+| Native MCP gateway | The server endpoint is public HTTPS, its discovered catalog is reviewed, the server is trusted, only required tools are enabled, and the agent runtime scope uses `mcp:<serverId>.<toolName>`. |
 | OIDC / SCIM | Readiness is Boolean-only in the console; customer identity credentials exist only in secure deployment settings. |
 | Vault | Disconnected-safe status is explicit until secure configuration is supplied. |
 | Stripe | Checkout is server-created; webhook signatures are checked; the browser never reads the secret key. |
@@ -105,3 +117,4 @@ The Team Management surface supports **administrator**, **operator**, **viewer**
 [3]: https://developer.pagerduty.com/docs/events-api-v2-overview "PagerDuty: Events API v2 overview"
 [4]: https://openid.net/specs/openid-connect-discovery-1_0.html "OpenID Connect Discovery 1.0"
 [5]: https://datatracker.ietf.org/doc/html/rfc7644 "RFC 7644: System for Cross-domain Identity Management Protocol"
+[6]: https://modelcontextprotocol.io/specification/2025-06-18/server/tools "Model Context Protocol: Tools"

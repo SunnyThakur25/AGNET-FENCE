@@ -13,29 +13,31 @@
     .heading { display:grid; grid-template-columns:1.25fr .75fr; gap:44px; padding-top:25px; align-items:end; }
     h1 { font-size:39px; line-height:1.02; letter-spacing:-1.35px; }
     .heading p { color:var(--body); font:16px/1.37 Arial,sans-serif; }
-    .content { display:grid; grid-template-columns:260px 375px 1fr; gap:28px; flex:1; align-items:center; padding-top:22px; }
-    .thesis { border-top:5px solid var(--red); min-height:344px; padding-top:19px; }
+    /* reduced vertical padding to eliminate overflow */
+    .content { display:grid; grid-template-columns:260px 375px 1fr; gap:28px; flex:1; align-items:center; padding-top:6px; }
+    .thesis { border-top:5px solid var(--red); min-height:300px; padding-top:10px; }
     .label { color:var(--red); font:700 11px Arial,sans-serif; letter-spacing:1.7px; text-transform:uppercase; }
     .thesis h2 { font-size:28px; line-height:1.03; letter-spacing:-.7px; margin-top:12px; }
     .thesis p { color:var(--body); font:16px/1.35 Arial,sans-serif; margin-top:18px; }
     .guardrail { border-top:1px solid var(--line); padding-top:12px; margin-top:18px; font:700 13px/1.35 Arial,sans-serif; color:var(--muted); }
-    .loop { min-height:344px; background:var(--paper); border-top:4px solid var(--ink); padding-top:20px; padding-left:18px; padding-right:18px; }
+    .loop { min-height:300px; background:var(--paper); border-top:4px solid var(--ink); padding-top:8px; padding-left:18px; padding-right:18px; }
     .loop h2 { font-size:25px; line-height:1.04; margin-top:9px; }
-    .stages { display:grid; grid-template-columns:1fr 25px 1fr 25px 1fr 25px 1fr; align-items:center; margin-top:36px; }
-    .stage { min-height:128px; border-top:3px solid var(--ink); padding-top:12px; }
+    /* tighten stage spacing and heights */
+    .stages { display:grid; grid-template-columns:1fr 25px 1fr 25px 1fr 25px 1fr; align-items:center; margin-top:12px; }
+    .stage { min-height:100px; border-top:3px solid var(--ink); padding-top:12px; }
     .stage.current { border-color:var(--red); }
     .stage .n { font:700 11px Arial,sans-serif; color:var(--red); letter-spacing:1.3px; }
     .stage h3 { font-size:19px; line-height:1.03; margin-top:8px; }
     .stage p { color:var(--body); font:12px/1.28 Arial,sans-serif; margin-top:9px; }
     .arrow { height:2px; background:var(--ink); position:relative; }
     .arrow:after { content:''; position:absolute; right:-1px; top:-4px; border-left:8px solid var(--ink); border-top:5px solid transparent; border-bottom:5px solid transparent; }
-    .loop-note { font:13px/1.3 Arial,sans-serif; color:var(--muted); border-top:1px solid var(--line); padding-top:11px; margin-top:23px; }
-    .roadmap { min-height:344px; border-top:4px solid var(--red); padding-top:19px; }
+    .loop-note { font:13px/1.3 Arial,sans-serif; color:var(--muted); border-top:1px solid var(--line); padding-top:11px; margin-top:8px; }
+    .roadmap { min-height:300px; border-top:4px solid var(--red); padding-top:10px; }
     .roadmap h2 { font-size:25px; line-height:1.04; margin-top:9px; }
-    .horizon { display:grid; grid-template-columns:73px 1fr; gap:13px; border-top:1px solid var(--line); padding-top:12px; margin-top:14px; }
+    .horizon { display:grid; grid-template-columns:73px 1fr; gap:13px; border-top:1px solid var(--line); padding-top:8px; margin-top:14px; }
     .horizon .when { color:var(--red); font:700 11px Arial,sans-serif; letter-spacing:1.2px; text-transform:uppercase; }
     .horizon p { color:var(--body); font:13px/1.34 Arial,sans-serif; }
-    .ask { border-top:1px solid var(--ink); padding-top:11px; margin-top:14px; font:700 13px/1.35 Arial,sans-serif; }
+    .ask { border-top:1px solid var(--ink); padding-top:11px; margin-top:8px; font:700 13px/1.35 Arial,sans-serif; }
     .footer { border-top:1px solid var(--line); padding-top:10px; color:var(--muted); font:11px/1.32 Arial,sans-serif; }
   </style>
 </head>
@@ -59,26 +61,26 @@
           <div class="label">Expansion loop</div>
           <h2>Land with one safe workflow. Expand through operational proof.</h2>
           <div class="stages">
-            <div class="stage current"><div class="n">01</div><h3>Wrap</h3><p>Connect one cloud SDK or managed-browser-wrapper workflow to a low-blast-radius action.</p></div>
+            <div class="stage current"><div class="n">01</div><h3>Wrap</h3><p>Connect one cloud SDK, managed-browser-wrapper, or reviewed MCP workflow to a low-blast-radius action.</p></div>
             <div class="arrow"></div>
             <div class="stage"><div class="n">02</div><h3>Govern</h3><p>Set boundaries, Data Guard rules, and approval thresholds.</p></div>
             <div class="arrow"></div>
             <div class="stage"><div class="n">03</div><h3>Prove</h3><p>Inspect action traces and export evidence for oversight.</p></div>
             <div class="arrow"></div>
-            <div class="stage"><div class="n">04</div><h3>Expand</h3><p>Add agents, environments, targets, policy owners, and workflows.</p></div>
+            <div class="stage"><div class="n">04</div><h3>Expand</h3><p>Add agents, MCP tools, environments, targets, policy owners, and workflows.</p></div>
           </div>
           <p class="loop-note">Retention thesis: approved policies, safe integration patterns, audit history, and compliance evidence compound inside each customer environment.</p>
         </section>
         <section class="roadmap">
           <div class="label">Product horizon</div>
           <h2>From governed actions to a control fabric.</h2>
-          <div class="horizon"><div class="when">Now</div><p>Multi-tenant action governance, strongest inbound/outbound Data Guard gating, approvals, action observability, controlled OWASP assessment, evidence export, scoped runtime credential controls, and secure connector profiles with controlled Splunk certification.</p></div>
-          <div class="horizon"><div class="when">Next</div><p>Customer-connected Vault AppRole activation, continuous approved connector delivery, deeper target-system connectors, richer policy packs, native MCP gateway/proxy controls, and operational-security workflow integrations.</p></div>
+          <div class="horizon"><div class="when">Now</div><p>Multi-tenant action governance, strongest inbound/outbound Data Guard gating, approvals, action observability, controlled OWASP assessment, evidence export, scoped runtime credential controls, secure connector profiles with controlled Splunk certification, customer-controlled Vault AppRole activation, and public-HTTPS MCP discovery/trust/proxy controls.</p></div>
+          <div class="horizon"><div class="when">Next</div><p>Continuous approved connector delivery, deeper target-system connectors, richer policy packs, private-network and STDIO MCP transport, OAuth authorization-code integration, and operational-security workflow integrations.</p></div>
           <div class="horizon"><div class="when">Extended</div><p>A durable enterprise fabric to authorize, observe, and prove integrated agent actions across heterogeneous runtimes without exposing raw secrets to agents.</p></div>
           <p class="ask">Design-partner test: wrap one real action, show allow/block/approval, and inspect its trace.</p>
         </section>
       </div>
-      <div class="footer">Vault live activation remains customer-controlled: it requires a reachable customer Vault, a constrained AppRole policy, and secure deployment configuration. Direct calls outside the SDK/wrapper are not part of the current enforcement claim.</div>
+      <div class="footer">Vault activation stays customer-controlled: it requires a reachable customer Vault, a constrained AppRole policy, and secure deployment configuration. Native MCP currently governs public HTTPS tools only; direct or unsupported transport calls are outside the control claim.</div>
     </div>
   </div>
 </body>

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { BILLING_PLANS, isBillingPlanKey } from "./agentfence/billing";
-import { extractSplunkHecToken, isEnterpriseSecretReferenceAllowed, normalizeEnterpriseHttpsEndpoint, safeConfigContainsSecret } from "./routers/enterprise";
+import { extractSplunkHecToken, isEnterpriseSecretReferenceAllowed, normalizeEnterpriseHttpsEndpoint, normalizeSplunkHecEventEndpoint, safeConfigContainsSecret, splunkSafeMetadata } from "./routers/enterprise";
 
 describe("enterprise-pilot security contracts", () => {
   it("accepts only feature-based billing plan keys and preserves the custom enterprise boundary", () => {
@@ -33,5 +33,11 @@ describe("enterprise-pilot security contracts", () => {
     expect(extractSplunkHecToken({ hec_token: "a-tenant-hec-token" })).toBe("a-tenant-hec-token");
     expect(extractSplunkHecToken({ token: "alternate-hec-token" })).toBe("alternate-hec-token");
     expect(() => extractSplunkHecToken({ password: "not-a-token" })).toThrow("HEC token");
+  });
+
+  it("requires the precise Splunk HEC event endpoint and forwards only allowlisted metadata", () => {
+    expect(normalizeSplunkHecEventEndpoint("https://splunk.example.test:8088/services/collector/event/")).toBe("https://splunk.example.test:8088/services/collector/event");
+    expect(() => normalizeSplunkHecEventEndpoint("https://splunk.example.test:8088/services/collector/health")).toThrow("HEC event endpoint");
+    expect(splunkSafeMetadata({ index: "agentfence", source: "agentfence", token: "never" })).toEqual({ index: "agentfence", source: "agentfence" });
   });
 });

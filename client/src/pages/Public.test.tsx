@@ -44,7 +44,7 @@ describe("AgentFence public authentication journey", () => {
     const markup = renderToStaticMarkup(<Router ssrPath="/"><LandingPage /></Router>);
     expect(markup).toContain("Enterprise architecture");
     expect(markup).toContain("One integrated control path across cloud, browser, and enterprise systems.");
-    expect(markup).toContain("agentfence_claim_hardened_architecture_e0c51010.png");
+    expect(markup).toContain("agentfence_claim_hardened_architecture_946b4c2e.png");
     expect(markup).toContain("Connect a workload");
     expect(markup).toContain("Control each integrated action");
     expect(markup).toContain("Prove what happened");

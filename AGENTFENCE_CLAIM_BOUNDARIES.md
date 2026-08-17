@@ -28,7 +28,7 @@
 
 | Item | Accurate current statement |
 |---|---|
-| **Native MCP gateway/proxy** | MCP-capable tools can be governed through SDK wrapping. Native MCP server discovery, transport interception, and server trust policy are roadmap capabilities. |
+| **Native MCP gateway/proxy** | The first release supports public HTTPS remote MCP registration, `initialize`/`tools/list` discovery, administrator trust, per-tool enablement, signed runtime scope, policy/Data Guard checks, and proxied `tools/call`. STDIO, private-network endpoints, OAuth authorization-code flows, dynamic client registration, and streaming remain future work. |
 | **Continuous connector delivery** | Controlled Splunk certification is implemented. Continuous production delivery for SIEM/SOAR connectors remains future integration work. |
 | **Automatic per-allow Vault issuance** | AgentFence supports scoped runtime credentials and optional server-side Vault lifecycle procedures. It does not mint a new Vault lease automatically for every allow decision. |
 

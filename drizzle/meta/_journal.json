@@ -78,6 +78,13 @@
       "when": 1786960173025,
       "tag": "0010_unknown_norrin_radd",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "5",
+      "when": 1786964223896,
+      "tag": "0011_robust_sentinel",
+      "breakpoints": true
     }
   ]
 }

@@ -5,6 +5,7 @@ import { publicProcedure, router } from "./_core/trpc";
 import { agentfenceRouter } from "./routers/agentfence";
 import { accountRouter } from "./routers/account";
 import { enterpriseRouter } from "./routers/enterprise";
+import { mcpGatewayRouter } from "./routers/mcpGateway";
 import { policyGovernanceRouter } from "./routers/policyGovernance";
 import * as dbHelpers from "./db";
 import { parse as parseCookieHeader } from "cookie";
@@ -27,6 +28,7 @@ export const appRouter = router({
   agentfence: agentfenceRouter,
   account: accountRouter,
   enterprise: enterpriseRouter,
+  mcpGateway: mcpGatewayRouter,
   policyGovernance: policyGovernanceRouter,
 });
 

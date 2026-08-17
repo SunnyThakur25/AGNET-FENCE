@@ -74,7 +74,11 @@ The platform supports two explicit integration paths:
 
 > **Control boundary:** Direct calls that bypass these integration paths are outside AgentFence enforcement. Customers must constrain those paths with environment design, target-system permissions, network controls, and organizational policy.
 
-For an editable architecture visual that includes the enforcement and activation limits, see [`agentfence_claim_hardened_architecture.mmd`](./agentfence_claim_hardened_architecture.mmd). It clarifies that managed browser actions execute in the existing enterprise session, Vault AppRole activation is optional and customer-controlled, controlled Splunk certification is not continuous SIEM delivery, and MCP tools currently require SDK wrapping rather than a native MCP proxy.
+For an editable architecture visual that includes the enforcement and activation limits, see [`agentfence_claim_hardened_architecture.mmd`](./agentfence_claim_hardened_architecture.mmd). It clarifies that managed browser actions execute in the existing enterprise session, Vault AppRole activation is optional and customer-controlled, controlled Splunk certification is not continuous SIEM delivery, and the Native MCP Gateway currently supports public HTTPS discovery and proxied tool calls rather than STDIO, private-network, or OAuth authorization-code transport.
+
+### Native MCP Gateway
+
+The authenticated **Native MCP Gateway** page registers tenant-approved public HTTPS MCP endpoints, performs JSON-RPC initialization and tool discovery, stores a reviewable catalog, requires an administrator to trust a server and enable each tool, and proxies an allowed `tools/call` only after signed runtime scope, Data Guard, policy, and approval checks. An upstream bearer token may be retrieved only from a tenant Vault reference; it is never collected by the browser or retained in the application database. This first release intentionally excludes STDIO, local/private-network endpoints, OAuth authorization-code handoff, dynamic client registration, and streaming transport.
 
 ## First-agent onboarding
 
@@ -182,6 +186,7 @@ The test suite covers core policy decisions, tenant safety, runtime credential b
 | [`RELEASE_READINESS.md`](./RELEASE_READINESS.md) | Release activation, monitoring, remediation, and rollback guide. |
 | [`AGENTFENCE_ARCHITECTURE_GUIDE.md`](./AGENTFENCE_ARCHITECTURE_GUIDE.md) | Integrated action-path architecture, browser-session, Vault, monitoring, and MCP boundaries. |
 | [`AGENTFENCE_CLAIM_BOUNDARIES.md`](./AGENTFENCE_CLAIM_BOUNDARIES.md) | Claim register distinguishing current controls, customer activation prerequisites, and roadmap items. |
+| [`MCP_GATEWAY_RESEARCH_NOTES.md`](./MCP_GATEWAY_RESEARCH_NOTES.md) | Official MCP protocol findings and the implemented gateway trust/authorization boundaries. |
 | [`ENTERPRISE_PILOT_DEPLOYMENT_GUIDE.md`](./ENTERPRISE_PILOT_DEPLOYMENT_GUIDE.md) | Secure SIEM/SOAR, IdP/SCIM, Vault, billing, and team-management pilot activation guide. |
 | [`ENTERPRISE_PILOT_INTEGRATIONS_RESEARCH.md`](./ENTERPRISE_PILOT_INTEGRATIONS_RESEARCH.md) | Primary-source research register for the pilot connector design. |
 | [`ENTERPRISE_AUDIT_READINESS_ASSESSMENT.md`](./ENTERPRISE_AUDIT_READINESS_ASSESSMENT.md) | Candid enterprise control assessment, audit-evidence expectations, and prioritized roadmap for production-scale assurance. |

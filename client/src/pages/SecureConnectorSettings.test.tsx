@@ -13,7 +13,7 @@ vi.mock("@/pages/Console", () => ({
 }));
 vi.mock("@/lib/trpc", () => ({ trpc: {
   useUtils: () => ({
-    enterprise: { connections: { list: { invalidate: vi.fn() }, identityReadiness: { invalidate: vi.fn() } } },
+    enterprise: { connections: { list: { invalidate: vi.fn() }, identityReadiness: { invalidate: vi.fn() }, vaultActivation: { get: { invalidate: vi.fn() } } } },
     agentfence: { vault: { status: { invalidate: vi.fn() } } },
   }),
   agentfence: {
@@ -28,6 +28,10 @@ vi.mock("@/lib/trpc", () => ({ trpc: {
       save: { useMutation: mutation },
       test: { useMutation: mutation },
       certifySplunkHec: { useMutation: mutation },
+      vaultActivation: {
+        get: { useQuery: () => ({ data: { profile: null, endpointConfigured: false, roleIdConfigured: false, secretIdConfigured: false, connected: false, detail: "Vault deployment values stay outside the browser." } }) },
+        activate: { useMutation: mutation },
+      },
     },
   },
 } }));
@@ -41,6 +45,7 @@ describe("SecureConnectorSettingsPage", () => {
     expect(markup).toContain("Activate integrations without browser-held secrets");
     expect(markup).toContain("Tenant Vault secret reference");
     expect(markup).toContain("Certify Splunk HEC");
+    expect(markup).toContain("Authenticate AppRole");
     expect(markup).toContain("OIDC federation");
     expect(markup).toContain("SCIM 2.0");
     expect(markup).toContain("VAULT_SECRET_ID");

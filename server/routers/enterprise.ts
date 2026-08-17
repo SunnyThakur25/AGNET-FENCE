@@ -33,6 +33,20 @@ export function normalizeEnterpriseHttpsEndpoint(value: string) {
   return url.toString().replace(/\/$/, "");
 }
 
+export function normalizeSplunkHecEventEndpoint(value: string) {
+  const endpoint = normalizeEnterpriseHttpsEndpoint(value);
+  const path = new URL(endpoint).pathname.replace(/\/$/, "");
+  if (!/\/services\/collector\/event$/i.test(path)) {
+    throw new TRPCError({ code: "BAD_REQUEST", message: "Use the specific Splunk HEC event endpoint ending in /services/collector/event." });
+  }
+  return endpoint;
+}
+
+export function splunkSafeMetadata(config: Record<string, string> | null) {
+  const allowed = new Set(["index", "source", "sourcetype", "host"]);
+  return Object.fromEntries(Object.entries(config ?? {}).filter(([key, value]) => allowed.has(key) && value.trim().length > 0));
+}
+
 function requiredVaultPrefix(organizationId: number, kind: string) {
   return `agentfence/tenants/${organizationId}/integrations/${kind}/`;
 }
@@ -92,7 +106,7 @@ export const enterpriseRouter = router({
       if (safeConfigContainsSecret(input.safeConfig)) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Safe connector metadata cannot contain credential-like keys. Store provider secrets only in the customer Vault path or secure deployment settings." });
       }
-      const endpoint = input.endpoint ? normalizeEnterpriseHttpsEndpoint(input.endpoint) : null;
+      const endpoint = input.endpoint ? input.kind === "splunk_hec" ? normalizeSplunkHecEventEndpoint(input.endpoint) : normalizeEnterpriseHttpsEndpoint(input.endpoint) : null;
       if (input.vaultSecretPath && !isEnterpriseSecretReferenceAllowed(input.vaultSecretPath, input.organizationId, input.kind)) {
         throw new TRPCError({ code: "BAD_REQUEST", message: "Integration secret references must stay in this organization’s integration Vault path." });
       }
@@ -142,6 +156,9 @@ export const enterpriseRouter = router({
           status = "unhealthy";
           code = "OIDC_DISCOVERY_UNREACHABLE";
         }
+      } else if (input.kind === "splunk_hec") {
+        status = connection.endpoint && connection.vaultSecretPath ? "pending_activation" : "unhealthy";
+        code = status === "pending_activation" ? "HEC_CERTIFICATION_REQUIRED" : "HEC_ENDPOINT_OR_VAULT_REFERENCE_REQUIRED";
       }
       await db.update(enterpriseConnections).set({ status, lastTestedAt: new Date(), lastErrorCode: code }).where(eq(enterpriseConnections.id, connection.id));
       await appendAuditEvent({ organizationId: input.organizationId, eventType: "enterprise_connection.tested", actorType: "user", actorIdentity: ctx.user.email || ctx.user.openId, outcome: status === "ready" ? "allowed" : "approval_required", payload: { kind: input.kind, status, code } });
@@ -174,11 +191,13 @@ export const enterpriseRouter = router({
             const response = await fetch(connection.endpoint, {
               method: "POST",
               headers: { authorization: `Splunk ${extractSplunkHecToken(secret)}`, "content-type": "application/json" },
-              body: JSON.stringify({ source: "agentfence", sourcetype: "agentfence:certification", event: { eventType: "agentfence.connector.certification", organizationId: input.organizationId, timestamp: new Date().toISOString() } }),
+              body: JSON.stringify({ ...splunkSafeMetadata(connection.safeConfig as Record<string, string> | null), source: "agentfence", sourcetype: "agentfence:certification", event: { eventType: "agentfence.connector.certification", organizationId: input.organizationId, timestamp: new Date().toISOString() } }),
               signal: AbortSignal.timeout(8_000),
             });
-            certificationStatus = response.ok ? "certified" : "failed";
-            evidenceCode = response.ok ? "HEC_DELIVERY_ACKNOWLEDGED" : `HEC_HTTP_${response.status}`;
+            let payload: { code?: unknown } | null = null;
+            try { payload = await response.json() as { code?: unknown }; } catch { payload = null; }
+            certificationStatus = response.ok && payload?.code === 0 ? "certified" : "failed";
+            evidenceCode = certificationStatus === "certified" ? "HEC_EVENT_ACCEPTED" : `HEC_HTTP_${response.status}`;
           } catch {
             certificationStatus = "failed";
             evidenceCode = "HEC_OR_VAULT_UNREACHABLE";
@@ -189,6 +208,47 @@ export const enterpriseRouter = router({
       await db.update(enterpriseConnections).set({ status: certificationStatus === "certified" ? "ready" : certificationStatus === "failed" ? "unhealthy" : "pending_activation", lastTestedAt: new Date(), lastErrorCode: certificationStatus === "certified" ? null : evidenceCode }).where(eq(enterpriseConnections.id, connection.id));
       await appendAuditEvent({ organizationId: input.organizationId, eventType: "enterprise_connection.splunk_certification", actorType: "user", actorIdentity: ctx.user.email || ctx.user.openId, outcome: certificationStatus === "certified" ? "allowed" : "approval_required", payload: { connectionId: connection.id, status: certificationStatus, evidenceCode, hasVaultReference: Boolean(connection.vaultSecretPath) } });
       return { status: certificationStatus, evidenceCode, certified: certificationStatus === "certified" };
+    }),
+    vaultActivation: router({
+      get: protectedProcedure.input(organizationInput).query(async ({ ctx, input }) => {
+        await organizationAdmin(input.organizationId, ctx.user.id);
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable." });
+        const [connection] = await db.select().from(enterpriseConnections).where(and(eq(enterpriseConnections.organizationId, input.organizationId), eq(enterpriseConnections.kind, "vault_approle"))).limit(1);
+        const vault = createVaultAppRoleClient();
+        return {
+          profile: connection ? toSafeConnection(connection) : null,
+          endpointConfigured: vault.status.endpointConfigured,
+          roleIdConfigured: vault.status.roleIdConfigured,
+          secretIdConfigured: vault.status.secretIdConfigured,
+          connected: vault.status.connected,
+          detail: "Vault address, Role ID, and Secret ID remain deployment-only secrets. AgentFence returns only activation status.",
+        };
+      }),
+      activate: protectedProcedure.input(organizationInput.extend({ displayName: z.string().trim().min(2).max(120), endpoint: z.string().trim().url().max(500) })).mutation(async ({ ctx, input }) => {
+        await organizationAdmin(input.organizationId, ctx.user.id);
+        const endpoint = normalizeEnterpriseHttpsEndpoint(input.endpoint);
+        const vault = createVaultAppRoleClient();
+        if (!vault.status.connected) {
+          throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Vault activation requires VAULT_ADDR, VAULT_ROLE_ID, and VAULT_SECRET_ID in protected deployment settings. Values are never accepted through this page." });
+        }
+        let ready = false;
+        let code = "VAULT_APPROLE_AUTH_FAILED";
+        try {
+          const configuredEndpoint = normalizeEnterpriseHttpsEndpoint(process.env.VAULT_ADDR!);
+          if (configuredEndpoint !== endpoint) throw new Error("VAULT_ENDPOINT_MISMATCH");
+          await vault.login();
+          ready = true;
+          code = "VAULT_APPROLE_AUTHENTICATED";
+        } catch (error) {
+          if (error instanceof Error && error.message === "VAULT_ENDPOINT_MISMATCH") code = "VAULT_ENDPOINT_MISMATCH";
+        }
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable." });
+        await db.insert(enterpriseConnections).values({ organizationId: input.organizationId, kind: "vault_approle", displayName: input.displayName, endpoint, status: ready ? "ready" : "unhealthy", lastTestedAt: new Date(), lastErrorCode: ready ? null : code, createdBy: ctx.user.id }).onDuplicateKeyUpdate({ set: { displayName: input.displayName, endpoint, status: ready ? "ready" : "unhealthy", lastTestedAt: new Date(), lastErrorCode: ready ? null : code } });
+        await appendAuditEvent({ organizationId: input.organizationId, eventType: "vault.approle_activation_tested", actorType: "user", actorIdentity: ctx.user.email || ctx.user.openId, outcome: ready ? "allowed" : "blocked", payload: { endpointHost: new URL(endpoint).hostname, code } });
+        return { ready, code, detail: ready ? "Vault AppRole authentication succeeded. Raw Vault values remain server-side." : "Vault profile was saved, but deployment activation did not authenticate. Review the safe evidence code and protected deployment settings." };
+      }),
     }),
   }),
 
