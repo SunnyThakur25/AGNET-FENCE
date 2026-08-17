@@ -115,3 +115,10 @@
 - [x] Classify and remove, isolate, or explicitly govern any active non-production behavior found during the release audit.
 - [x] Implement prioritized enterprise hardening fixes and release documentation for production activation, monitoring, rollback, and incident response.
 - [x] Validate the hardened release with automated tests, TypeScript, production build, and an updated deployment readiness checklist.
+- [x] Build an interactive onboarding wizard that guides an organization through connecting its first real cloud or managed browser agent.
+- [x] Enhance the public landing page with a clear operational “how AgentFence works” journey and the supplied enterprise architecture visual.
+- [x] Create research-grounded Markdown documentation for product development, enterprise production deployment, and investor evaluation of AgentFence.
+- [x] Create an investor narrative explaining the problem, market context, differentiated USP, operating model, and realistic value thesis without unsupported market-cap claims.
+- [ ] Produce a concise product demo video that shows the governed agent-action workflow and labels controlled-assessment limits clearly. **Blocked:** the available free-plan video-generation quota is exhausted; the approved 60-second script and production prompt are ready in `AGENTFENCE_DEMO_VIDEO_SCRIPT.md`.
+- [x] Add automated coverage and visual validation for the onboarding and landing-page changes, then validate the research-grounded documentation deliverables.
+- [ ] After the demo video is generated, validate the final media artifact against the approved script and compliance note.

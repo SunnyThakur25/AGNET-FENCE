@@ -1,7 +1,7 @@
 import { useAgentFenceWorkspace } from "@/contexts/AgentFenceContext";
 import { AGENTFENCE_OWASP_CONTROL_MATRIX, OWASP_AGENTIC_TOP10 } from "@shared/owaspAgentic";
 import { trpc } from "@/lib/trpc";
-import { Activity, ArrowDownUp, Check, ChevronRight, CircleAlert, Cloud, Clock3, Copy, FileCheck2, GitBranch, Info, KeyRound, Laptop, Loader2, LockKeyhole, Play, Plus, Radar, ScanLine, Search, Settings2, ShieldAlert, ShieldCheck, Sparkles, TriangleAlert, X } from "lucide-react";
+import { Activity, ArrowDownUp, Check, ChevronRight, CircleAlert, Cloud, Clock3, Code2, Copy, FileCheck2, GitBranch, Info, KeyRound, Laptop, Loader2, LockKeyhole, Play, Plus, Radar, Rocket, ScanLine, Search, Settings2, ShieldAlert, ShieldCheck, Sparkles, TriangleAlert, X } from "lucide-react";
 import React, { FormEvent, ReactNode, useEffect, useMemo, useState } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
@@ -56,6 +56,15 @@ export function filterAndSortCapturedActions<T extends CaptureLike>(items: T[], 
 
 export function isTraceLive(action: { decision: string; targetOutcome: string | null }, isFetching: boolean) {
   return isFetching || (action.decision === "allowed" && !action.targetOutcome);
+}
+
+export const FIRST_AGENT_ONBOARDING_STEPS = ["Choose runtime", "Register identity", "Set first boundary", "Wrap a real action"] as const;
+
+export function canAdvanceFirstAgentOnboarding(step: number, values: { runtime: string; name: string; identity: string; tool: string; action: string; destination: string }) {
+  if (step === 0) return values.runtime === "cloud" || values.runtime === "browser";
+  if (step === 1) return values.name.trim().length >= 2 && /^[a-z0-9._:-]{3,}$/i.test(values.identity.trim());
+  if (step === 2) return values.tool.trim().length > 0 && values.action.trim().length > 0 && values.destination.trim().length > 0;
+  return true;
 }
 
 export function TraceHopTooltip({ id, intent, policy, decision, dataGuard, targetOutcome }: { id?: string; intent: string; policy: string; decision: string; dataGuard: string; targetOutcome: string }) {
@@ -270,8 +279,51 @@ export function ToolGateway() {
   </PageFrame>;
 }
 
+export function FirstAgentOnboardingWizard({ organizationId, teamId, onCreated }: { organizationId: number; teamId: number | null; onCreated: (agentId: number) => void }) {
+  const [, navigate] = useLocation();
+  const [step, setStep] = useState(0);
+  const [createdAgentId, setCreatedAgentId] = useState<number | null>(null);
+  const [form, setForm] = useState({ runtime: "cloud", name: "", identity: "", environment: "development" as "development" | "staging" | "production", riskLevel: "medium" as "low" | "medium" | "high" | "critical", tool: "crm", action: "customer.read", destination: "crm.company.internal", effect: "require_approval" as "allow" | "deny" | "require_approval" });
+  const createAgent = trpc.agentfence.agents.create.useMutation();
+  const createPolicy = trpc.agentfence.policies.create.useMutation();
+  const busy = createAgent.isPending || createPolicy.isPending;
+  const canContinue = canAdvanceFirstAgentOnboarding(step, form) && (step !== 2 || createdAgentId !== null);
+
+  const continueWizard = async () => {
+    if (!canAdvanceFirstAgentOnboarding(step, form)) return;
+    try {
+      if (step === 1) {
+        if (!teamId) throw new Error("No organization team is available for agent registration.");
+        const result = await createAgent.mutateAsync({ organizationId, teamId, name: form.name.trim(), identity: form.identity.trim(), environment: form.environment, riskLevel: form.riskLevel, description: `${form.runtime === "cloud" ? "Cloud" : "Managed browser"} agent onboarded through the first-agent wizard.` });
+        setCreatedAgentId(result.agentId);
+        onCreated(result.agentId);
+        toast.success("Agent identity registered and audit event written");
+      }
+      if (step === 2) {
+        if (!createdAgentId) throw new Error("Register the agent identity before creating a policy.");
+        await createPolicy.mutateAsync({ organizationId, teamId, agentId: createdAgentId, name: `First boundary · ${form.tool}.${form.action}`, description: "Created by the first-agent onboarding wizard. Review and refine before production use.", effect: form.effect, toolPattern: form.tool.trim(), actionPattern: form.action.trim(), dataSensitivity: "internal", destinationPattern: form.destination.trim(), priority: 100 });
+        toast.success("First agent boundary policy is active");
+      }
+      setStep(current => Math.min(current + 1, FIRST_AGENT_ONBOARDING_STEPS.length - 1));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "The onboarding step could not be completed.");
+    }
+  };
+
+  const snippet = form.runtime === "cloud"
+    ? `await fence.guardAndDeliver({ toolName: "${form.tool}", action: "${form.action}", destination: "${form.destination}", dataSensitivity: "internal", riskLevel: "${form.riskLevel}" }, deliver);`
+    : `await browserFence.authorizeAndExecute({ action: "${form.action}", destination: "${form.destination}", metadata: { tool: "${form.tool}" }, dataSensitivity: "internal", riskLevel: "${form.riskLevel}" }, executeBrowserAction);`;
+
+  return <section className="first-agent-wizard console-card"><div className="card-heading"><div><p className="card-kicker">Guided production onboarding</p><h2>Connect your first real agent</h2><p>Creates a real tenant-scoped identity and first policy. It never issues or displays raw credentials.</p></div><Badge tone={step === 3 ? "good" : "info"}>{step === 3 ? "Ready to wrap" : `Step ${step + 1} of ${FIRST_AGENT_ONBOARDING_STEPS.length}`}</Badge></div><div className="wizard-progress" aria-label={`Onboarding step ${step + 1} of ${FIRST_AGENT_ONBOARDING_STEPS.length}`}>{FIRST_AGENT_ONBOARDING_STEPS.map((label, index) => <div key={label} className={index === step ? "current" : index < step ? "complete" : ""}><span>{index < step ? <Check size={13} /> : index + 1}</span><strong>{label}</strong></div>)}</div><div className="wizard-panel">
+    {step === 0 && <div className="wizard-choice-grid"><button type="button" className={form.runtime === "cloud" ? "wizard-choice selected" : "wizard-choice"} onClick={() => setForm({ ...form, runtime: "cloud" })}><Cloud size={22} /><strong>Cloud agent</strong><span>Copilot, workflow, API service, or serverless runtime using the signed SDK.</span></button><button type="button" className={form.runtime === "browser" ? "wizard-choice selected" : "wizard-choice"} onClick={() => setForm({ ...form, runtime: "browser" })}><Laptop size={22} /><strong>Managed browser agent</strong><span>Browser automation, RPA, managed laptop, or VDI using the action adapter.</span></button></div>}
+    {step === 1 && <div className="form-grid wizard-form"><Field label="Agent name"><input value={form.name} onChange={event => setForm({ ...form, name: event.target.value })} placeholder="Support resolution agent" /></Field><Field label="Workload identity"><input value={form.identity} onChange={event => setForm({ ...form, identity: event.target.value })} placeholder="agent.support.resolution" /></Field><Field label="Environment"><select value={form.environment} onChange={event => setForm({ ...form, environment: event.target.value as typeof form.environment })}><option value="development">Development</option><option value="staging">Staging</option><option value="production">Production</option></select></Field><Field label="Risk level"><select value={form.riskLevel} onChange={event => setForm({ ...form, riskLevel: event.target.value as typeof form.riskLevel })}><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="critical">Critical</option></select></Field></div>}
+    {step === 2 && <div className="form-grid wizard-form"><Field label="Tool or system"><input value={form.tool} onChange={event => setForm({ ...form, tool: event.target.value })} placeholder="crm" /></Field><Field label="Allowed action"><input value={form.action} onChange={event => setForm({ ...form, action: event.target.value })} placeholder="customer.read" /></Field><Field label="Approved destination"><input value={form.destination} onChange={event => setForm({ ...form, destination: event.target.value })} placeholder="crm.company.internal" /></Field><Field label="Decision mode"><select value={form.effect} onChange={event => setForm({ ...form, effect: event.target.value as typeof form.effect })}><option value="require_approval">Require human approval (recommended first)</option><option value="allow">Allow within this narrow boundary</option><option value="deny">Deny and test containment</option></select></Field><p className="wizard-safety-note"><ShieldCheck size={16} /> This creates a live policy for the registered agent. Start with approval-required in development or staging, test it, then promote only the reviewed boundary.</p></div>}
+    {step === 3 && <div className="wizard-code"><div><div className="integration-icon">{form.runtime === "cloud" ? <Cloud size={19} /> : <Laptop size={19} />}</div><p className="card-kicker">{form.runtime === "cloud" ? "Cloud runtime wrapper" : "Browser action wrapper"}</p><h3>Put this immediately before the consequential action.</h3><p>Use an issued short-lived runtime credential on the server or managed device. Do not place it in browser source code or a prompt.</p></div><pre><code>{snippet}</code></pre><div className="wizard-final-actions"><SecondaryButton onClick={() => navigator.clipboard.writeText(snippet).then(() => toast.success("Runtime wrapper copied"))}><Copy size={15} /> Copy wrapper call</SecondaryButton><PrimaryButton onClick={() => navigate("/gateway")}><Rocket size={15} /> Test in Tool Gateway</PrimaryButton></div></div>}
+  </div><div className="wizard-actions">{step > 0 && <SecondaryButton onClick={() => setStep(current => current - 1)} disabled={busy}>Back</SecondaryButton>}{step < 3 ? <PrimaryButton onClick={continueWizard} disabled={!canContinue || busy}>{busy ? <Loader2 className="animate-spin" size={15} /> : <ChevronRight size={15} />}{step === 2 ? "Create first boundary" : step === 1 ? "Register agent identity" : "Continue"}</PrimaryButton> : <SecondaryButton onClick={() => { setStep(0); setCreatedAgentId(null); setForm({ ...form, name: "", identity: "" }); }}>Onboard another agent</SecondaryButton>}</div></section>;
+}
+
 export function IntegrationHubPage() {
-  const { organizationId, ready } = useAgentFenceWorkspace();
+  const { organizationId, ready, teamId } = useWorkspaceData();
   const agentsQuery = trpc.agentfence.agents.list.useQuery({ organizationId: organizationId ?? 0 }, { enabled: ready });
   const [agentId, setAgentId] = useState("");
   if (!ready) return <WorkspacePending />;
@@ -305,6 +357,7 @@ await browserFence.authorizeAndExecute({
   const copy = async (value: string) => { await navigator.clipboard.writeText(value); toast.success("Integration example copied"); };
   return <PageFrame eyebrow="Organization integrations" title="Connect any agent in four controlled steps" description="Use the same signed control path for cloud agents, API workflows, browser automation, RPA, managed laptops, and VDI environments. AgentFence captures every governed action automatically—never raw credentials or unredacted sensitive content.">
     <section className="integration-hero"><div><p className="eyebrow">Portable enforcement contract</p><h2>One action gateway. Any approved agent runtime.</h2><p>Cloud agents use the runtime SDK; browser agents use the lightweight browser-action adapter around each navigation, form submission, upload, download, or browser-backed API call.</p></div><div className="integration-protocol"><span>1. identify</span><i>→</i><span>2. policy</span><i>→</i><span>3. scoped credential</span><i>→</i><strong>4. capture + trace</strong></div></section>
+    <FirstAgentOnboardingWizard organizationId={organizationId!} teamId={teamId} onCreated={id => { setAgentId(String(id)); agentsQuery.refetch(); }} />
     <section className="console-card"><div className="card-heading"><div><p className="card-kicker">Integration readiness</p><h2>Choose the governed agent</h2></div><Badge tone={selectedAgent ? "good" : "warn"}>{selectedAgent ? "Ready for integration" : "Select an identity"}</Badge></div><div className="integration-steps"><div className="integration-step"><b>01</b><div><strong>Register identity</strong><p>Every runtime has a unique tenant-bound agent identity.</p></div></div><div className="integration-step"><b>02</b><div><strong>Set policies</strong><p>Allow, block, or require approval by tool, action, data, and destination.</p></div></div><div className="integration-step"><b>03</b><div><strong>Issue a short-lived scope</strong><p>Use a Vault-backed reference when live Vault connectivity is configured.</p></div></div><div className="integration-step"><b>04</b><div><strong>Wrap actions</strong><p>Use one helper before the actual cloud or browser action runs.</p></div></div></div><div className="mt-5 max-w-md"><Field label="Agent identity"><select value={agentId} onChange={event => setAgentId(event.target.value)}><option value="">Select a registered agent</option>{agentsQuery.data?.filter(agent => agent.status === "active").map(agent => <option value={agent.id} key={agent.id}>{agent.name} · {agent.identity}</option>)}</select></Field></div></section>
     <section className="integration-grid"><article className="console-card integration-card"><div className="integration-icon"><Cloud size={19} /></div><p className="card-kicker">Cloud SDK pattern</p><h2>APIs, copilots, workflows, and backend agents</h2><p>Keep the real API call inside the delivery callback. AgentFence evaluates the action before the request is released.</p><pre><code>{cloudSnippet}</code></pre><SecondaryButton onClick={() => copy(cloudSnippet)}><Copy size={15} /> Copy cloud example</SecondaryButton></article><article className="console-card integration-card"><div className="integration-icon browser"><Laptop size={19} /></div><p className="card-kicker">Browser wrapper pattern</p><h2>Local browser agents, RPA, VDI, and extensions</h2><p>Place the adapter directly before browser automation. A denied or approval-required action never reaches the page control.</p><pre><code>{browserSnippet}</code></pre><SecondaryButton onClick={() => copy(browserSnippet)}><Copy size={15} /> Copy browser example</SecondaryButton></article></section>
     <section className="privacy-callout"><LockKeyhole size={19} /><div><strong>Capture is safe by design.</strong><p>AgentFence stores redacted action metadata, policy results, approval states, and audit evidence. It is not a keystroke recorder, screen recorder, or raw network-packet collector.</p></div></section>

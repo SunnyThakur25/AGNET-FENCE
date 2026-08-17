@@ -40,6 +40,16 @@ describe("AgentFence public authentication journey", () => {
     expect(markup).toContain("Human gate");
   });
 
+  it("renders the enterprise architecture visual and guided cloud/browser control narrative", () => {
+    const markup = renderToStaticMarkup(<Router ssrPath="/"><LandingPage /></Router>);
+    expect(markup).toContain("Enterprise architecture");
+    expect(markup).toContain("One control path across cloud, browser, and enterprise systems.");
+    expect(markup).toContain("agentfence_enterprise_architecture_1e43c33d.png");
+    expect(markup).toContain("Connect a workload");
+    expect(markup).toContain("Control every consequential action");
+    expect(markup).toContain("Prove what happened");
+  });
+
   it("routes all sign-in, sign-up, Google, and SSO entry controls to the secure OAuth handler", () => {
     let calls = 0;
     for (const mode of ["signin", "signup"] as const) {

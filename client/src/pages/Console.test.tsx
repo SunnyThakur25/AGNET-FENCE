@@ -1,6 +1,6 @@
 import React from "react";
 import { describe, expect, it } from "vitest";
-import { ActionCaptureControls, ActionCaptureRows, ActionTraceHopCard, ActionSummaryWidget, captureOutcome, filterAndSortCapturedActions, isTraceLive, TraceHopTooltip } from "./Console";
+import { ActionCaptureControls, ActionCaptureRows, ActionTraceHopCard, ActionSummaryWidget, canAdvanceFirstAgentOnboarding, captureOutcome, filterAndSortCapturedActions, FIRST_AGENT_ONBOARDING_STEPS, isTraceLive, TraceHopTooltip } from "./Console";
 import { renderToStaticMarkup } from "react-dom/server";
 
 const actions = [
@@ -11,6 +11,15 @@ const actions = [
 const rowFixtures = actions.map((item, index) => ({ ...item, id: index + 1, createdAt: new Date(item.createdAt), targetRecordedAt: item.targetRecordedAt ? new Date(item.targetRecordedAt) : null, targetStatusCode: null, riskLevel: "medium", dataSensitivity: "internal", dataGuardFindings: [], approval: null }));
 
 describe("AI Action Capture and Trace helpers", () => {
+  it("requires a real runtime choice, valid workload identity, and a narrow first boundary before onboarding advances", () => {
+    const base = { runtime: "", name: "", identity: "", tool: "", action: "", destination: "" };
+    expect(FIRST_AGENT_ONBOARDING_STEPS).toEqual(["Choose runtime", "Register identity", "Set first boundary", "Wrap a real action"]);
+    expect(canAdvanceFirstAgentOnboarding(0, base)).toBe(false);
+    expect(canAdvanceFirstAgentOnboarding(0, { ...base, runtime: "cloud" })).toBe(true);
+    expect(canAdvanceFirstAgentOnboarding(1, { ...base, runtime: "cloud", name: "Support agent", identity: "agent.support.prod" })).toBe(true);
+    expect(canAdvanceFirstAgentOnboarding(1, { ...base, runtime: "browser", name: "Support agent", identity: "unsafe identity" })).toBe(false);
+    expect(canAdvanceFirstAgentOnboarding(2, { ...base, runtime: "browser", name: "Support agent", identity: "agent.browser.prod", tool: "crm", action: "case.update", destination: "crm.company.internal" })).toBe(true);
+  });
   it("renders the customizable 24-hour action summary widget controls", () => {
     const markup = renderToStaticMarkup(<ActionSummaryWidget totalActions={12} windowStart="2026-01-01T00:00:00.000Z" items={[{ key: "crm.case.update", toolName: "crm", action: "case.update", count: 7, completed: 6, succeeded: 5, failed: 1, pending: 1, successRate: 83 }]} />);
     expect(markup).toContain("last 24 hours");
