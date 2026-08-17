@@ -189,3 +189,18 @@
 > Customer raw secrets must only be supplied through secure project secret settings or customer Vault. The app may display safe readiness state and a Vault path reference, but must never collect, return, store, log, or render raw Vault, SIEM, OIDC, or SCIM credential values.
 
 **Delivery note:** The workflow now records a real controlled certification result once a customer provides a reachable Splunk HEC endpoint and Vault AppRole deployment credentials. No customer credential or live endpoint was supplied for this release, so the visible `activation_required` state is intentional and no live SIEM certification is claimed.
+
+## Architecture claim verification follow-up
+
+- [x] Compare each pasted architecture capability claim with current AgentFence implementation and document the verified, partial, and customer-activation-required boundaries.
+- [x] Tighten any product or deployment documentation language that could overstate runtime enforcement, integrations, or live service activation.
+- [x] Validate, checkpoint, and push any approved claim-correction updates to GitHub.
+
+## Claim-hardening implementation
+
+- [x] Feed the highest detected inbound or outbound Data Guard sensitivity into runtime policy evaluation before delivery, while retaining redaction and tenant-safe audit evidence.
+- [x] Add regression coverage proving sensitive outbound content cannot bypass a matching block or approval-required policy.
+- [x] Revise the architecture diagram to show Data Guard policy input, all decision outcomes feeding runtime monitoring, optional Vault-to-broker activation, and browser-session execution boundaries.
+- [x] Tighten investor, product, architecture, and deployment documentation to distinguish implemented controls, integration boundaries, optional activation, and roadmap items such as native MCP governance.
+- [x] Update the investor presentation wording to use the same audit-defensible claims.
+- [x] Validate, checkpoint, and push the completed claim-hardening implementation to GitHub.

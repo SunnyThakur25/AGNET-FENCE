@@ -8,15 +8,15 @@
 
 ## 1. The Operating Model
 
-An agentic application becomes consequential when it can invoke a tool, submit a browser form, download or upload a file, change a record, call a business API, or use a credential. AgentFence inserts a policy decision point before that action is released. This model aligns with the NIST AI RMF emphasis on governing, mapping, measuring, and managing AI risks throughout the lifecycle.[1]
+An agentic application becomes consequential when it can invoke a tool, submit a browser form, download or upload a file, change a record, call a business API, or use a credential. AgentFence inserts a policy decision point before an **integrated** action is released through its signed SDK or managed-browser wrapper. This model aligns with the NIST AI RMF emphasis on governing, mapping, measuring, and managing AI risks throughout the lifecycle.[1]
 
 | Layer | AgentFence responsibility | Enterprise responsibility |
 |---|---|---|
 | Identity | Registers a tenant-bound agent identity, owner, environment, and risk level. | Establishes trusted workforce and workload identity through the corporate IdP or an approved workload identity system. |
-| Runtime enforcement | Evaluates signed cloud SDK and browser-wrapper requests before the action is released. | Routes consequential cloud and browser actions through the AgentFence wrapper; direct bypass paths must be removed or separately denied. |
-| Policy | Applies allow, deny, and approval-required boundaries using tool, action, data, and destination context. | Defines an approved action inventory and assigns accountable policy owners. |
-| Credentials | Keeps raw secrets out of agent context and supports scoped, short-lived runtime credentials and optional Vault lease operations. | Configures a live secret-manager integration and applies least-privilege permissions at each target system. |
-| Evidence | Produces tenant-scoped, tamper-evident audit events, action capture, trace, and exportable evidence. | Forwards selected events to SIEM/SOAR and operates the incident-response process. |
+| Runtime enforcement | Evaluates signed cloud SDK and managed-browser-wrapper requests before their delivery callback or browser execution runs. | Routes consequential cloud and browser actions through the AgentFence integration; direct bypass paths must be removed or separately denied. |
+| Policy | Applies allow, deny, and approval-required boundaries using tool, action, data, destination, and the strictest declared or Data Guard-detected inbound/outbound sensitivity. | Defines an approved action inventory and assigns accountable policy owners. |
+| Credentials | Keeps raw secrets out of agent context and supports scoped, short-lived runtime credentials plus optional server-side Vault lifecycle operations. | Configures a live secret-manager integration and applies least-privilege permissions at each target system. |
+| Evidence | Produces tenant-scoped, tamper-evident audit events, action capture, trace, and exportable evidence for governed actions. | Configures and operates any continuous SIEM/SOAR forwarding, alert routing, and incident-response process. |
 
 ## 2. Development Workflow
 
@@ -24,7 +24,7 @@ Development should start with a narrow, observable use case rather than an unres
 
 ### 2.1 Cloud Agent Pattern
 
-Cloud workloads—including copilots, API services, workflows, and serverless agents—use the signed runtime client. The application places the real API action in the delivery callback. AgentFence evaluates the request before the callback is allowed to run. A policy allow indicates that AgentFence released the action; the wrapper then reports a sanitized downstream success or failure outcome without recording raw response bodies.
+Cloud workloads—including copilots, API services, workflows, and serverless agents—use the signed runtime client. The application places the real API action in the delivery callback. AgentFence inspects inbound parameters and outbound payloads, evaluates the request using the strongest declared or detected sensitivity, and releases the callback only after an allow decision. The wrapper then reports a sanitized downstream success or failure outcome without recording raw response bodies.
 
 ```ts
 await fence.guardAndDeliver(
@@ -42,7 +42,7 @@ await fence.guardAndDeliver(
 
 ### 2.2 Managed Browser Agent Pattern
 
-Browser automation, RPA, managed laptops, VDI environments, and extensions use the browser-action adapter immediately before navigation, a form submission, upload, download, or browser-backed API request. This is a governance wrapper, not a packet sniffer and not a keystroke recorder. It captures privacy-safe action metadata, policy decisions, Data Guard findings, approval state, and sanitized target outcome.
+Browser automation, RPA, managed laptops, VDI environments, and extensions use the browser-action adapter immediately before navigation, a form submission, upload, download, or browser-backed API request. This is a governance wrapper, not a packet sniffer and not a keystroke recorder. It captures privacy-safe action metadata, policy decisions, Data Guard findings, approval state, and sanitized target outcome. An allowed browser action executes with the organization’s existing browser or VDI session; it does not currently use a separately brokered target credential.
 
 ```ts
 await browserFence.authorizeAndExecute(
@@ -67,7 +67,7 @@ Start with a read-oriented workflow that has a single target system, a small des
 |---|---|---|---|
 | Development | `crm.customer.read` against a non-production CRM destination | Action Capture and trace for test requests | Policy behavior matches expected allow/block outcomes. |
 | Staging | `crm.case.update` with approval required | Approval event, audit chain, Data Guard finding review, target outcome | Target API and wrapper outcome reporting are observed end-to-end. |
-| Production pilot | Read-only or approval-gated updates for a small operator group | SIEM-forwarded events, named escalation owner, rollback exercise | Security owner accepts the action inventory and exception process. |
+| Production pilot | Read-only or approval-gated updates for a small operator group | Controlled connector certification or evidence-export review, named escalation owner, rollback exercise | Security owner accepts the action inventory and exception process. |
 | Broader production | Additional tools and agents | Monthly policy review and evidence export | Each expanded scope has an accountable business and security owner. |
 
 ## 4. Production Activation Checklist
@@ -81,7 +81,7 @@ The core application ships with managed identity, database, storage, notificatio
 | Policy | Approved tool/action/destination/data rules, including default-deny expectations. | Policy review and a controlled allow, block, and approval test. |
 | Target system | A least-privilege service account or target-specific authorization boundary. | Target permissions prove that unapproved actions are rejected independently. |
 | Credentials | Optional but recommended HashiCorp Vault AppRole configuration using `VAULT_ADDR`, `VAULT_ROLE_ID`, and `VAULT_SECRET_ID`. | Server-side Vault readiness reports configured; no raw secret appears in the console or agent prompt. |
-| Monitoring | SIEM/SOAR export strategy, on-call owner, alert routing, and incident playbook. | Test alert and incident triage record. |
+| Monitoring | SIEM/SOAR export strategy, on-call owner, alert routing, and incident playbook. | Controlled connector certification or evidence-export review, plus an incident-triage record. |
 | Recovery | Backup, rollback, credential revocation, and agent pause procedures. | Tabletop exercise covering a compromised agent or destination. |
 
 AgentFence remains safe in disconnected-Vault mode. In that mode, teams can develop, test policies, inspect action capture and trace records, and use the existing tenant-scoped control plane. Live dynamic secret issuance, rotation, and revocation require a securely configured Vault deployment; the platform does not fabricate or expose credential values while that connection is absent.
@@ -94,7 +94,7 @@ The OWASP Agentic Top 10 assessment capability in AgentFence is intentionally **
 
 ## 6. Security Boundaries and Known Limits
 
-AgentFence is strongest when it is combined with network segmentation, target-system least privilege, corporate identity controls, secure software delivery, and operational monitoring. A policy allow is not an attestation of business correctness. An approval decision is not a substitute for a reviewer’s judgement. Action Capture stores privacy-safe metadata; it is not designed to retain raw prompts, keystrokes, page contents, secret values, or response bodies.
+AgentFence is strongest when it is combined with network segmentation, target-system least privilege, corporate identity controls, secure software delivery, and operational monitoring. A policy allow is not an attestation of business correctness. An approval decision is not a substitute for a reviewer’s judgement. Action Capture stores privacy-safe metadata; it is not designed to retain raw prompts, keystrokes, page contents, secret values, or response bodies. MCP-capable tools may be governed through the signed SDK, but AgentFence does not currently operate a native MCP proxy, automatic MCP server-discovery layer, or independent MCP transport interceptor.
 
 The European Commission’s AI Act guidance emphasizes information sharing across the AI value chain and, for relevant systemic-risk models, risk mitigation, serious-incident reporting, and cybersecurity practices.[3] AgentFence can provide system-level evidence and control records that support an organization’s broader governance program, but it does not by itself certify compliance with the EU AI Act, SOC 2, ISO 27001, HIPAA, PCI DSS, or any other framework.
 
@@ -106,7 +106,7 @@ The platform’s `/healthz` endpoint supports basic deployment health probing. T
 
 ## 8. Enterprise Pilot Connections, Teams, and Billing
 
-The Enterprise Pilot console provides tenant-scoped configuration profiles for **Splunk HEC**, **Microsoft Sentinel**, **PagerDuty Events v2**, **OIDC federation**, **SCIM 2.0 provisioning**, and **HashiCorp Vault AppRole**. The profile record stores safe configuration metadata, connection state, and an optional tenant-scoped Vault reference. It does not store an HEC token, Azure client secret, PagerDuty routing key, OIDC client secret, SCIM bearer token, or AppRole Secret ID. Splunk documents HEC as a supported HTTP/HTTPS ingestion path, while Microsoft documents its Logs Ingestion API as HTTPS JSON delivery through customer-managed Azure resources.[4] [5]
+The Enterprise Pilot console provides tenant-scoped configuration profiles for **Splunk HEC**, **Microsoft Sentinel**, **PagerDuty Events v2**, **OIDC federation**, **SCIM 2.0 provisioning**, and **HashiCorp Vault AppRole**. The profile record stores safe configuration metadata, connection state, and an optional tenant-scoped Vault reference. It does not store an HEC token, Azure client secret, PagerDuty routing key, OIDC client secret, SCIM bearer token, or AppRole Secret ID. The product performs controlled Splunk HEC certification using a Vault-held token once the customer activates Vault; it does not yet claim continuous event delivery to Splunk, Sentinel, or PagerDuty. Splunk documents HEC as a supported HTTP/HTTPS ingestion path, while Microsoft documents its Logs Ingestion API as HTTPS JSON delivery through customer-managed Azure resources.[4] [5]
 
 The Vault integration remains disconnected-safe until the customer supplies secure deployment values. The console reports that state explicitly; a live AppRole activation must be completed by the customer’s Vault administrator with a policy restricted to the AgentFence tenant path. OIDC preflight uses the provider’s HTTPS discovery metadata, which OpenID Connect defines as the location for issuer, authorization, token, and key information.[6] The SCIM readiness profile is intentionally separate from live enforcement: SCIM deployment requires a customer-authenticated service principal, lifecycle semantics, and interoperability testing under RFC 7644.[7]
 

@@ -43,10 +43,10 @@ describe("AgentFence public authentication journey", () => {
   it("renders the enterprise architecture visual and guided cloud/browser control narrative", () => {
     const markup = renderToStaticMarkup(<Router ssrPath="/"><LandingPage /></Router>);
     expect(markup).toContain("Enterprise architecture");
-    expect(markup).toContain("One control path across cloud, browser, and enterprise systems.");
-    expect(markup).toContain("agentfence_enterprise_architecture_1e43c33d.png");
+    expect(markup).toContain("One integrated control path across cloud, browser, and enterprise systems.");
+    expect(markup).toContain("agentfence_claim_hardened_architecture_e0c51010.png");
     expect(markup).toContain("Connect a workload");
-    expect(markup).toContain("Control every consequential action");
+    expect(markup).toContain("Control each integrated action");
     expect(markup).toContain("Prove what happened");
   });
 

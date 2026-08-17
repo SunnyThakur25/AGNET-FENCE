@@ -14,14 +14,16 @@ The NIST Generative AI Profile identifies concerns including data privacy, infor
 
 ## 2. Product Solution
 
-AgentFence puts a signed **Tool Gateway** and optional **browser-action wrapper** in the control path. It evaluates workload identity, tenant isolation, policy, destination, data sensitivity, credential scope, and approval requirements before an agent action is released.
+AgentFence puts a signed **Tool Gateway** in the integrated cloud-SDK and managed-browser-wrapper control path. It evaluates workload identity, tenant isolation, policy, destination, the strongest declared or Data Guard-detected inbound/outbound data sensitivity, credential scope, and approval requirements before an integrated agent action is released.
+
+> **Zero-trust in this product has a bounded meaning.** AgentFence does not inherit trust from a prior agent action: each integrated request is bound to a signed workload identity, tenant and agent scope, nonce/replay check, policy decision, data context, destination, and—when required—human approval. It does not claim to govern calls that bypass the SDK or wrapper.
 
 | Product capability | Buyer outcome | Why it matters |
 |---|---|---|
 | Agent Registry and Role-Based Access Control | Every agent has a tenant, owner, environment, and risk context. | Prevents ambiguous ownership and cross-organization control leakage. |
 | Policy Engine and Tool Gateway | Decision is allow, block, or approval-required before execution. | Converts natural-language intent into enforceable application controls. |
-| Data Guard | Sensitive data categories are detected and redacted in governed paths. | Reduces accidental disclosure to unapproved models or destinations. |
-| Credential Vault integration | Agents use scoped, short-lived references rather than raw secrets. | Limits blast radius and supports revocation and rotation. |
+| Data Guard | Sensitive inbound and outbound content is detected, redacted, and supplied to policy evaluation at the strongest detected sensitivity. | Prevents a sensitive outbound payload from being treated as a lower-sensitivity allow decision on the integrated path. |
+| Credential Vault integration | Agents use scoped, short-lived runtime credentials rather than raw secrets; optional customer Vault operations remain server-side. | Limits blast radius and supports configured lease revocation and rotation without claiming a fresh Vault lease for every allow decision. |
 | Human Approval Workflow | High-impact actions can wait for a named human approver. | Preserves accountability when automation touches consequential systems. |
 | Action Capture, Trace, and Audit Ledger | Operators inspect the full decision path and privacy-safe downstream outcome. | Provides actionable observability rather than unstructured logs. |
 | Compliance Evidence Export | Evidence can be assembled for SOC 2, ISO 27001, insurance, and internal reviews. | Lowers the operational cost of demonstrating control execution. |
@@ -52,7 +54,9 @@ The design avoids an unsafe “agent firewall” marketing shortcut. It does not
 
 ## 6. Product Maturity and Go-to-Market Readiness
 
-The current platform includes tenant isolation, role-based authorization, policy decisions, Data Guard, approvals, tamper-evident audit events, action capture, action trace, compliance evidence exports, runtime wrappers, controlled OWASP assessment scenarios, and optional Vault AppRole integration. It has been validated with automated tests, TypeScript checks, production builds, and release-readiness controls. The first-agent wizard creates a real tenant-scoped agent identity and a first policy; it is not a mock setup flow.
+The current platform includes tenant isolation, role-based authorization, policy decisions, inbound/outbound Data Guard gating, approvals, tamper-evident audit events, action capture, action trace, compliance evidence exports, runtime wrappers, controlled OWASP assessment scenarios, and optional Vault AppRole integration. It also has secure connector profiles and controlled Splunk HEC certification, but does not yet claim continuous SIEM/SOAR event delivery. It has been validated with automated tests, TypeScript checks, production builds, and release-readiness controls. The first-agent wizard creates a real tenant-scoped agent identity and a first policy; it is not a mock setup flow.
+
+MCP-capable tools can be governed when their host application invokes them through the signed runtime SDK. A native MCP proxy, automatic server-discovery capability, and independent MCP transport interception are roadmap work rather than current product claims.
 
 For a production customer rollout, the remaining work is not “add arbitrary API keys.” The organization must connect its own agent runtime, IdP, approved target systems, least-privilege service accounts, monitoring pathway, and—where dynamic secret leasing is required—its Vault AppRole deployment. This dependency is a feature of the security model: raw credentials should not be copied into an agent or onboarding screen.
 

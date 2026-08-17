@@ -16,6 +16,15 @@ const classificationRank: Record<DataClassification, number> = {
   secret: 5,
 };
 
+/**
+ * Chooses the most restrictive sensitivity found across declared, inbound, and
+ * outbound action context. This is used before policy evaluation so redaction
+ * cannot turn a sensitive outbound request into an allow decision.
+ */
+export function strongestDataClassification(...classifications: DataClassification[]) {
+  return classifications.reduce((strongest, candidate) => classificationRank[candidate] > classificationRank[strongest] ? candidate : strongest, "public" as DataClassification);
+}
+
 const patterns: Array<{ classification: DataClassification; detector: string; expression: RegExp; replacement: string }> = [
   { classification: "secret", detector: "api-key", expression: /\b(?:sk|pk|api)[-_][A-Za-z0-9_-]{16,}\b/g, replacement: "[REDACTED_SECRET]" },
   { classification: "secret", detector: "bearer-token", expression: /\bBearer\s+[A-Za-z0-9._-]{16,}\b/gi, replacement: "Bearer [REDACTED_TOKEN]" },

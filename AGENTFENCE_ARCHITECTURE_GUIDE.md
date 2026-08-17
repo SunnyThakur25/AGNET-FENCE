@@ -1,28 +1,32 @@
 # AgentFence enterprise integration architecture
 
-The diagram in `agentfence_enterprise_architecture.mmd` presents **AgentFence as the action-control boundary between an AI agent and the real systems it can affect**. The design supports both cloud-hosted agents and browser agents running on a managed laptop, virtual desktop, or controlled browser-automation environment.
+The diagram in [`agentfence_claim_hardened_architecture.mmd`](./agentfence_claim_hardened_architecture.mmd) presents **AgentFence as the action-control boundary for explicitly integrated AI-agent actions**. The design supports cloud-hosted agents that use the signed runtime SDK and browser agents that use a managed wrapper, extension, local proxy, or automation adapter. Calls that bypass those integration paths are outside AgentFence enforcement and must be constrained through environment design, target permissions, and organizational controls.
 
 ## Trust boundaries and action flow
 
 | Stage | Component | What happens | Security result |
 |---|---|---|---|
-| 1 | Cloud agent or local browser agent | The agent proposes an API call, browser navigation, form submission, file action, or data operation. | The proposal is intercepted before the enterprise action occurs. |
+| 1 | Integrated cloud agent or managed browser agent | The agent proposes an API call, browser navigation, form submission, file action, or data operation through the SDK or wrapper. | The integrated proposal is evaluated before its target callback or browser execution runs. |
 | 2 | AgentFence Tool Gateway | It verifies the signed workload identity and resolves the registered agent, tenant, owner, environment, and risk level. | An unregistered, expired, revoked, cross-tenant, or replayed request is rejected. |
-| 3 | Policy Engine and Data Guard | Policy checks tool, action, parameters, data sensitivity, destination, and approval requirements. Data Guard classifies/redacts sensitive content. | The decision is **allow**, **block**, or **require approval**. |
+| 3 | Data Guard and Policy Engine | Data Guard inspects inbound parameters and outbound payloads, redacts sensitive values, and supplies the strongest declared or detected sensitivity to policy evaluation. Policy checks tool, action, parameters, data sensitivity, destination, and approval requirements. | The decision is **allow**, **block**, or **require approval** before delivery. |
 | 4 | Human Approval Workflow | High-impact actions wait for an identity-bound approver. | No payment, deletion, export, role change, or similar action proceeds merely because an agent requests it. |
-| 5 | Credential Broker and Vault | After an allowed decision, the broker obtains a short-lived, scoped lease from Vault or a supported secret manager. | Agents do not receive permanent raw API keys or broad administrative credentials. |
-| 6 | Approved enterprise system | Only the action and scope that passed enforcement reach the target CRM, API, database, payment system, SaaS platform, or browser portal. | The agent cannot use direct access outside the approved control path. |
-| 7 | Audit and SOC operations | Every decision, approval, credential lifecycle event, and outcome is added to the audit ledger and can flow to a SIEM/SOAR and compliance evidence packet. | Security teams can investigate and demonstrate what happened. |
+| 5 | Credential Broker and optional Vault AppRole | AgentFence enforces scoped, short-lived runtime credential lifecycle controls. When the customer activates Vault AppRole, server-side lease/read operations use a tenant-scoped Vault reference; no raw Vault secret is sent to the agent or browser. | The system does not claim a fresh Vault lease is minted automatically for every allowed action. |
+| 6 | Approved enterprise system or browser portal | An allowed cloud callback receives a redacted outbound payload. An allowed browser wrapper action executes with the existing enterprise browser/VDI session, rather than a brokered target credential. | The SDK/wrapper path is controlled; direct target access outside it is a separate environment and permission boundary. |
+| 7 | Audit and SOC operations | Each governed decision, policy revision, approval, credential-lifecycle action, and reported target outcome creates tenant-scoped evidence. Configured profiles support controlled connector certification and evidence export. | Security teams can investigate the governed path without treating the product as a universal event collector or a live-SIEM-delivery guarantee. |
 
 ## Local browser-agent pattern
 
-For a local browser agent, AgentFence is not installed *inside every web application*. The organization deploys a managed **browser wrapper, extension, local proxy, or automation adapter**. Before the browser agent navigates, clicks, fills a sensitive form, uploads/downloads data, or invokes a browser-backed API, the adapter sends the intended action to the AgentFence Tool Gateway.
+For a local browser agent, AgentFence is not installed *inside every web application*. The organization deploys a managed **browser wrapper, extension, local proxy, or automation adapter**. Before the browser agent navigates, clicks, fills a sensitive form, uploads/downloads data, or invokes a browser-backed API, the adapter sends the intended action to the AgentFence Tool Gateway. The adapter uses the organization’s existing managed browser or VDI session to execute an allowed action; this path does not currently obtain a separate brokered target credential.
 
 > The browser agent may be technically capable of many actions, but the wrapper executes only the action that AgentFence allows. An approval or denial stops the browser before the sensitive request is submitted.
 
 ## Cloud agent pattern
 
-For cloud agents, developers use the signed runtime SDK around each tool connector. The agent calls a protected helper rather than calling the CRM, ERP, database, or browser service directly. The helper asks AgentFence for an enforcement decision and only runs the delivery callback after an **allow** decision. A dynamic Vault lease is kept server-side where practical; raw secret values should not appear in the agent prompt, application logs, browser UI, or audit ledger.
+For cloud agents, developers use the signed runtime SDK around each tool connector. The agent calls a protected helper rather than calling the CRM, ERP, database, or browser service directly. The helper inspects inbound and outbound content, asks AgentFence for an enforcement decision using the strictest declared or detected sensitivity, and only runs the delivery callback after an **allow** decision. A customer-connected Vault AppRole is optional and remains server-side; raw secret values do not appear in the agent prompt, application logs, browser UI, or audit ledger.
+
+## MCP boundary
+
+MCP-capable agent tools can be governed when the calling application wraps each tool invocation with the signed runtime SDK. AgentFence does **not** currently provide a native MCP server proxy, automatic MCP tool discovery layer, or independent MCP transport interceptor. A native MCP gateway with server trust policy and per-tool enforcement is a roadmap item, not a current claim.
 
 ## Deployment sequence
 

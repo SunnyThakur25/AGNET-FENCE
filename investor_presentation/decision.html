@@ -38,29 +38,29 @@
       <div class="top"><span>03 / Product architecture</span><span>Action governance at runtime</span></div>
       <div class="rule"></div>
       <div class="intro">
-        <h1>AgentFence is the decision point before execution.</h1>
-        <p>Before a governed action reaches a real system, AgentFence verifies the requesting workload and evaluates the conditions required to release—or stop—the action.</p>
+        <h1>AgentFence is the decision point before integrated execution.</h1>
+        <p>For each signed cloud-SDK or managed-browser-wrapper action, AgentFence verifies the requesting workload and evaluates the conditions required to release—or stop—the action.</p>
       </div>
       <div class="journey">
         <section class="source">
-          <h2>Requested action</h2>
+          <h2>Integrated action</h2>
           <p>Agent intent<br>Tool invocation<br>Target destination</p>
-          <small>Cloud SDK or managed browser wrapper</small>
+          <small>Signed cloud SDK or managed browser wrapper</small>
         </section>
         <div class="link" aria-hidden="true"></div>
         <section class="gate">
-          <div><div class="label">pre-execution containment</div><h2 style="padding-top:12px">AgentFence</h2></div>
+          <div><div class="label">Per-action containment</div><h2 style="padding-top:12px">AgentFence</h2></div>
           <div class="statement">Verify.<br>Decide.<br>Record.</div>
-          <div class="checks">workload identity · tenant · policy · data sensitivity · credential scope · destination · approval requirement</div>
+          <div class="checks">workload identity · tenant · policy · strongest inbound/outbound data sensitivity · runtime scope · destination · approval requirement</div>
         </section>
         <div class="link" aria-hidden="true"></div>
         <section class="outcomes" aria-label="Policy outcomes">
-          <div class="outcome allow"><div class="tag">Outcome 01</div><h3>Allow</h3><p>Release an action that matches a policy and its permitted scope.</p></div>
-          <div class="outcome block"><div class="tag">Outcome 02</div><h3>Block</h3><p>Stop an action that violates a defined policy boundary before release.</p></div>
+          <div class="outcome allow"><div class="tag">Outcome 01</div><h3>Allow</h3><p>Release a redacted, integrated action that matches its policy and permitted scope.</p></div>
+          <div class="outcome block"><div class="tag">Outcome 02</div><h3>Block</h3><p>Stop an action that violates a defined policy boundary before delivery.</p></div>
           <div class="outcome approve"><div class="tag">Outcome 03</div><h3>Require approval</h3><p>Route a consequential action to a named human decision point.</p></div>
         </section>
       </div>
-      <div class="footer">Enforcement applies to explicit, integrated action paths. Calls that bypass the runtime integration remain an environment, identity, and target-permission responsibility.</div>
+      <div class="footer">Zero-trust applies to explicit, integrated action paths: every request is identity-bound and re-evaluated. Calls that bypass the runtime integration remain an environment, identity, and target-permission responsibility.</div>
     </div>
   </div>
 </body>

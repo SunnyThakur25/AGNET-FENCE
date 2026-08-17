@@ -24,7 +24,7 @@ import {
 import { appendAuditEvent } from "../agentfence/audit";
 import { isApprovalExpired } from "../agentfence/approvals";
 import { requireOrganizationMembership, requireOrganizationRole } from "../agentfence/authz";
-import { inspectAndRedact, inspectOutboundAndRedact } from "../agentfence/dataGuard";
+import { inspectAndRedact, inspectOutboundAndRedact, strongestDataClassification } from "../agentfence/dataGuard";
 import { generatePolicyExplanation, generatePolicyPatternSuggestions } from "../agentfence/llm";
 import { evaluatePolicies } from "../agentfence/policyEngine";
 import { issueRuntimeToken, scopeAllows, verifyRuntimeToken } from "../agentfence/runtimeAuth";
@@ -338,7 +338,7 @@ export const agentfenceRouter = router({
         const db = await getDb();
         if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable." });
         const guardResult = inspectAndRedact(input.parameters);
-        const effectiveSensitivity = guardResult.classification === "internal" ? input.dataSensitivity : guardResult.classification;
+        const effectiveSensitivity = strongestDataClassification(input.dataSensitivity, guardResult.classification);
         const activePolicies = await db
           .select()
           .from(policies)
@@ -519,7 +519,7 @@ export const agentfenceRouter = router({
         if (agent.status !== "active") throw new TRPCError({ code: "FORBIDDEN", message: "Paused or retired agents cannot invoke tools." });
         const inboundGuard = inspectAndRedact(input.parameters);
         const outboundGuard = inspectOutboundAndRedact(input.outboundPayload ?? {});
-        const effectiveSensitivity = inboundGuard.classification === "internal" ? input.dataSensitivity : inboundGuard.classification;
+        const effectiveSensitivity = strongestDataClassification(input.dataSensitivity, inboundGuard.classification, outboundGuard.classification);
         const activePolicies = await db.select().from(policies).where(and(eq(policies.organizationId, claims.organizationId), eq(policies.status, "active"), or(isNull(policies.agentId), eq(policies.agentId, claims.agentId))));
         const evaluation = evaluatePolicies(activePolicies, { toolName: input.toolName, action: input.action, parameters: input.parameters, dataSensitivity: effectiveSensitivity, destination: input.destination });
         const toolCallId = insertId(await db.insert(toolCalls).values({ organizationId: claims.organizationId, agentId: claims.agentId, toolName: input.toolName, action: input.action, redactedParameters: inboundGuard.redactedValue as Record<string, unknown>, dataSensitivity: effectiveSensitivity, destination: input.destination, riskLevel: input.riskLevel, decision: evaluation.decision, matchedPolicyId: evaluation.matchedPolicy?.id ?? null, initiatedBy: `runtime:${credential[0].id}` }));

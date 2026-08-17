@@ -1,0 +1,71 @@
+flowchart TB
+  classDef actor fill:#231126,stroke:#f43f5e,color:#fff,stroke-width:1px
+  classDef control fill:#40102a,stroke:#fb7185,color:#fff,stroke-width:1px
+  classDef boundary fill:#10243d,stroke:#67e8f9,color:#e6f7ff,stroke-width:1px
+  classDef system fill:#17242d,stroke:#34d399,color:#eafdf4,stroke-width:1px
+  classDef optional fill:#312716,stroke:#fbbf24,color:#fff8dc,stroke-dasharray: 5 4
+  classDef evidence fill:#231d3b,stroke:#a78bfa,color:#f5f3ff,stroke-width:1px
+
+  subgraph Users[Enterprise users and operations]
+    direction LR
+    Admin[Security administrators]:::actor
+    Operator[Enterprise operators]:::actor
+    Approver[Authorized approvers]:::actor
+    SOC[SOC / compliance team]:::actor
+  end
+
+  subgraph Runtime[Integrated AI-agent execution paths]
+    direction LR
+    Cloud[Cloud agent<br/>signed runtime SDK]:::boundary
+    Browser[Managed browser agent<br/>wrapper / extension / RPA adapter]:::boundary
+    MCP[MCP-capable agent<br/>integrated through signed SDK<br/>no native MCP proxy]:::optional
+  end
+
+  subgraph AgentFence[AgentFence governed action path]
+    direction TB
+    Registry[Agent Registry & workload identity<br/>tenant · owner · environment · risk]:::control
+    Gateway[Tool Gateway<br/>signed identity · nonce/replay check<br/>one decision per integrated action]:::control
+    Guard[Data Guard<br/>inbound + outbound inspection<br/>strongest sensitivity + redaction]:::control
+    Policy[Policy Engine<br/>tool · action · parameters · data · destination]:::control
+    Approval[Human Approval Workflow<br/>high-impact action holds]:::control
+    Broker[Credential Broker<br/>scoped runtime credential lifecycle]:::control
+    Monitor[Runtime Monitoring & Notifications<br/>allow · block · approval · outcome]:::evidence
+    Ledger[Tamper-Evident Audit Ledger<br/>decisions · changes · approvals · outcomes]:::evidence
+    Owasp[Controlled OWASP assessment<br/>synthetic policy-path test only<br/>no external payload execution]:::optional
+    Registry --> Gateway --> Guard --> Policy
+    Policy -->|allow| Broker
+    Policy -->|approval required| Approval -->|approved action| Broker
+    Owasp -. tests same policy boundary .-> Policy
+    Gateway -->|all decisions| Monitor
+    Approval -->|approval / rejection| Monitor
+    Gateway --> Ledger
+    Guard --> Ledger
+    Policy --> Ledger
+    Approval --> Ledger
+    Broker --> Ledger
+    Monitor --> Ledger
+  end
+
+  subgraph Targets[Approved target and evidence boundaries]
+    direction LR
+    APIs[Cloud APIs / internal services<br/>CRM · ERP · databases · SaaS]:::system
+    Portal[Approved browser portals<br/>existing enterprise browser session]:::system
+    Vault[Customer HashiCorp Vault AppRole<br/>optional customer activation]:::optional
+    SIEM[SIEM / SOAR / evidence export<br/>optional configured delivery]:::optional
+  end
+
+  Admin -->|register agent and policy| Registry
+  Operator -->|integrated action intent| Cloud
+  Operator -->|integrated browser intent| Browser
+  Cloud --> Gateway
+  Browser --> Gateway
+  MCP -->|SDK-wrapped tool intent| Gateway
+  Broker -->|scoped target call| APIs
+  Vault -. customer-connected lease/read only after activation .-> Broker
+  Gateway -->|browser action allowed only| Portal
+  Browser -. executes with existing browser session;<br/>no brokered target credential .-> Portal
+  APIs -->|sanitized outcome report| Monitor
+  Portal -->|sanitized outcome report| Monitor
+  Ledger -. configured export / evidence packet .-> SIEM
+  SOC -->|review evidence and alerts| Monitor
+  SOC -->|review export| SIEM

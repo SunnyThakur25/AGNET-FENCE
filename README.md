@@ -2,7 +2,7 @@
 
 > **A zero-trust action-governance control plane for AI agents and action-taking chatbots.**
 
-AgentFence inserts an explicit decision boundary between an AI agent’s intent and a real-world enterprise consequence. For each integrated action, it verifies the agent identity and tenant, evaluates policy and data context, checks credential scope and destination, optionally obtains human approval, and creates privacy-safe operational evidence.
+AgentFence inserts an explicit decision boundary between an AI agent’s intent and a real-world enterprise consequence. For each integrated action, it verifies the agent identity and tenant, evaluates policy using the strongest declared or Data Guard-detected inbound/outbound sensitivity, checks credential scope and destination, optionally obtains human approval, and creates privacy-safe operational evidence.
 
 AgentFence is designed for organizations that are moving from conversational AI to **action-taking agents** that query internal systems, call tools, navigate browsers, change records, move data, or use delegated credentials. It is not a packet firewall and does not claim to govern agent activity that bypasses its cloud SDK or managed browser integration paths.
 
@@ -20,8 +20,8 @@ NIST’s AI Agent Standards Initiative identifies secure agent identity, authori
 |---|---|
 | **Who is acting?** | Binds the request to a tenant-scoped agent identity and role-based authorization context. |
 | **What may it do?** | Evaluates a policy before the integrated action is released. |
-| **What sensitive data is involved?** | Applies Data Guard detection and redaction in governed paths. |
-| **Which credential may it use?** | Uses scoped, short-lived runtime references; raw secrets are not surfaced to agents. |
+| **What sensitive data is involved?** | Applies inbound and outbound Data Guard detection/redaction and uses the strongest discovered sensitivity for the policy decision. |
+| **Which credential may it use?** | Uses scoped, short-lived runtime references; optional Vault operations remain server-side and raw secrets are not surfaced to agents. |
 | **Does a human need to intervene?** | Routes consequential actions through the Human Approval Workflow. |
 | **What happened after the decision?** | Records privacy-safe outcomes in Action Capture, Action Trace, and the Audit Ledger. |
 | **Can the organization demonstrate control operation?** | Produces evidence for SOC 2, ISO 27001, insurance review, and internal oversight. |
@@ -38,7 +38,7 @@ The current product contains the following **13 core capabilities**.
 | **Credential Vault** | Supports optional HashiCorp Vault AppRole integration with scoped, short-lived credential references. |
 | **Human Approval Workflow** | Escalates high-impact actions to named human approvers. |
 | **Tamper-Evident Audit Ledger** | Records a hash-linked decision history for investigation and control evidence. |
-| **Data Guard** | Detects and redacts configured sensitive-data categories on governed outbound paths. |
+| **Data Guard** | Detects and redacts configured sensitive-data categories on governed inbound and outbound paths before the policy result is released. |
 | **Runtime Monitoring Dashboard** | Surfaces action activity and decision outcomes for operators. |
 | **Attack Simulation** | Runs controlled, non-destructive OWASP Agentic Top 10 assessment scenarios. |
 | **Role-Based Access Control** | Limits user access to authorized console and operational functions. |
@@ -54,8 +54,8 @@ Cloud agent ─── signed runtime SDK ───┐
 Managed browser agent ─ action wrapper┼──> AgentFence decision path
                                       │       │
                                       │       ├─ verify identity + tenant
-                                      │       ├─ evaluate policy + destination + data context
-                                      │       ├─ use scoped credential reference
+                                      │       ├─ inspect inbound + outbound data, then evaluate policy + destination
+                                      │       ├─ use scoped runtime credential control; optional server-side Vault lifecycle
                                       │       ├─ allow / block / require approval
                                       │       └─ capture trace + audit evidence
                                       │
@@ -73,6 +73,8 @@ The platform supports two explicit integration paths:
 | **Managed browser agent** | Browser-action wrapper | Navigation, form submission, upload, download, and browser-backed API behavior. |
 
 > **Control boundary:** Direct calls that bypass these integration paths are outside AgentFence enforcement. Customers must constrain those paths with environment design, target-system permissions, network controls, and organizational policy.
+
+For an editable architecture visual that includes the enforcement and activation limits, see [`agentfence_claim_hardened_architecture.mmd`](./agentfence_claim_hardened_architecture.mmd). It clarifies that managed browser actions execute in the existing enterprise session, Vault AppRole activation is optional and customer-controlled, controlled Splunk certification is not continuous SIEM delivery, and MCP tools currently require SDK wrapping rather than a native MCP proxy.
 
 ## First-agent onboarding
 
@@ -107,7 +109,7 @@ See [`vault_deployment_guide.md`](./vault_deployment_guide.md) and [`LOCAL_TESTI
 
 ### Enterprise pilot integrations, teams, and billing
 
-The authenticated **Enterprise pilot** console adds server-side, tenant-scoped profiles for **Splunk HEC**, **Microsoft Sentinel**, **PagerDuty Events v2**, **OIDC federation**, **SCIM 2.0 provisioning**, and **HashiCorp Vault AppRole**. Profiles store safe endpoint metadata and optional Vault references only. Each endpoint must use HTTPS, and AgentFence validates OIDC discovery or Vault health through a controlled server-side test; live service delivery remains activation-dependent.
+The authenticated **Enterprise pilot** console adds server-side, tenant-scoped profiles for **Splunk HEC**, **Microsoft Sentinel**, **PagerDuty Events v2**, **OIDC federation**, **SCIM 2.0 provisioning**, and **HashiCorp Vault AppRole**. Profiles store safe endpoint metadata and optional Vault references only. Each endpoint must use HTTPS. AgentFence supports Boolean deployment readiness, OIDC discovery preflight, Vault health, and controlled Splunk HEC certification with a Vault-held token after customer activation; continuous delivery to Splunk, Sentinel, or PagerDuty remains an activation and product-roadmap boundary.
 
 Team Management provides administrator, operator, viewer, and billing-administrator roles, expiring invitation lifecycle controls, and auditable role changes. The public landing page and authenticated billing page present three feature-based plans: **Pilot ($99/workspace/month)**, **Growth ($299/workspace/month)**, and **Enterprise (custom agreement)**. Stripe Checkout is created on the server and Stripe is the source of truth for payment data; AgentFence records only the required resource identifiers and the selected operational plan.
 
@@ -178,6 +180,8 @@ The test suite covers core policy decisions, tenant safety, runtime credential b
 | [`LOCAL_TESTING.md`](./LOCAL_TESTING.md) | No-Vault local testing workflow. |
 | [`vault_deployment_guide.md`](./vault_deployment_guide.md) | Vault AppRole setup guidance. |
 | [`RELEASE_READINESS.md`](./RELEASE_READINESS.md) | Release activation, monitoring, remediation, and rollback guide. |
+| [`AGENTFENCE_ARCHITECTURE_GUIDE.md`](./AGENTFENCE_ARCHITECTURE_GUIDE.md) | Integrated action-path architecture, browser-session, Vault, monitoring, and MCP boundaries. |
+| [`AGENTFENCE_CLAIM_BOUNDARIES.md`](./AGENTFENCE_CLAIM_BOUNDARIES.md) | Claim register distinguishing current controls, customer activation prerequisites, and roadmap items. |
 | [`ENTERPRISE_PILOT_DEPLOYMENT_GUIDE.md`](./ENTERPRISE_PILOT_DEPLOYMENT_GUIDE.md) | Secure SIEM/SOAR, IdP/SCIM, Vault, billing, and team-management pilot activation guide. |
 | [`ENTERPRISE_PILOT_INTEGRATIONS_RESEARCH.md`](./ENTERPRISE_PILOT_INTEGRATIONS_RESEARCH.md) | Primary-source research register for the pilot connector design. |
 | [`ENTERPRISE_AUDIT_READINESS_ASSESSMENT.md`](./ENTERPRISE_AUDIT_READINESS_ASSESSMENT.md) | Candid enterprise control assessment, audit-evidence expectations, and prioritized roadmap for production-scale assurance. |

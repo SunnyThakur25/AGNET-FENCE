@@ -6,6 +6,7 @@ const state = vi.hoisted(() => ({
   gatewayError: null as string | null,
   auditEvents: [] as Array<Record<string, unknown>>,
   policyDecision: "blocked" as "blocked" | "approval_required" | "allowed",
+  capturedSensitivity: null as string | null,
 }));
 
 const db = {
@@ -35,7 +36,7 @@ vi.mock("../agentfence/runtimeGatewayGuard", () => ({
     return true;
   }),
 }));
-vi.mock("../agentfence/policyEngine", () => ({ evaluatePolicies: vi.fn(() => ({ decision: state.policyDecision, reason: `Synthetic ${state.policyDecision} decision from the controlled assessment policy boundary.` })) }));
+vi.mock("../agentfence/policyEngine", () => ({ evaluatePolicies: vi.fn((_policies, request: { dataSensitivity: string }) => { state.capturedSensitivity = request.dataSensitivity; return { decision: state.policyDecision, reason: `Synthetic ${state.policyDecision} decision from the controlled assessment policy boundary.` }; }) }));
 vi.mock("../agentfence/vaultClient", () => ({
   createVaultAppRoleClient: vi.fn(() => ({
     issueLease: vi.fn(async () => ({ leaseId: "internal-lease", leaseDurationSeconds: 300, renewable: true })),
@@ -68,6 +69,7 @@ describe("agentfence runtime procedures", () => {
     state.gatewayError = null;
     state.auditEvents = [];
     state.policyDecision = "blocked";
+    state.capturedSensitivity = null;
   });
 
   it("returns an unauthorized error when the gateway detects a duplicate nonce replay", async () => {
@@ -78,6 +80,12 @@ describe("agentfence runtime procedures", () => {
   it("rejects a signed runtime credential whose stored organization does not match its token claim", async () => {
     state.credential = { ...state.credential, organizationId: 6 };
     await expect(caller().runtime.evaluate(runtimeInput)).rejects.toMatchObject({ code: "UNAUTHORIZED", message: "Runtime credential is invalid or inactive." });
+  });
+
+  it("supplies a secret outbound payload classification to policy evaluation before any delivery callback can run", async () => {
+    state.policyDecision = "blocked";
+    await expect(caller().runtime.evaluate({ ...runtimeInput, outboundPayload: { authorization: "Bearer a-tenant-secret-token-123456" } })).resolves.toMatchObject({ decision: "blocked", allowed: false });
+    expect(state.capturedSensitivity).toBe("secret");
   });
 
   it("refuses Action Capture queries outside the caller's organization before records can be read", async () => {

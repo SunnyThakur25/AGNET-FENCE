@@ -2,7 +2,7 @@
 
 **Audience:** Enterprise customers, design partners, security leaders, and early-stage investors.  
 **Reference date:** August 17, 2026.  
-**Visual direction:** Premium enterprise-security presentation with AgentFence’s deep-black and red-glass containment aesthetic; crimson action boundaries, cyan verification accents, concise diagrams, and source footnotes. Use the existing enterprise architecture visual as the visual anchor. Distinguish implemented capabilities from roadmap items.
+**Visual direction:** Premium enterprise-security presentation with AgentFence’s deep-black and red-glass containment aesthetic; crimson action boundaries, cyan verification accents, concise diagrams, and source footnotes. Use the claim-hardened enterprise architecture visual as the visual anchor. Distinguish implemented capabilities, customer-activated controls, and roadmap items.
 
 ## Cover
 
@@ -36,8 +36,8 @@ Enterprise security, authority, and evidence between an agent’s intent and a r
 
 ### AgentFence is the decision point before execution
 
-- AgentFence sits between an AI agent and enterprise targets as an explicit action-governance control plane.
-- It evaluates workload identity, tenant, policy scope, data sensitivity, destination, credential scope, and approval requirements **before** a governed action is released.
+- AgentFence sits on the explicit, integrated action path between a cloud SDK or managed-browser wrapper and enterprise targets.
+- It evaluates workload identity, tenant, policy scope, destination, credential scope, approval requirements, and the strongest declared or Data Guard-detected inbound/outbound sensitivity **before** an integrated action is released.
 - The result is an enforceable decision: **allow, block, or require approval**, plus an audit-ready action trail.
 
 **Visual:** Enterprise architecture diagram with AgentFence highlighted as the containment boundary between agents and enterprise systems.
@@ -48,7 +48,7 @@ Enterprise security, authority, and evidence between an agent’s intent and a r
 
 - Cloud agents use the signed runtime SDK; managed browser agents use a wrapper before navigation, form submission, upload, download, or browser-backed API behavior.
 - Both paths converge on the same policy and evidence model: Action Capture, graphical Action Trace, and tamper-evident Audit Ledger.
-- The design does not claim to secure agent calls that bypass the integration path; bypass prevention remains an environment, identity, and target-permission responsibility.
+- Browser actions execute with the existing enterprise session rather than a separately brokered target credential. The design does not claim to secure agent calls that bypass the integration path; bypass prevention remains an environment, identity, and target-permission responsibility.
 
 **Visual:** Dual-lane flow diagram: cloud SDK and browser wrapper merge into identity → policy → data guard → approval → target → evidence.
 
@@ -57,7 +57,7 @@ Enterprise security, authority, and evidence between an agent’s intent and a r
 ### The control stack is built around real operational needs
 
 - **Identity and authority:** Agent Registry, Role-Based Access Control, Policy Engine, Tool Gateway, and Credential Vault references.
-- **Risk and intervention:** Data Guard, Human Approval Workflow, Runtime Monitoring, and controlled OWASP Agentic Top 10 assessments.
+- **Risk and intervention:** inbound/outbound Data Guard policy gating, Human Approval Workflow, Runtime Monitoring, and controlled OWASP Agentic Top 10 assessments.
 - **Evidence and operations:** Tamper-Evident Audit Ledger, AI Action Capture, AI Action Trace, Notifications, and Compliance Evidence Export.
 
 **Visual:** Three-layer capability stack. Emphasize that all 13 named capabilities are implemented product surfaces, not slideware.
@@ -125,7 +125,7 @@ Enterprise security, authority, and evidence between an agent’s intent and a r
 
 - Commercial hypothesis: platform subscription plus governed-agent capacity, protected environments, action volume, evidence/export modules, and optional integration services; pricing and ROI remain **design-partner validation items**, not unverified claims.
 - Land with a low-blast-radius workflow; expand by agent, environment, destination, policy owner, approval workflow, and evidence program. Approved policies, safe integration patterns, audit history, and evidence compound inside the customer environment.
-- **Now:** multi-tenant action governance, Data Guard, approvals, action observability, OWASP-controlled assessment, compliance evidence, and disconnected-safe Vault integration. **Next:** customer-connected Vault AppRole activation, deeper target connectors, richer policy packs, and security-workflow integrations.
+- **Now:** multi-tenant action governance, strongest inbound/outbound Data Guard gating, approvals, action observability, OWASP-controlled assessment, compliance evidence, scoped runtime credential controls, and secure connector profiles with controlled Splunk certification. **Next:** customer-connected Vault AppRole activation, continuous approved connector delivery, deeper target connectors, richer policy packs, native MCP gateway/proxy controls, and security-workflow integrations.
 - **Extended vision:** a durable enterprise control fabric that lets organizations authorize, observe, and prove agent actions across heterogeneous runtimes without exposing raw secrets to agents.
 
 **Visual:** Land → govern → prove → expand flywheel flowing into a Now / Next / Extended horizon. End with an invitation to run a design-partner demonstration: wrap one real action, show allow/block/approval, and inspect the trace.

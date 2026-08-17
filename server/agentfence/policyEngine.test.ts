@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { inspectAndRedact, inspectOutboundAndRedact } from "./dataGuard";
+import { inspectAndRedact, inspectOutboundAndRedact, strongestDataClassification } from "./dataGuard";
 import { evaluatePolicies } from "./policyEngine";
 import { hashAuditEvent, isAuditHashValid } from "./audit";
 import { isApprovalExpired } from "./approvals";
@@ -69,6 +69,24 @@ describe("AgentFence enforcement core", () => {
     const guarded = inspectOutboundAndRedact("Send to destination: sk-live-1234567890abcdefghijkl");
     expect(guarded.classification).toBe("secret");
     expect(String(guarded.redactedValue)).toContain("[REDACTED_SECRET]");
+  });
+
+  it("uses the strongest outbound Data Guard classification for policy evaluation before delivery", () => {
+    const outbound = inspectOutboundAndRedact({ authorization: "Bearer a-tenant-secret-token-123456" });
+    const sensitivity = strongestDataClassification("internal", "internal", outbound.classification);
+    const result = evaluatePolicies([{
+      id: 42,
+      name: "Block secret-bearing CRM updates",
+      effect: "deny",
+      toolPattern: "crm",
+      actionPattern: "case.update",
+      parameterConstraints: [],
+      dataSensitivity: "secret",
+      destinationPattern: "crm.production",
+      priority: 100,
+    }], { toolName: "crm", action: "case.update", parameters: {}, dataSensitivity: sensitivity, destination: "crm.production" });
+    expect(sensitivity).toBe("secret");
+    expect(result.decision).toBe("blocked");
   });
 
   it("evaluates authorization roles and approval expiry deterministically", () => {

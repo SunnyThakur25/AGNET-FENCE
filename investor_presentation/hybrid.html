@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>One governed path across cloud and browser agents</title>
+  <title>One integrated control path across cloud and browser agents</title>
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
     :root { --bg:#E8ECEF; --ink:#0B0C10; --body:#2C3539; --red:#990000; --line:#B7BEC2; --paper:#F7F8F8; }
@@ -11,7 +11,7 @@
     .meta { display:flex; justify-content:space-between; color:var(--red); font:700 12px Arial,sans-serif; letter-spacing:2px; text-transform:uppercase; }
     .rule { height:1px; background:var(--line); margin-top:16px; }
     h1 { font-size:45px; letter-spacing:-1.7px; line-height:1.02; margin-top:24px; }
-    .lede { max-width:780px; color:var(--body); font-size:18px; line-height:1.35; margin-top:12px; }
+    .lede { max-width:850px; color:var(--body); font-size:18px; line-height:1.35; margin-top:12px; }
     .flow { flex:1; display:grid; grid-template-columns:235px 235px 88px 280px 88px 280px; align-items:center; gap:0; margin-top:22px; }
     .lane { min-height:148px; border-top:4px solid var(--ink); background:var(--paper); padding-top:20px; padding-left:19px; padding-right:19px; }
     .lane.browser { border-top-color:var(--red); }
@@ -44,21 +44,21 @@
     <div class="frame">
       <div class="meta"><span>04 / Hybrid runtime</span><span>AgentFence investor brief</span></div>
       <div class="rule"></div>
-      <h1>One governed path across cloud and browser agents.</h1>
-      <p class="lede">Different runtimes, one explicit decision model: authorize the action before execution, then retain evidence of the decision and downstream outcome.</p>
+      <h1>One integrated control path across cloud and browser agents.</h1>
+      <p class="lede">Different runtimes, one explicit decision model: inspect inbound and outbound data, authorize the action before execution, then retain evidence of the decision and downstream outcome.</p>
       <section class="flow" aria-label="Cloud and browser runtime convergence diagram">
         <div class="inputs">
-          <article class="lane"><div class="tag">Cloud runtime</div><h2>Signed SDK</h2><p>Cloud agents submit a signed, replay-protected request before a governed tool call.</p></article>
-          <article class="lane browser"><div class="tag">Managed browser</div><h2>Action wrapper</h2><p>Browser agents are intercepted before navigation, forms, uploads, downloads, or browser-backed API behavior.</p></article>
+          <article class="lane"><div class="tag">Cloud runtime</div><h2>Signed SDK</h2><p>Cloud agents submit a signed, replay-protected request before an integrated tool callback runs.</p></article>
+          <article class="lane browser"><div class="tag">Managed browser</div><h2>Action wrapper</h2><p>Browser wrappers authorize navigation, forms, uploads, downloads, and browser-backed actions before execution.</p></article>
         </div>
         <div></div>
         <div class="join"><span class="head"></span></div>
-        <article class="fence"><div class="tag">Containment boundary</div><h2>AgentFence decision path</h2><p>Verify identity and tenant. Evaluate policy, destination, data sensitivity, credential scope, and approval requirement.</p><p><strong>ALLOW · BLOCK · REQUIRE APPROVAL</strong></p></article>
+        <article class="fence"><div class="tag">Containment boundary</div><h2>AgentFence decision path</h2><p>Verify identity and tenant. Evaluate policy, destination, runtime scope, approval requirement, and the strongest detected inbound/outbound sensitivity.</p><p><strong>ALLOW · BLOCK · REQUIRE APPROVAL</strong></p></article>
         <div class="arrow"></div>
-        <article class="target"><div class="tag">Released consequence</div><h2>Enterprise target + evidence plane</h2><p>Only permitted requests reach approved systems. Privacy-safe Action Capture, graphical Action Trace, and tamper-evident audit events preserve the path.</p><div class="evidence"><span>Capture</span><span>Trace</span><span>Ledger</span></div></article>
+        <article class="target"><div class="tag">Released consequence</div><h2>Target boundary + evidence plane</h2><p>Allowed cloud callbacks receive redacted payloads. Browser wrappers execute through the existing enterprise session. Capture, trace, and audit preserve the governed path.</p><div class="evidence"><span>Capture</span><span>Trace</span><span>Ledger</span></div></article>
       </section>
-      <p class="boundary">Control boundary: calls that bypass the SDK or managed browser wrapper are outside AgentFence’s enforcement path and must be constrained by environment design, target permissions, and organizational policy.</p>
-      <div class="footer">Implemented product surfaces: signed runtime gateway, managed browser action wrapper, Policy Engine, Data Guard, approvals, Action Capture, Action Trace, and Audit Ledger.</div>
+      <p class="boundary">Control boundary: calls that bypass the SDK or managed browser wrapper are outside AgentFence enforcement. Vault AppRole target-credential operations are optional customer activation; browser execution does not use a separately brokered target credential.</p>
+      <div class="footer">Implemented: signed runtime gateway, managed browser action wrapper, Policy Engine, inbound/outbound Data Guard gating, approvals, Action Capture, Action Trace, and Audit Ledger. MCP tools can use the SDK; a native MCP proxy is roadmap work.</div>
     </div>
   </div>
 </body>
