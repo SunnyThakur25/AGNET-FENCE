@@ -127,6 +127,11 @@ export function CommandCenter() {
         ))}
       </section>
 
+      <section className="agent-fence-explainer">
+        <div className="explainer-copy"><p className="eyebrow">Agent firewall, explained</p><h2>AgentFence governs actions—not conversations.</h2><p>Before an agent can call a tool, AgentFence checks its identity, the policy scope, data sensitivity, destination, and whether a human must approve the action.</p></div>
+        <div className="explainer-path" aria-label="AI agent decision flow"><span>AI agent</span><i>→</i><strong>Identity + policy + data guard</strong><i>→</i><span>Allow · block · approve</span></div>
+      </section>
+
       <section className="split-grid">
         <article className="console-card span-two">
           <div className="card-heading">

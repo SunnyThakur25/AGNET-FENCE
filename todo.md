@@ -29,7 +29,7 @@
 ## Dedicated Vault deployment
 
 - [x] Define the dedicated Vault tenancy, namespace/path layout, authentication method, and lease TTL contract for AgentFence.
-- [ ] Implement Vault-backed credential metadata, dynamic lease issuance, rotation, revocation, and tenant-scoped audit events without storing raw secret values in AgentFence.
+- [x] Implement Vault-backed credential metadata, dynamic lease issuance, rotation, revocation, and tenant-scoped audit events without storing raw secret values in AgentFence.
 - [x] Implement signed runtime gateway requests with nonce/replay protection and automatic outbound Data Guard enforcement before delivery.
 - [x] Add tests for Vault lease scope, expiry, revocation, tenant isolation, replay rejection, and outbound redaction.
 - [x] Document the Vault deployment prerequisites, required secrets, and production hardening checklist.
@@ -55,3 +55,13 @@
 - [x] Add a procedure-level runtime gateway test proving duplicate nonces are rejected as replays.
 - [x] Add a procedure-level test proving signed runtime credentials cannot cross organization or agent boundaries.
 - [x] Add a procedure-level test proving the Vault path scope contract is enforced by the runtime credential workflow.
+- [x] Add a protected Vault lease-rotation procedure with tenant-scoped audit events and secure failure handling.
+- [x] Add router-level configured-Vault tests for lease issue, revoke, and rotate flows without exposing raw secret material.
+- [x] Create a premium glassmorphic visual system with an intentional security color palette, depth, and accessible contrast.
+- [x] Build a clear public landing experience that explains AgentFence as an AI-agent firewall through practical use cases and a visual request-flow story.
+- [x] Build responsive sign-in and sign-up screens with a Google sign-in action that uses the existing secure OAuth login flow.
+- [x] Add controlled, reduced-motion-aware micro-interactions and page transitions across public and authenticated AgentFence experiences.
+- [x] Refine the governance console hierarchy and contextual education so first-time users understand policies, Tool Gateway decisions, Data Guard, approvals, and audit evidence.
+- [x] Add and run focused UI/auth-flow Vitest coverage, then verify desktop and mobile screenshots for the redesign.
+- [x] Add route-level reduced-motion-aware transitions between the public landing, sign-in, sign-up, and protected console experiences.
+- [x] Add interactive Vitest coverage proving sign-in, sign-up, and Google sign-in controls invoke the secure OAuth entry handler.

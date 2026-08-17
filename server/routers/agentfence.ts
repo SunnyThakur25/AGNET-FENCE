@@ -613,6 +613,24 @@ export const agentfenceRouter = router({
         throw new TRPCError({ code: "BAD_GATEWAY", message: "Vault lease revocation failed." });
       }
     }),
+    rotateLease: protectedProcedure.input(organizationInput.extend({ agentId: z.number().int().positive(), vaultCredentialId: z.number().int().positive(), previousLeaseId: z.string().min(3).max(512) })).mutation(async ({ ctx, input }) => {
+      await requireOrganizationRole(input.organizationId, ctx.user.id, ["admin"]);
+      await requireAgentInOrganization(input.organizationId, input.agentId);
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable." });
+      const reference = await db.select().from(vaultCredentials).where(and(eq(vaultCredentials.id, input.vaultCredentialId), eq(vaultCredentials.organizationId, input.organizationId), eq(vaultCredentials.status, "active"))).limit(1);
+      if (!reference[0] || !isVaultPathForOrganization(reference[0].externalReference, input.organizationId) || !reference[0].externalReference.startsWith(`agentfence/tenants/${input.organizationId}/agents/${input.agentId}/`)) {
+        throw new TRPCError({ code: "FORBIDDEN", message: "This Vault credential reference is not scoped to the selected agent." });
+      }
+      try {
+        const lease = await createVaultAppRoleClient().rotateLease(input.previousLeaseId, reference[0].externalReference);
+        await appendAuditEvent({ organizationId: input.organizationId, eventType: "vault.lease_rotated", actorType: "user", actorIdentity: ctx.user.email || ctx.user.openId, agentId: input.agentId, outcome: "allowed", payload: { vaultCredentialId: input.vaultCredentialId, leaseDurationSeconds: lease.leaseDurationSeconds, renewable: lease.renewable } });
+        return { leaseDurationSeconds: lease.leaseDurationSeconds, renewable: lease.renewable };
+      } catch (error) {
+        if (error instanceof Error && error.message.includes("not configured")) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Dedicated Vault is not configured yet." });
+        throw new TRPCError({ code: "BAD_GATEWAY", message: "Vault lease rotation failed." });
+      }
+    }),
     list: protectedProcedure.input(organizationInput).query(async ({ ctx, input }) => {
       await requireOrganizationRole(input.organizationId, ctx.user.id, ["admin"]);
       const db = await getDb();

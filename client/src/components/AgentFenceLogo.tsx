@@ -1,4 +1,5 @@
 import { ShieldCheck } from "lucide-react";
+import React from "react";
 
 export function AgentFenceLogo({ compact = false }: { compact?: boolean }) {
   return (

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const state = vi.hoisted(() => ({
   claims: { tokenId: "runtime-token", organizationId: 5, agentId: 9, vaultCredentialId: 3, allowedScopes: ["crm.read"] },
-  credential: { id: 77, tokenId: "runtime-token", organizationId: 5, agentId: 9, vaultCredentialId: 3, allowedScopes: ["crm.read"], tokenTtlSeconds: 300, status: "active", expiresAt: new Date("2030-01-01T00:00:00.000Z") },
+  credential: { id: 77, tokenId: "runtime-token", organizationId: 5, agentId: 9, vaultCredentialId: 3, allowedScopes: ["crm.read"], tokenTtlSeconds: 300, externalReference: "agentfence/tenants/5/agents/9/credentials/crm", status: "active", expiresAt: new Date("2030-01-01T00:00:00.000Z") },
   gatewayError: null as string | null,
 }));
 
@@ -20,6 +20,13 @@ vi.mock("../agentfence/runtimeGatewayGuard", () => ({
     if (input.credential.organizationId !== input.claims.organizationId || input.credential.agentId !== input.claims.agentId) throw new Error("runtime_credential_inactive");
     return true;
   }),
+}));
+vi.mock("../agentfence/vaultClient", () => ({
+  createVaultAppRoleClient: vi.fn(() => ({
+    issueLease: vi.fn(async () => ({ leaseId: "internal-lease", leaseDurationSeconds: 300, renewable: true })),
+    revokeLease: vi.fn(async () => ({ revoked: true })),
+    rotateLease: vi.fn(async () => ({ leaseId: "replacement-lease", leaseDurationSeconds: 300, renewable: true })),
+  })),
 }));
 
 import { agentfenceRouter } from "./agentfence";
@@ -42,7 +49,7 @@ const runtimeInput = {
 describe("agentfence runtime procedures", () => {
   beforeEach(() => {
     state.claims = { tokenId: "runtime-token", organizationId: 5, agentId: 9, vaultCredentialId: 3, allowedScopes: ["crm.read"] };
-    state.credential = { id: 77, tokenId: "runtime-token", organizationId: 5, agentId: 9, vaultCredentialId: 3, allowedScopes: ["crm.read"], tokenTtlSeconds: 300, status: "active", expiresAt: new Date("2030-01-01T00:00:00.000Z") };
+    state.credential = { id: 77, tokenId: "runtime-token", organizationId: 5, agentId: 9, vaultCredentialId: 3, allowedScopes: ["crm.read"], tokenTtlSeconds: 300, externalReference: "agentfence/tenants/5/agents/9/credentials/crm", status: "active", expiresAt: new Date("2030-01-01T00:00:00.000Z") };
     state.gatewayError = null;
   });
 
@@ -66,5 +73,11 @@ describe("agentfence runtime procedures", () => {
 
   it("rejects a runtime credential TTL above the selected Vault credential reference limit", async () => {
     await expect(caller().runtime.issueCredential({ organizationId: 5, agentId: 9, vaultCredentialId: 77, requestedScopes: ["crm.read"], ttlSeconds: 301 })).rejects.toMatchObject({ code: "FORBIDDEN", message: "Requested runtime TTL exceeds this Vault credential reference." });
+  });
+
+  it("issues, revokes, and rotates Vault leases through protected tenant-scoped procedures without returning lease IDs", async () => {
+    await expect(caller().vault.issueLease({ organizationId: 5, agentId: 9, vaultCredentialId: 77 })).resolves.toEqual({ leaseDurationSeconds: 300, renewable: true });
+    await expect(caller().vault.revokeLease({ organizationId: 5, leaseId: "server-only-lease" })).resolves.toEqual({ success: true });
+    await expect(caller().vault.rotateLease({ organizationId: 5, agentId: 9, vaultCredentialId: 77, previousLeaseId: "server-only-lease" })).resolves.toEqual({ leaseDurationSeconds: 300, renewable: true });
   });
 });
