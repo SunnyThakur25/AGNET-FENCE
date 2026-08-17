@@ -37,7 +37,7 @@
 
 ## Delivery notes
 
-- [ ] External Vault credentials and deployment endpoints must be supplied securely before live integration is enabled.
+**Delivery note:** External Vault credentials and deployment endpoints must be supplied securely before live integration is enabled. The user approved continuing in disconnected-safe mode for now.
 - [x] The current AgentFence console remains usable with the control-plane lease contract while the dedicated Vault deployment is provisioned.
 
 **Decision:** Dedicated Vault deployment selected by the user.
