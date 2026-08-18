@@ -1,4 +1,6 @@
 import React from "react";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { SidebarCollapseToggle, ThemeToggle } from "./DashboardLayout";
@@ -40,5 +42,13 @@ describe("SidebarCollapseToggle", () => {
     expect(renderToStaticMarkup(element)).toContain('aria-pressed="true"');
     element.props.onClick();
     expect(activations).toBe(1);
+  });
+
+  it("keeps the collapsed control and brand copy inside the sidebar rail", () => {
+    const css = readFileSync(resolve(process.cwd(), "client/src/index.css"), "utf8");
+    expect(css).toContain(".sidebar-collapsed .agentfence-logo-copy");
+    expect(css).toContain(".sidebar-collapsed .sidebar-collapse-toggle{position:static");
+    expect(css).toContain(".sidebar-collapsed .app-sidebar{flex-basis:76px");
+    expect(css).not.toContain(".sidebar-collapsed .sidebar-collapse-toggle{position:absolute;left:51px");
   });
 });

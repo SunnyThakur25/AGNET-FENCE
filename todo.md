@@ -328,3 +328,8 @@
 - [x] Make the authenticated sidebar collapsible with a persistent accessible toggle, keyboard labels, responsive layout, and preserved route navigation.
 - [x] Add tenant-isolation, endpoint-containment, rendered Endpoint Operations, and sidebar-collapse accessibility regressions.
 - [x] Validate, checkpoint, and synchronize the completed endpoint-readiness and navigation release to GitHub.
+
+## Sidebar collapsed-layout correction
+
+- [x] Correct collapsed-sidebar geometry so the toggle and rail cannot overlay the application header or workspace content at desktop widths.
+- [x] Add regression coverage for collapsed sidebar header clearance and main-content offset, then visually verify the Endpoint Operations workspace.
