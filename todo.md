@@ -281,3 +281,11 @@
 - [x] Add a tenant-safe in-app AI guidance assistant that explains AgentFence controls, policy decisions, and operator workflows without exposing secrets, cross-tenant data, or unrestricted external actions.
 - [x] Add regressions for cleanup behavior, policy-authoring quick starts, contextual AI-assistant authorization, route context, redaction, throttling, and safe response boundaries.
 - [x] Save the completed cleanup and guidance-assistant release, then synchronize it to the selected GitHub repository.
+
+## Guidance assistant hardening and activation preparation
+
+- [x] Replace process-local guidance-assistant throttling with a durable tenant-wide quota and usage model that applies across instances.
+- [x] Add an administrator-visible assistant usage report with bounded tenant-only metrics and quota configuration.
+- [x] Add authenticated operator acceptance coverage for the global assistant launcher, contextual policy guidance, and denial/redaction behavior.
+- [x] Preserve the customer Vault AppRole activation workflow in disconnected-safe readiness mode; live authentication remains intentionally deferred until the customer supplies protected deployment credentials.
+- [ ] Validate, checkpoint, and synchronize the completed assistant-hardening release to GitHub.

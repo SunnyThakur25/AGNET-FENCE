@@ -25,10 +25,12 @@
 .ops-connector-meta { justify-items: end; text-align: right; }
 .ops-link { border: 0; background: transparent; color: #7dd3fc; padding: .7rem 0 0; display: inline-flex; align-items: center; gap: .32rem; font-size: .82rem; }
 .ops-usage { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; margin: .8rem 0; }
+.ops-usage-three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .ops-usage div { padding: .85rem; border-radius: 12px; background: color-mix(in srgb, var(--background) 44%, transparent); display: grid; gap: .2rem; }
 .ops-usage span, .ops-usage small { color: var(--muted-foreground); font-size: .73rem; }
 .ops-usage strong { font-size: 1.25rem; }
 .ops-quota-form { display: grid; grid-template-columns: 1fr 1fr auto; gap: .65rem; align-items: end; }
+.ops-quota-form-three { grid-template-columns: repeat(3, minmax(0, 1fr)) auto; }
 .ops-quota-form label { display: grid; gap: .35rem; font-size: .73rem; color: var(--muted-foreground); }
 .ops-quota-form input { min-height: 36px; border-radius: 9px; }
 .ops-check { display: flex; gap: .55rem; align-items: start; color: #f59e0b; padding: .6rem 0; border-bottom: 1px solid color-mix(in srgb, var(--card-border) 72%, transparent); }
@@ -51,5 +53,5 @@
 .ops-empty { color: var(--muted-foreground); font-size: .82rem; margin: .7rem 0; }
 .ops-tour-trigger { display: inline-flex; align-items: center; gap: .4rem; margin-top: .7rem; }
 @media (max-width: 1200px) { .ops-hero-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .ops-grid { grid-template-columns: 1fr; } }
-@media (max-width: 700px) { .ops-hero-grid, .ops-grid-secondary, .ops-usage, .ops-quota-form { grid-template-columns: 1fr; } .ops-department-row { grid-template-columns: minmax(0, 1fr) repeat(2, minmax(0, 1fr)); } .ops-language-boundary { grid-template-columns: auto minmax(0, 1fr); } .ops-language-boundary .ops-link { grid-column: 2; } }
+@media (max-width: 700px) { .ops-hero-grid, .ops-grid-secondary, .ops-usage, .ops-usage-three, .ops-quota-form, .ops-quota-form-three { grid-template-columns: 1fr; } .ops-department-row { grid-template-columns: minmax(0, 1fr) repeat(2, minmax(0, 1fr)); } .ops-language-boundary { grid-template-columns: auto minmax(0, 1fr); } .ops-language-boundary .ops-link { grid-column: 2; } }
 @media (prefers-reduced-motion: no-preference) { .ops-connector { transition: border-color 160ms var(--ease-out, ease-out), transform 160ms var(--ease-out, ease-out); } .ops-connector:active { transform: scale(.98); } }

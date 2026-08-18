@@ -1,0 +1,2 @@
+ALTER TABLE `tenantUsageWindows` MODIFY COLUMN `tenantUsageKind` enum('gateway_evaluations','evidence_exports','assistant_guidance') NOT NULL;--> statement-breakpoint
+ALTER TABLE `tenantQuotaPolicies` ADD `assistantGuidancePerDay` int DEFAULT 200 NOT NULL;

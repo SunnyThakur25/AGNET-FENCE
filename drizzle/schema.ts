@@ -61,7 +61,7 @@ export const auditAnchorStatus = mysqlEnum("auditAnchorStatus", ["prepared", "ex
 export const siemDeliveryStatus = mysqlEnum("siemDeliveryStatus", ["queued", "delivered", "retrying", "failed", "skipped"]);
 export const resilienceStatus = mysqlEnum("resilienceStatus", ["draft", "declared", "exercise_recorded", "needs_remediation"]);
 export const resilienceExerciseOutcome = mysqlEnum("resilienceExerciseOutcome", ["passed", "failed", "partial"]);
-export const tenantUsageKind = mysqlEnum("tenantUsageKind", ["gateway_evaluations", "evidence_exports"]);
+export const tenantUsageKind = mysqlEnum("tenantUsageKind", ["gateway_evaluations", "evidence_exports", "assistant_guidance"]);
 export const auditExportScheduleStatus = mysqlEnum("auditExportScheduleStatus", ["draft", "active", "paused", "unhealthy"]);
 export const auditExportDeliveryMode = mysqlEnum("auditExportDeliveryMode", ["managed_archive", "customer_storage_activation_required"]);
 
@@ -374,6 +374,7 @@ export const tenantQuotaPolicies = mysqlTable(
     organizationId: int("organizationId").notNull().references(() => organizations.id, { onDelete: "cascade" }),
     gatewayEvaluationsPerMinute: int("gatewayEvaluationsPerMinute").notNull().default(600),
     evidenceExportsPerDay: int("evidenceExportsPerDay").notNull().default(24),
+    assistantGuidancePerDay: int("assistantGuidancePerDay").notNull().default(200),
     updatedBy: int("updatedBy").notNull().references(() => users.id, { onDelete: "restrict" }),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
     updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

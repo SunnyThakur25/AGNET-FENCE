@@ -27,7 +27,7 @@ vi.mock("@/lib/trpc", () => ({ trpc: {
   governanceOperations: {
     performance: { useQuery: () => mock.query({ p95LatencyMs: 14, measuredDecisions: 6, averageLatencyMs: 8, maxLatencyMs: 18, unmeasuredLegacyDecisions: 2, detail: "Measured control-path latency." }) },
     pilotReadiness: { useQuery: () => mock.query({ items: [{ key: "agents", title: "Agent inventory", complete: true, detail: "2 active registered agent(s)." }], boundary: "Control-plane readiness only." }) },
-    quotas: { get: { useQuery: () => mock.query({ quotas: { gatewayEvaluationsPerMinute: 600, evidenceExportsPerDay: 24 }, gatewayEvaluations: { used: 3, limit: 600 }, evidenceExports: { used: 1, limit: 24 } }) }, update: { useMutation: mock.mutation } },
+    quotas: { get: { useQuery: () => mock.query({ quotas: { gatewayEvaluationsPerMinute: 600, evidenceExportsPerDay: 24, assistantGuidancePerDay: 200 }, gatewayEvaluations: { used: 3, limit: 600 }, evidenceExports: { used: 1, limit: 24 }, assistantGuidance: { used: 4, limit: 200, history: [], detail: "Counts tenant-wide guidance requests by UTC day." } }) }, update: { useMutation: mock.mutation } },
     evidenceSchedules: { list: { useQuery: () => mock.query([{ id: 5, framework: "SOC 2", status: "active", lastRunCode: "EXPORT_GENERATED" }]) }, activate: { useMutation: mock.mutation }, deactivate: { useMutation: mock.mutation }, runNow: { useMutation: mock.mutation }, exportNow: { useMutation: mock.mutation } },
   },
 } }));
@@ -40,7 +40,8 @@ describe("OperationsCenterPage", () => {
     expect(markup).toContain("One control plane for every department’s AI agents");
     expect(markup).toContain("Finance");
     expect(markup).toContain("Splunk HEC");
-    expect(markup).toContain("Tenant gateway and evidence quotas");
+    expect(markup).toContain("Tenant-wide capacity and guidance quotas");
+    expect(markup).toContain("AgentFence Guide");
     expect(markup).toContain("Managed archive exports");
     expect(markup).toContain("Action governance is deterministic; language safety is complementary.");
   });

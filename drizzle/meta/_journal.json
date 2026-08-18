@@ -113,6 +113,13 @@
       "when": 1786978097253,
       "tag": "0015_clumsy_thundra",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "5",
+      "when": 1787035804732,
+      "tag": "0016_rare_deathstrike",
+      "breakpoints": true
     }
   ]
 }

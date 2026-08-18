@@ -72,12 +72,12 @@ export const governanceOperationsRouter = router({
       try { return await getTenantUsageSnapshot(input.organizationId); }
       catch { throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Usage evidence is unavailable." }); }
     }),
-    update: protectedProcedure.input(organizationInput.extend({ gatewayEvaluationsPerMinute: z.number().int().min(10).max(100_000), evidenceExportsPerDay: z.number().int().min(1).max(1_000) })).mutation(async ({ ctx, input }) => {
+    update: protectedProcedure.input(organizationInput.extend({ gatewayEvaluationsPerMinute: z.number().int().min(10).max(100_000), evidenceExportsPerDay: z.number().int().min(1).max(1_000), assistantGuidancePerDay: z.number().int().min(10).max(10_000) })).mutation(async ({ ctx, input }) => {
       await requireAdmin(input.organizationId, ctx.user.id);
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database unavailable." });
-      await db.insert(tenantQuotaPolicies).values({ organizationId: input.organizationId, gatewayEvaluationsPerMinute: input.gatewayEvaluationsPerMinute, evidenceExportsPerDay: input.evidenceExportsPerDay, updatedBy: ctx.user.id }).onDuplicateKeyUpdate({ set: { gatewayEvaluationsPerMinute: input.gatewayEvaluationsPerMinute, evidenceExportsPerDay: input.evidenceExportsPerDay, updatedBy: ctx.user.id } });
-      await appendAuditEvent({ organizationId: input.organizationId, eventType: "tenant.quota_updated", actorType: "user", actorIdentity: ctx.user.email || ctx.user.openId, outcome: "allowed", payload: { gatewayEvaluationsPerMinute: input.gatewayEvaluationsPerMinute, evidenceExportsPerDay: input.evidenceExportsPerDay } });
+      await db.insert(tenantQuotaPolicies).values({ organizationId: input.organizationId, gatewayEvaluationsPerMinute: input.gatewayEvaluationsPerMinute, evidenceExportsPerDay: input.evidenceExportsPerDay, assistantGuidancePerDay: input.assistantGuidancePerDay, updatedBy: ctx.user.id }).onDuplicateKeyUpdate({ set: { gatewayEvaluationsPerMinute: input.gatewayEvaluationsPerMinute, evidenceExportsPerDay: input.evidenceExportsPerDay, assistantGuidancePerDay: input.assistantGuidancePerDay, updatedBy: ctx.user.id } });
+      await appendAuditEvent({ organizationId: input.organizationId, eventType: "tenant.quota_updated", actorType: "user", actorIdentity: ctx.user.email || ctx.user.openId, outcome: "allowed", payload: { gatewayEvaluationsPerMinute: input.gatewayEvaluationsPerMinute, evidenceExportsPerDay: input.evidenceExportsPerDay, assistantGuidancePerDay: input.assistantGuidancePerDay } });
       return { success: true };
     }),
   }),

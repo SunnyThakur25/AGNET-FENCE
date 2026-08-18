@@ -75,27 +75,6 @@ export function prepareAssistantQuestion(question: string) {
   return redactAssistantText(normalized);
 }
 
-const ASSISTANT_WINDOW_MS = 60_000;
-const ASSISTANT_REQUEST_LIMIT = 12;
-const assistantRequestWindows = new Map<string, { startedAt: number; count: number }>();
-
-export function consumeAssistantRequestQuota(key: string, now = Date.now()) {
-  const current = assistantRequestWindows.get(key);
-  const window = !current || now - current.startedAt >= ASSISTANT_WINDOW_MS
-    ? { startedAt: now, count: 0 }
-    : current;
-  window.count += 1;
-  assistantRequestWindows.set(key, window);
-  for (const [candidate, candidateWindow] of Array.from(assistantRequestWindows.entries())) {
-    if (now - candidateWindow.startedAt > ASSISTANT_WINDOW_MS * 2) assistantRequestWindows.delete(candidate);
-  }
-  return {
-    allowed: window.count <= ASSISTANT_REQUEST_LIMIT,
-    remaining: Math.max(0, ASSISTANT_REQUEST_LIMIT - window.count),
-    retryAfterMs: Math.max(0, ASSISTANT_WINDOW_MS - (now - window.startedAt)),
-  };
-}
-
 export function buildAssistantSystemPrompt(currentPage: AiAssistantPageId) {
   return `You are AgentFence Guide, an in-product assistant for authenticated security operators. Help users understand and safely operate AgentFence. The user is currently viewing: ${pageLabels[currentPage]}.
 

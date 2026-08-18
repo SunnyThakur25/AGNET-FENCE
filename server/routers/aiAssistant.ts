@@ -1,7 +1,8 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-import { AI_ASSISTANT_PAGE_IDS, consumeAssistantRequestQuota, generateAiAssistantReply } from "../agentfence/aiAssistant";
+import { AI_ASSISTANT_PAGE_IDS, generateAiAssistantReply } from "../agentfence/aiAssistant";
 import { requireOrganizationMembership } from "../agentfence/authz";
+import { consumeTenantQuota } from "../agentfence/tenantQuotas";
 import { protectedProcedure, router } from "../_core/trpc";
 
 const assistantInput = z.object({
@@ -13,11 +14,16 @@ const assistantInput = z.object({
 export const aiAssistantRouter = router({
   chat: protectedProcedure.input(assistantInput).mutation(async ({ ctx, input }) => {
     await requireOrganizationMembership(input.organizationId, ctx.user.id);
-    const quota = consumeAssistantRequestQuota(`${ctx.user.id}:${input.organizationId}`);
+    let quota: Awaited<ReturnType<typeof consumeTenantQuota>>;
+    try {
+      quota = await consumeTenantQuota({ organizationId: input.organizationId, kind: "assistant_guidance" });
+    } catch {
+      throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Guidance usage controls are temporarily unavailable. Please try again." });
+    }
     if (!quota.allowed) {
       throw new TRPCError({
         code: "TOO_MANY_REQUESTS",
-        message: "Guidance requests are temporarily limited. Please wait a minute before trying again.",
+        message: "This organization has reached its AgentFence Guide quota for the current UTC day. An administrator can review or adjust the limit in Operations Center.",
       });
     }
     try {

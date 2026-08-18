@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildAssistantSystemPrompt, consumeAssistantRequestQuota, prepareAssistantQuestion, redactAssistantText } from "./aiAssistant";
+import { buildAssistantSystemPrompt, prepareAssistantQuestion, redactAssistantText } from "./aiAssistant";
 
 describe("AgentFence guidance assistant safety boundaries", () => {
   it("redacts named credential material and private keys before a question reaches the model", () => {
@@ -25,11 +25,4 @@ describe("AgentFence guidance assistant safety boundaries", () => {
     expect(prompt).toContain("Never execute actions");
   });
 
-  it("bounds guidance requests per user and tenant", () => {
-    const key = `assistant-test-${Date.now()}`;
-    for (let count = 0; count < 12; count += 1) expect(consumeAssistantRequestQuota(key, 1_000).allowed).toBe(true);
-    const denied = consumeAssistantRequestQuota(key, 1_000);
-    expect(denied.allowed).toBe(false);
-    expect(denied.retryAfterMs).toBeGreaterThan(0);
-  });
 });

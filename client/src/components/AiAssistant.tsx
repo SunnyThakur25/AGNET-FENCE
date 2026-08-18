@@ -1,7 +1,7 @@
 import { useAgentFenceWorkspace } from "@/contexts/AgentFenceContext";
 import { trpc } from "@/lib/trpc";
 import { Bot, CircleHelp, Loader2, LockKeyhole, SendHorizontal, ShieldCheck, Sparkles, X } from "lucide-react";
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import React, { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 
@@ -45,6 +45,8 @@ const promptsByPage: Partial<Record<AssistantPage, string[]>> = {
   mcp_gateway: ["How does Native MCP Gateway trust and scope a tool?", "What must be certified before an MCP server is enabled?"],
   compliance: ["What evidence can AgentFence export for a security review?", "What is the difference between evidence and compliance certification?"],
 };
+
+export const AI_ASSISTANT_BOUNDARY_MESSAGE = "Guidance only. No access to tenant records, secrets, tokens, or external systems.";
 
 export function pageForAssistantPath(path: string): AssistantPage {
   return routeContext.find(entry => entry.prefix === "/" ? path === "/" : path.startsWith(entry.prefix))?.page ?? "other";
@@ -91,7 +93,7 @@ export default function AiAssistant() {
   return <div className="assistant-root">
     {open && <section className="assistant-panel" role="dialog" aria-modal="false" aria-labelledby="assistant-title">
       <header className="assistant-header"><div className="assistant-header-icon"><Bot size={18} /></div><div><p className="assistant-eyebrow">Contextual operator guidance</p><h2 id="assistant-title">AgentFence Guide</h2></div><button type="button" className="assistant-close" aria-label="Close AgentFence Guide" onClick={() => setOpen(false)}><X size={18} /></button></header>
-      <div className="assistant-boundary"><LockKeyhole size={15} /><span>Guidance only. No access to tenant records, secrets, tokens, or external systems.</span></div>
+      <div className="assistant-boundary"><LockKeyhole size={15} /><span>{AI_ASSISTANT_BOUNDARY_MESSAGE}</span></div>
       <div className="assistant-messages" aria-live="polite">
         {messages.length === 0 && <div className="assistant-welcome"><div className="assistant-welcome-mark"><Sparkles size={18} /></div><h3>How can I help?</h3><p>Ask how a control works, how to complete an operator workflow, or how to interpret a policy decision. I will not change controls or ask for secrets.</p><div className="assistant-prompt-stack">{prompts.map(prompt => <button type="button" key={prompt} onClick={() => void ask(prompt)} disabled={!ready || chat.isPending}>{prompt}</button>)}</div></div>}
         {messages.map(message => <article className={`assistant-message ${message.role}`} key={message.id}>{message.role === "assistant" ? <Bot size={15} /> : <span className="assistant-user-mark">You</span>}<div><p>{message.content}</p></div></article>)}
