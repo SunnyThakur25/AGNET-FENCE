@@ -1,7 +1,7 @@
 import React from "react";
 import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
-import { ThemeToggle } from "./DashboardLayout";
+import { SidebarCollapseToggle, ThemeToggle } from "./DashboardLayout";
 
 describe("ThemeToggle", () => {
   it("marks dark mode pressed and offers a light-mode switch", () => {
@@ -23,5 +23,22 @@ describe("ThemeToggle", () => {
     expect(markup).toContain('aria-pressed="false"');
     expect(markup).toContain('aria-label="Switch to dark mode"');
     expect(markup).toContain("Light mode");
+  });
+});
+
+describe("SidebarCollapseToggle", () => {
+  it("exposes an accessible collapse action when the sidebar is expanded", () => {
+    const markup = renderToStaticMarkup(<SidebarCollapseToggle collapsed={false} onToggle={() => undefined} />);
+    expect(markup).toContain('aria-label="Collapse sidebar"');
+    expect(markup).toContain('aria-pressed="false"');
+  });
+
+  it("exposes an accessible expand action and calls the supplied toggle handler when collapsed", () => {
+    let activations = 0;
+    const element = SidebarCollapseToggle({ collapsed: true, onToggle: () => { activations += 1; } }) as React.ReactElement<{ onClick: () => void }>;
+    expect(renderToStaticMarkup(element)).toContain('aria-label="Expand sidebar"');
+    expect(renderToStaticMarkup(element)).toContain('aria-pressed="true"');
+    element.props.onClick();
+    expect(activations).toBe(1);
   });
 });

@@ -14,6 +14,7 @@ import { operationalReadinessRouter } from "./routers/operationalReadiness";
 import { governanceOperationsRouter } from "./routers/governanceOperations";
 import { aiAssistantRouter } from "./routers/aiAssistant";
 import { incidentResponseRouter } from "./routers/incidentResponse";
+import { endpointOperationsRouter } from "./routers/endpointOperations";
 import * as dbHelpers from "./db";
 import { parse as parseCookieHeader } from "cookie";
 
@@ -44,6 +45,7 @@ export const appRouter = router({
   governanceOperations: governanceOperationsRouter,
   aiAssistant: aiAssistantRouter,
   incidentResponse: incidentResponseRouter,
+  endpointOperations: endpointOperationsRouter,
 });
 
 export type AppRouter = typeof appRouter;

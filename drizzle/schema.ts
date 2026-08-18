@@ -68,6 +68,10 @@ export const incidentContainmentStatus = mysqlEnum("incidentContainmentStatus", 
 export const incidentContainmentTrigger = mysqlEnum("incidentContainmentTrigger", ["manual", "critical_block"]);
 export const incidentRoutingProvider = mysqlEnum("incidentRoutingProvider", ["slack", "pagerduty"]);
 export const incidentRoutingStatus = mysqlEnum("incidentRoutingStatus", ["disabled", "activation_required", "configured"]);
+export const endpointOperatingSystem = mysqlEnum("endpointOperatingSystem", ["windows", "macos", "linux"]);
+export const endpointSensorStatus = mysqlEnum("endpointSensorStatus", ["registered", "healthy", "degraded", "offline", "isolated"]);
+export const endpointBindingKind = mysqlEnum("endpointBindingKind", ["sdk", "browser_wrapper", "native_mcp"]);
+export const endpointContainmentStatus = mysqlEnum("endpointContainmentStatus", ["active", "released"]);
 
 export const organizations = mysqlTable(
   "organizations",
@@ -437,6 +441,70 @@ export const incidentRoutingProfiles = mysqlTable(
     updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   },
   table => [uniqueIndex("incident_routing_profiles_org_provider_unique").on(table.organizationId, table.provider)],
+);
+
+/** Approved customer-managed endpoint metadata. No prompts, page content, raw process arguments, device secrets, or unrelated process telemetry is retained. */
+export const managedEndpoints = mysqlTable(
+  "managedEndpoints",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    organizationId: int("organizationId").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    teamId: int("teamId").references(() => teams.id, { onDelete: "set null" }),
+    ownerUserId: int("ownerUserId").references(() => users.id, { onDelete: "set null" }),
+    deviceIdentity: varchar("deviceIdentity", { length: 160 }).notNull(),
+    displayName: varchar("displayName", { length: 120 }).notNull(),
+    operatingSystem: endpointOperatingSystem.notNull(),
+    sensorStatus: endpointSensorStatus.notNull().default("registered"),
+    sensorVersion: varchar("sensorVersion", { length: 64 }),
+    deploymentReference: varchar("deploymentReference", { length: 255 }),
+    lastSeenAt: timestamp("lastSeenAt"),
+    createdBy: int("createdBy").notNull().references(() => users.id, { onDelete: "restrict" }),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  table => [
+    uniqueIndex("managed_endpoints_org_device_unique").on(table.organizationId, table.deviceIdentity),
+    index("managed_endpoints_org_status_idx").on(table.organizationId, table.sensorStatus),
+  ],
+);
+
+/** Explicit mapping from an approved endpoint to a registered AgentFence workload and supported integration path. */
+export const endpointAgentBindings = mysqlTable(
+  "endpointAgentBindings",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    organizationId: int("organizationId").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    endpointId: int("endpointId").notNull().references(() => managedEndpoints.id, { onDelete: "cascade" }),
+    agentId: int("agentId").notNull().references(() => agents.id, { onDelete: "cascade" }),
+    kind: endpointBindingKind.notNull(),
+    enabled: boolean("enabled").notNull().default(true),
+    createdBy: int("createdBy").notNull().references(() => users.id, { onDelete: "restrict" }),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  table => [
+    uniqueIndex("endpoint_agent_bindings_unique").on(table.endpointId, table.agentId, table.kind),
+    index("endpoint_agent_bindings_org_agent_idx").on(table.organizationId, table.agentId),
+  ],
+);
+
+/** Endpoint isolation evidence. Isolation applies only to explicitly bound AgentFence integrations; it does not claim host-wide or unmanaged-process control. */
+export const endpointContainments = mysqlTable(
+  "endpointContainments",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    organizationId: int("organizationId").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    endpointId: int("endpointId").notNull().references(() => managedEndpoints.id, { onDelete: "cascade" }),
+    status: endpointContainmentStatus.notNull().default("active"),
+    reason: varchar("reason", { length: 500 }).notNull(),
+    initiatedBy: int("initiatedBy").references(() => users.id, { onDelete: "set null" }),
+    releasedBy: int("releasedBy").references(() => users.id, { onDelete: "set null" }),
+    releasedAt: timestamp("releasedAt"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  table => [
+    index("endpoint_containments_org_status_idx").on(table.organizationId, table.status),
+    index("endpoint_containments_endpoint_idx").on(table.endpointId),
+  ],
 );
 
 /** Active containment corresponds to a paused agent and revoked runtime credentials on AgentFence-supported integrated action paths. */

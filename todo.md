@@ -318,3 +318,13 @@
 - [x] Add customer-specific containment runbook references and approval-escalation SLA targets with clear ownership and activation boundaries.
 - [x] Add tenant-isolation, role-promotion, filtering, routing-readiness, and rendered operator-workflow regressions.
 - [x] Validate, checkpoint, and synchronize the completed incident-operations release to GitHub.
+
+## Endpoint Sensor readiness and collapsible navigation
+
+- [x] Define a tenant-safe Endpoint Sensor control-plane contract for approved endpoint inventory, signed device identity, privacy-minimized health telemetry, and explicit deployment/containment boundaries.
+- [x] Add administrator-managed endpoint inventory and endpoint-to-registered-agent correlation with safe device status, owner, operating-system, sensor version, and last-seen evidence.
+- [x] Add integrated-path endpoint containment readiness that can revoke AgentFence runtime access and mark a managed endpoint as isolated without claiming to control arbitrary unmanaged applications or direct bypass calls.
+- [x] Add an Endpoint Operations workspace documenting customer-controlled sensor installation, MDM deployment, privacy policy, integration health, and containment boundaries.
+- [x] Make the authenticated sidebar collapsible with a persistent accessible toggle, keyboard labels, responsive layout, and preserved route navigation.
+- [x] Add tenant-isolation, endpoint-containment, rendered Endpoint Operations, and sidebar-collapse accessibility regressions.
+- [ ] Validate, checkpoint, and synchronize the completed endpoint-readiness and navigation release to GitHub.
