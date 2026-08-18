@@ -250,3 +250,10 @@
 - [x] Implement an accessible interactive guided tour for enterprise-pilot setup across team ownership, agent registration, policy governance, secure connectors, evidence operations, and final coverage review.
 - [x] Add rendered and interaction tests for guided-tour progression, dismissal, persistence, and MCP Gateway layout content structure.
 - [x] Perform and document a focused product maturity audit covering implemented controls, activation boundaries, usability findings, and prioritized next improvements.
+
+## Gateway proxy visual demo package
+
+- [x] Create an accurate visual architecture diagram showing AgentFence as the integrated gateway/proxy between an AI agent and an external API, including allow, block, approval, audit, and bypass boundaries.
+- [x] Add a safe, copyable guarded API-call integration example that matches the signed AgentFence runtime contract and demonstrates pre-execution block behavior.
+- [x] Create a complete visual demo report with a reproducible step-by-step allow/block/approval flow, expected Action Capture and Trace evidence, and explicit demo-safe boundaries.
+- [x] Validate the diagram, integration example, and demo report against current implemented claims and product tests.

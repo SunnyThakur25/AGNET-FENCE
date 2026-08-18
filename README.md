@@ -181,6 +181,8 @@ The test suite covers core policy decisions, tenant safety, runtime credential b
 | [`AGENTFENCE_DEMO_VIDEO_SCRIPT.md`](./AGENTFENCE_DEMO_VIDEO_SCRIPT.md) | Approved 60-second product demo script and production prompt. |
 | [`AGENTFENCE_RESEARCH_SOURCES.md`](./AGENTFENCE_RESEARCH_SOURCES.md) | Source register for product, standards, and market narrative. |
 | [`INTEGRATION_QUICKSTART.md`](./INTEGRATION_QUICKSTART.md) | Cloud and browser integration quickstart. |
+| [`GATEWAY_PROXY_DEMO_REPORT.md`](./GATEWAY_PROXY_DEMO_REPORT.md) | Visual gateway-proxy architecture, safe guarded-call example, reproducible allow/block/approval demo, and explicit bypass boundary. |
+| [`examples/guarded-external-api-call.ts`](./examples/guarded-external-api-call.ts) | Server-side runtime template showing that an AgentFence block prevents the integrated external API callback from executing. |
 | [`LOCAL_TESTING.md`](./LOCAL_TESTING.md) | No-Vault local testing workflow. |
 | [`vault_deployment_guide.md`](./vault_deployment_guide.md) | Vault AppRole setup guidance. |
 | [`RELEASE_READINESS.md`](./RELEASE_READINESS.md) | Release activation, monitoring, remediation, and rollback guide. |
