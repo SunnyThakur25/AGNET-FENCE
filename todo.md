@@ -288,4 +288,4 @@
 - [x] Add an administrator-visible assistant usage report with bounded tenant-only metrics and quota configuration.
 - [x] Add authenticated operator acceptance coverage for the global assistant launcher, contextual policy guidance, and denial/redaction behavior.
 - [x] Preserve the customer Vault AppRole activation workflow in disconnected-safe readiness mode; live authentication remains intentionally deferred until the customer supplies protected deployment credentials.
-- [ ] Validate, checkpoint, and synchronize the completed assistant-hardening release to GitHub.
+- [x] Validate, checkpoint, and synchronize the completed assistant-hardening release to GitHub.
