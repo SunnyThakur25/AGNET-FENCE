@@ -280,4 +280,4 @@
 - [x] Clarify in the policy workflow that administrators author least-privilege policies from scratch, while optional editable quick starts provide guided starting points rather than predefined enforcement.
 - [x] Add a tenant-safe in-app AI guidance assistant that explains AgentFence controls, policy decisions, and operator workflows without exposing secrets, cross-tenant data, or unrestricted external actions.
 - [x] Add regressions for cleanup behavior, policy-authoring quick starts, contextual AI-assistant authorization, route context, redaction, throttling, and safe response boundaries.
-- [ ] Save the completed cleanup and guidance-assistant release, then synchronize it to the selected GitHub repository.
+- [x] Save the completed cleanup and guidance-assistant release, then synchronize it to the selected GitHub repository.
