@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import React from "react";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
 import { Router } from "wouter";
 import { AuthPanel, LandingPage } from "./Public";
@@ -38,6 +40,16 @@ describe("AgentFence public authentication journey", () => {
     expect(markup).toContain("AI agent containment layer");
     expect(markup).toContain("Build your control plane");
     expect(markup).toContain("Human gate");
+  });
+
+  it("layers cinematic containment atmosphere behind the readable public story with reduced-motion safeguards", () => {
+    const markup = renderToStaticMarkup(<Router ssrPath="/"><LandingPage /></Router>);
+    const css = readFileSync(resolve(process.cwd(), "client/src/index.css"), "utf8");
+    expect(markup).toContain("containment-landing");
+    expect(css).toContain("cinematic-drift");
+    expect(css).toContain("cinematic-scan");
+    expect(css).toContain("cinematic-sheen");
+    expect(css).toContain("@media (prefers-reduced-motion:reduce)");
   });
 
   it("renders the enterprise architecture visual and guided cloud/browser control narrative", () => {

@@ -333,3 +333,11 @@
 
 - [x] Correct collapsed-sidebar geometry so the toggle and rail cannot overlay the application header or workspace content at desktop widths.
 - [x] Add regression coverage for collapsed sidebar header clearance and main-content offset, then visually verify the Endpoint Operations workspace.
+
+## Navigation hierarchy and cinematic landing experience
+
+- [x] Group lower-priority sidebar routes into an accessible expandable section without hiding the active route or disrupting direct navigation.
+- [x] Add delayed compact-mode navigation tooltips with keyboard-accessible labels and no hover-only disclosure dependency.
+- [x] Improve expanded-to-compact sidebar motion using short, interruption-safe transitions and reduced-motion safeguards.
+- [x] Create a cinematic transparent-layer landing background with animated security topology, ambient scanning light, and motion-safe visual depth that preserves CTA legibility.
+- [x] Add rendered accessibility and motion regressions, then validate desktop and mobile visual composition.

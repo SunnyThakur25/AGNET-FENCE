@@ -51,4 +51,14 @@ describe("SidebarCollapseToggle", () => {
     expect(css).toContain(".sidebar-collapsed .app-sidebar{flex-basis:76px");
     expect(css).not.toContain(".sidebar-collapsed .sidebar-collapse-toggle{position:absolute;left:51px");
   });
+
+  it("keeps compact navigation deliberate and motion-safe", () => {
+    const layout = readFileSync(resolve(process.cwd(), "client/src/components/DashboardLayout.tsx"), "utf8");
+    const css = readFileSync(resolve(process.cwd(), "client/src/index.css"), "utf8");
+    expect(layout).toContain("More governance & evidence");
+    expect(layout).toContain("delayDuration={650}");
+    expect(layout).toContain('aria-controls="supplementary-navigation"');
+    expect(css).toContain(".sidebar-nav-group.open .supplementary-navigation");
+    expect(css).toContain("@media (prefers-reduced-motion:reduce)");
+  });
 });
