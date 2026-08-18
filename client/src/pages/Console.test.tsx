@@ -96,17 +96,17 @@ describe("AI Action Capture and Trace helpers", () => {
     }
   });
 
-  it("renders a hop card with in-context tooltip linkage and live pending indicator", () => {
+  it("renders a hop card with a contained step-detail disclosure and live pending indicator", () => {
     const markup = renderToStaticMarkup(<ActionTraceHopCard hop={{ id: "target-boundary", label: "Target boundary released", status: "allowed", detail: "Awaiting wrapped integration report.", timestamp: "2026-01-01T00:00:00.000Z" }} index={0} total={1} live intent="crm.case.update" policy="Scoped CRM" decision="Allowed" dataGuard="No findings" targetOutcome="Awaiting wrapped integration report" />);
-    expect(markup).toContain('aria-describedby="trace-tooltip-target-boundary"');
-    expect(markup).toContain('id="trace-tooltip-target-boundary"');
+    expect(markup).toContain('aria-controls="trace-detail-target-boundary"');
+    expect(markup).toContain('aria-expanded="false"');
+    expect(markup).toContain("Show step details");
     expect(markup).toContain("Updating");
-    expect(markup).toContain("crm.case.update");
   });
 
-  it("renders an accessible tooltip with policy, intent, Data Guard, and target outcome details", () => {
+  it("renders an accessible in-flow detail panel with policy, intent, Data Guard, and target outcome details", () => {
     const markup = renderToStaticMarkup(<TraceHopTooltip id="hop-policy" intent="crm.case.update" policy="Scoped CRM" decision="Allowed" dataGuard="No findings" targetOutcome="Awaiting wrapped integration report" />);
-    expect(markup).toContain('role="tooltip"');
+    expect(markup).toContain('aria-label="Step detail"');
     expect(markup).toContain('id="hop-policy"');
     expect(markup).toContain("crm.case.update");
     expect(markup).toContain("Scoped CRM");

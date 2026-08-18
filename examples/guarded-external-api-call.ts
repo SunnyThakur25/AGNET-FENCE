@@ -11,18 +11,39 @@ import { createAgentFenceRuntimeClient } from "../shared/agentfence-runtime-clie
 
 const endpoint = process.env.AGENTFENCE_URL;
 const runtimeCredential = process.env.AGENTFENCE_RUNTIME_CREDENTIAL;
-const demoApiUrl = process.env.DEMO_API_URL;
+const demoApiUrl = process.env.DEMO_API_URL || "http://localhost:3000/api/demo-crm-target";
 
-if (!endpoint || !runtimeCredential || !demoApiUrl) {
-  throw new Error("Set AGENTFENCE_URL, AGENTFENCE_RUNTIME_CREDENTIAL, and DEMO_API_URL before running this demo.");
+if (!endpoint || !runtimeCredential) {
+  throw new Error("Set AGENTFENCE_URL and AGENTFENCE_RUNTIME_CREDENTIAL before running this demo.");
 }
 
 const agentFence = createAgentFenceRuntimeClient({ endpoint, credential: runtimeCredential });
 
-const exportRequest = {
-  customerIds: ["demo-customer-001"],
-  exportFormat: "csv",
-};
+const caseReadRequest = { caseId: "CASE-DEMO-001" };
+const exportRequest = { customerIds: ["demo-customer-001"], exportFormat: "csv" };
+
+async function runGuardedCaseRead() {
+  return agentFence.guardAndDeliver(
+    {
+      toolName: "crm",
+      action: "case.read",
+      parameters: caseReadRequest,
+      outboundPayload: caseReadRequest,
+      dataSensitivity: "internal",
+      destination: "demo-crm-api.company.test",
+      riskLevel: "low",
+    },
+    async safePayload => {
+      const response = await fetch(`${demoApiUrl}/cases/read`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(safePayload),
+      });
+      if (!response.ok) throw new Error(`Demo API returned ${response.status}`);
+      return response.json() as Promise<{ requestId: string; case: { id: string; status: string; synthetic: true } }>;
+    },
+  );
+}
 
 async function runGuardedExport() {
   return agentFence.guardAndDeliver(
@@ -48,6 +69,14 @@ async function runGuardedExport() {
   );
 }
 
-runGuardedExport()
-  .then(result => console.log("External API was called only after an AgentFence allow decision:", result))
-  .catch(error => console.error("No external request was sent because AgentFence did not allow the action:", error.message));
+async function runDemo() {
+  const allowedRead = await runGuardedCaseRead();
+  console.log("Allowed case read reached the safe target:", allowedRead);
+  try {
+    await runGuardedExport();
+  } catch (error) {
+    console.log("Blocked export never reached the safe target:", error instanceof Error ? error.message : error);
+  }
+}
+
+runDemo().catch(error => console.error("Demo cannot begin until the narrow policies are independently approved and a runtime credential is issued:", error.message));

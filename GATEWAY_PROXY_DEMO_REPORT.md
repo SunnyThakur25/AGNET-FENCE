@@ -55,6 +55,25 @@ You can demonstrate policy, capture, trace, and block behavior without customer 
 | A safe test API or controlled MCP server | Shows that an allowed request arrives and a blocked one does not. |
 | Action Capture / Action Trace access | Shows the decision evidence in the AgentFence console. |
 
+### Built-in safe CRM target
+
+For local development, AgentFence now exposes a bounded safe target at `http://localhost:3000/api/demo-crm-target`. Its `POST /cases/read` and `POST /exports` routes return synthetic results, and `GET /logs` exposes only a bounded, payload-redacted receipt. It is deliberately unavailable in production mode.
+
+The current tenant has the following policy proposals. Both remain intentionally **disabled** until a separate authorized reviewer approves and promotes them through Policy Governance; the policy author cannot self-approve.
+
+| Policy | Effect | Scope | Required state before an allowed callback |
+|---|---|---|---|
+| `Demo CRM — Allow case read` | Allow | `crm` / `case.read` / `demo-crm-api.company.test` | Independently approved and promoted |
+| `Demo CRM — Block customer export` | Deny | `crm` / `customer.export` / `demo-crm-api.company.test` | Independently approved and promoted |
+
+Once promoted, run `examples/guarded-external-api-call.ts` in a trusted server-side runtime with `AGENTFENCE_URL` and a scoped `AGENTFENCE_RUNTIME_CREDENTIAL`. The script defaults `DEMO_API_URL` to the safe local target. Expect exactly one `case.read` entry in `/api/demo-crm-target/logs` and **zero** `customer.export` entries.
+
+### Recorded blocked-path demonstration
+
+The configured **Demo CRM Agent** was used in the Tool Gateway with `tool: crm`, `action: customer.export`, `destination: demo-crm-api.company.test`, and a synthetic CSV export payload. AgentFence returned **Blocked** with the reason: *No active policy grants this agent permission for the requested tool action.* Data Guard classified the payload as internal and reported no secret pattern. The development-only safe target receipt endpoint then returned `{"entries":[]}`; no export callback reached it.
+
+This is a genuine pre-execution decision and target non-delivery result. It is not yet an allowed-path demonstration because the allow policy is deliberately awaiting independent review. AgentFence will not bypass its separation-of-duties control merely to make a demo look complete.
+
 ## Step-by-step visual demo run
 
 ### 1. Create the safe demo boundary
@@ -89,4 +108,4 @@ Show the dotted bypass path in the diagram. If an agent uses a separate API key 
 
 ## Current product status for the demo tenant
 
-The currently inspected tenant has one registered department team, zero active registered agents, zero active policy bindings, and no configured Vault or OIDC connection. It is therefore at the **pilot configuration stage**. The diagram, template, and flow above provide the reproducible path to turn that tenant into a safe governed-action demonstration without needing live SIEM, IdP, or customer Vault activation.
+The currently inspected tenant has one registered department team, one active **Demo CRM Agent**, two disabled policy proposals awaiting independent review, and no configured Vault or OIDC connection. It is therefore at the **pilot configuration stage**. The diagram, template, and flow above provide the reproducible path to turn that tenant into a safe governed-action demonstration without needing live SIEM, IdP, or customer Vault activation.

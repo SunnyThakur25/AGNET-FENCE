@@ -88,3 +88,16 @@ html:not(.dark) body{background:#f4f7fb;color:#17243a}html:not(.dark) .app-shell
 @media(max-width:780px){.account-grid{grid-template-columns:1fr}.profile-identity-card{align-items:flex-start}.session-heading-actions{flex-wrap:wrap;justify-content:flex-end}}
 @media(max-width:520px){.profile-identity-card{display:grid;justify-items:start}.provider-row{align-items:flex-start;flex-wrap:wrap}.session-row{align-items:flex-start}.session-row .session-revoke{margin-left:auto}.account-modal{padding:20px}.account-modal-actions{flex-direction:column-reverse}.account-modal-actions button{width:100%}.profile-bar-menu{left:-5px;right:-5px}}
 @media(prefers-reduced-motion:reduce){.profile-chevron,.profile-bar-menu,.account-modal{animation:none;transition:none}}
+
+/* Action Trace: details are an in-flow disclosure, never an overlapping hover layer. */
+.trace-hop-card{cursor:default}
+.trace-hop-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:12px}
+.trace-detail-toggle{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:30px;padding:0 9px;border:1px solid rgba(255,157,180,.22);border-radius:8px;color:#ffc4d1;background:rgba(255,89,123,.07);font-size:10px;font-weight:700;white-space:nowrap}
+.trace-detail-toggle:hover,.trace-detail-toggle:focus-visible{border-color:rgba(255,157,180,.48);background:rgba(255,89,123,.13);outline:none}
+.trace-detail-chevron-open{transform:rotate(90deg)}
+.trace-detail-panel{width:100%;margin-top:12px;padding:13px 14px;border:1px solid rgba(255,157,180,.24);border-radius:11px;background:rgba(24,8,17,.78);box-shadow:inset 0 1px rgba(255,255,255,.02)}
+.trace-detail-panel>div{display:flex;align-items:center;gap:7px;color:#ffadbd;font-size:11px}
+.trace-detail-panel dl{display:grid;grid-template-columns:84px minmax(0,1fr);gap:6px 10px;margin:11px 0 0;font-size:10px;line-height:1.4}
+.trace-detail-panel dt{color:#9f7887}.trace-detail-panel dd{margin:0;overflow-wrap:anywhere;color:#f7dce3}
+@media(max-width:640px){.trace-hop-footer{align-items:flex-start;flex-direction:column}.trace-detail-toggle{width:100%;justify-content:flex-start}.trace-detail-panel dl{grid-template-columns:1fr;gap:3px}.trace-detail-panel dd{margin-bottom:7px}}
+@media(prefers-reduced-motion:reduce){.trace-detail-chevron-open{transform:none}}

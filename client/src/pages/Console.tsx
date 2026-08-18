@@ -68,7 +68,7 @@ export function canAdvanceFirstAgentOnboarding(step: number, values: { runtime: 
 }
 
 export function TraceHopTooltip({ id, intent, policy, decision, dataGuard, targetOutcome }: { id?: string; intent: string; policy: string; decision: string; dataGuard: string; targetOutcome: string }) {
-  return <div className="trace-tooltip" id={id} role="tooltip"><div><Info size={13} /><strong>Step detail</strong></div><dl><dt>Intent</dt><dd>{intent}</dd><dt>Policy</dt><dd>{policy}</dd><dt>Decision</dt><dd>{decision}</dd><dt>Data Guard</dt><dd>{dataGuard}</dd><dt>Target outcome</dt><dd>{targetOutcome}</dd></dl></div>;
+  return <section className="trace-detail-panel" id={id} aria-label="Step detail"><div><Info size={13} /><strong>Step detail</strong></div><dl><dt>Intent</dt><dd>{intent}</dd><dt>Policy</dt><dd>{policy}</dd><dt>Decision</dt><dd>{decision}</dd><dt>Data Guard</dt><dd>{dataGuard}</dd><dt>Target outcome</dt><dd>{targetOutcome}</dd></dl></section>;
 }
 
 export function WorkspacePending() {
@@ -369,7 +369,9 @@ export function ActionCaptureControls({ search, decisionFilter, sort, visibleCou
 }
 
 export function ActionTraceHopCard({ hop, index, total, live, intent, policy, decision, dataGuard, targetOutcome }: { hop: { id: string; label: string; status: string; detail: string; timestamp: Date | string }; index: number; total: number; live: boolean; intent: string; policy: string; decision: string; dataGuard: string; targetOutcome: string }) {
-  return <article className={`trace-hop ${live && index === total - 1 ? "trace-hop-active" : ""}`} key={hop.id}><div className={`trace-node node-${decisionTone(hop.status)}`}><span>{index + 1}</span></div><div className="trace-hop-card" tabIndex={0} aria-describedby={`trace-tooltip-${hop.id}`}><div className="flex flex-wrap items-center gap-2"><h3>{hop.label}</h3><Badge tone={decisionTone(hop.status)}>{pretty(hop.status)}</Badge>{live && index === total - 1 && <span className="trace-live-dot"><span /> Updating</span>}</div><p>{hop.detail}</p><time>{formatTime(hop.timestamp)}</time><TraceHopTooltip id={`trace-tooltip-${hop.id}`} intent={intent} policy={policy} decision={decision} dataGuard={dataGuard} targetOutcome={targetOutcome} /></div>{index < total - 1 && <div className="trace-connector"><i /></div>}</article>;
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  const detailId = `trace-detail-${hop.id}`;
+  return <article className={`trace-hop ${live && index === total - 1 ? "trace-hop-active" : ""}`} key={hop.id}><div className={`trace-node node-${decisionTone(hop.status)}`}><span>{index + 1}</span></div><div className="trace-hop-card"><div className="flex flex-wrap items-center gap-2"><h3>{hop.label}</h3><Badge tone={decisionTone(hop.status)}>{pretty(hop.status)}</Badge>{live && index === total - 1 && <span className="trace-live-dot"><span /> Updating</span>}</div><p>{hop.detail}</p><div className="trace-hop-footer"><time>{formatTime(hop.timestamp)}</time><button type="button" className="trace-detail-toggle" aria-expanded={detailsOpen} aria-controls={detailId} onClick={() => setDetailsOpen(open => !open)}><Info size={13} />{detailsOpen ? "Hide step details" : "Show step details"}<ChevronRight size={14} className={detailsOpen ? "trace-detail-chevron-open" : ""} /></button></div>{detailsOpen && <TraceHopTooltip id={detailId} intent={intent} policy={policy} decision={decision} dataGuard={dataGuard} targetOutcome={targetOutcome} />}</div>{index < total - 1 && <div className="trace-connector"><i /></div>}</article>;
 }
 
 type CaptureRowModel = { id: number; toolName: string; action: string; decision: string; targetOutcome: string | null; targetStatusCode: number | null; targetRecordedAt: Date | null; createdAt: Date; agentName: string; agentIdentity: string; destination: string; riskLevel: string; dataSensitivity: string; policyName: string | null; dataGuardFindings: Array<{ classification: string }>; approval: { status: string } | null };

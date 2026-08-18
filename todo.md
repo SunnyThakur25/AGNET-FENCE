@@ -257,3 +257,19 @@
 - [x] Add a safe, copyable guarded API-call integration example that matches the signed AgentFence runtime contract and demonstrates pre-execution block behavior.
 - [x] Create a complete visual demo report with a reproducible step-by-step allow/block/approval flow, expected Action Capture and Trace evidence, and explicit demo-safe boundaries.
 - [x] Validate the diagram, integration example, and demo report against current implemented claims and product tests.
+
+## Controlled CRM agent demonstration
+
+- [ ] Create a tenant-scoped Demo CRM Agent with explicit demo ownership and a non-production runtime boundary.
+- [ ] Create and govern narrow CRM policies that allow `crm.case.read` and block `crm.customer.export` for the safe demonstration destination.
+- [ ] Configure a safe test target and execute a governed allowed request and a governed blocked request, proving that only the allowed request reaches the target.
+- [ ] Verify Action Capture, Action Trace, audit evidence, and target logs without exposing customer data, secrets, or cross-tenant records.
+
+- [ ] Invite, authenticate, and later remove a temporary independently authenticated reviewer through the normal team-management workflow for the controlled CRM policy demonstration.
+- [ ] Use the temporary reviewer to approve and promote the two Demo CRM policy proposals, execute the allowed safe-target path, and record the target receipt without bypassing separation of duties.
+
+## Operator usability correction
+
+- [x] Correct Action Trace step-detail overlap so expanded evidence remains contained, readable, and associated with the correct enforcement step at desktop and mobile sizes.
+- [x] Audit Action Capture, Tool Gateway, Policy Governance, and Operations Center for adjacent status-hierarchy, overflow, and responsive-layout issues; correct verified defects.
+- [x] Add rendered regression coverage for the repaired trace-detail layout and key operator-state visibility.
