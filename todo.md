@@ -243,3 +243,10 @@
 - [x] Capture tenant-scoped policy-decision latency evidence and render bounded performance metrics without claiming an externally verified SLA.
 - [x] Expand the onboarding workflow into a pilot readiness checklist for multiple departments, agent owners, policies, connectors, and evidence ownership.
 - [x] Document the multi-department operating model and the boundary between language-level safety controls and action-level enforcement.
+
+## Guided onboarding and MCP Gateway usability audit
+
+- [x] Correct dense Native MCP Gateway layout behavior, including narrow instruction columns, wrapped credential copy, vertical rhythm, and responsive control ordering.
+- [x] Implement an accessible interactive guided tour for enterprise-pilot setup across team ownership, agent registration, policy governance, secure connectors, evidence operations, and final coverage review.
+- [x] Add rendered and interaction tests for guided-tour progression, dismissal, persistence, and MCP Gateway layout content structure.
+- [x] Perform and document a focused product maturity audit covering implemented controls, activation boundaries, usability findings, and prioritized next improvements.

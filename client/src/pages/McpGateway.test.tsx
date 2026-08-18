@@ -31,6 +31,7 @@ describe("McpGatewayPage", () => {
     expect(markup).toContain("Trust, inspect, and govern MCP tools before invocation");
     expect(markup).toContain("Register → discover → review → trust server");
     expect(markup).toContain("Optional Vault token reference");
+    expect(markup).toContain("Authorize the tool scope");
     expect(markup).toContain("mcp:&lt;serverId&gt;.&lt;toolName&gt;");
     expect(markup).toContain("No MCP servers are registered");
     expect(markup).not.toContain("mcp-token-long-enough");

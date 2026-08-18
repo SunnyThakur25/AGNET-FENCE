@@ -5,6 +5,7 @@ import { trpc } from "@/lib/trpc";
 import { Badge, PageFrame, WorkspacePending } from "@/pages/Console";
 import { Activity, Archive, ArrowUpRight, Building2, CheckCircle2, CircleAlert, Gauge, KeyRound, Play, RefreshCw, ShieldCheck, SlidersHorizontal, UsersRound } from "lucide-react";
 import { toast } from "sonner";
+import { EnterprisePilotTour } from "@/components/EnterprisePilotTour";
 import "../operations-center.css";
 
 function healthTone(status?: string) { return status === "ready" ? "good" : status === "unhealthy" ? "danger" : status === "pending_activation" ? "warn" : "info"; }
@@ -25,6 +26,7 @@ export default function OperationsCenterPage() {
   const schedules = trpc.governanceOperations.evidenceSchedules.list.useQuery(queryInput, { enabled: ready && Boolean(organizationId), refetchInterval: 30_000 });
   const [gatewayQuota, setGatewayQuota] = useState("600");
   const [exportQuota, setExportQuota] = useState("24");
+  const [tourOpen, setTourOpen] = useState(false);
   useEffect(() => { if (quotas.data) { setGatewayQuota(String(quotas.data.quotas.gatewayEvaluationsPerMinute)); setExportQuota(String(quotas.data.quotas.evidenceExportsPerDay)); } }, [quotas.data]);
   const refresh = () => void Promise.all([coverage.refetch(), connections.refetch(), vault.refetch(), identity.refetch(), performance.refetch(), readiness.refetch(), quotas.refetch(), schedules.refetch()]);
   const quotaUpdate = trpc.governanceOperations.quotas.update.useMutation({ onSuccess: () => { toast.success("Tenant quotas updated with audit evidence."); quotas.refetch(); }, onError: error => toast.error(error.message) });
@@ -54,7 +56,7 @@ export default function OperationsCenterPage() {
 
     <section className="ops-grid ops-grid-secondary">
       <article className="console-card ops-panel"><div className="card-heading"><div><p className="card-kicker">Abuse safeguards</p><h2>Tenant gateway and evidence quotas</h2><p className="widget-subtitle">Quota checks occur before governed action execution and evidence generation. They protect shared capacity without exposing other tenants’ usage.</p></div><SlidersHorizontal size={21} className="text-cyan-300" /></div><div className="ops-usage"><div><span>Gateway evaluations</span><strong>{quotas.data ? `${quotas.data.gatewayEvaluations.used} / ${quotas.data.gatewayEvaluations.limit}` : "—"}</strong><small>Current UTC minute</small></div><div><span>Evidence exports</span><strong>{quotas.data ? `${quotas.data.evidenceExports.used} / ${quotas.data.evidenceExports.limit}` : "—"}</strong><small>Current UTC day</small></div></div><div className="ops-quota-form"><label>Gateway / minute<input value={gatewayQuota} inputMode="numeric" onChange={event => setGatewayQuota(event.target.value)} /></label><label>Exports / day<input value={exportQuota} inputMode="numeric" onChange={event => setExportQuota(event.target.value)} /></label><button className="btn-primary" disabled={quotaUpdate.isPending} onClick={() => quotaUpdate.mutate({ organizationId, gatewayEvaluationsPerMinute: Number(gatewayQuota), evidenceExportsPerDay: Number(exportQuota) })}>Save quotas</button></div></article>
-      <article className="console-card ops-panel"><div className="card-heading"><div><p className="card-kicker">Pilot readiness checklist</p><h2>Enterprise rollout gates</h2><p className="widget-subtitle">Turn organization ownership into a reviewable deployment sequence.</p></div><CheckCircle2 size={21} className="text-cyan-300" /></div><div className="ops-checklist">{readiness.data?.items.map(item => <div className={item.complete ? "ops-check complete" : "ops-check"} key={item.key}><CheckCircle2 size={17} /><div><strong>{item.title}</strong><span>{item.detail}</span></div></div>)}</div><p className="ops-boundary">{readiness.data?.boundary}</p></article>
+      <article className="console-card ops-panel"><div className="card-heading"><div><p className="card-kicker">Pilot readiness checklist</p><h2>Enterprise rollout gates</h2><p className="widget-subtitle">Turn organization ownership into a reviewable deployment sequence.</p></div><CheckCircle2 size={21} className="text-cyan-300" /></div><div className="ops-checklist">{readiness.data?.items.map(item => <div className={item.complete ? "ops-check complete" : "ops-check"} key={item.key}><CheckCircle2 size={17} /><div><strong>{item.title}</strong><span>{item.detail}</span></div></div>)}</div><button type="button" className="btn-secondary ops-tour-trigger" onClick={() => setTourOpen(true)}>Guide me through setup <ArrowUpRight size={15} /></button><p className="ops-boundary">{readiness.data?.boundary}</p></article>
     </section>
 
     <section className="ops-grid ops-grid-secondary">
@@ -63,5 +65,6 @@ export default function OperationsCenterPage() {
     </section>
 
     <section className="console-card ops-language-boundary"><ShieldCheck size={20} /><div><p className="card-kicker">Enforcement boundary</p><h2>Action governance is deterministic; language safety is complementary.</h2><p>AgentFence governs a requested tool action only after the integrated SDK, browser wrapper, or Native MCP gateway supplies a structured request. Natural-language prompts can be ambiguous or malicious, so organizations should combine model-side prompt defenses and constrained tool schemas with AgentFence’s identity, policy, Data Guard, approval, quota, and audit controls. The decisive stop occurs before a governed external action is executed—not by attempting to prove that all language is safe.</p></div><button className="ops-link" onClick={() => navigate("/policy-governance")}>Review policy diffs <ArrowUpRight size={15} /></button></section>
+    <EnterprisePilotTour open={tourOpen} onClose={() => setTourOpen(false)} onNavigate={navigate} />
   </PageFrame>;
 }

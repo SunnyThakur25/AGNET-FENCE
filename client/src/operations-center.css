@@ -49,6 +49,7 @@
 .ops-language-boundary h2 { margin: .14rem 0 .38rem; font-size: 1rem; }
 .ops-language-boundary p:last-child { margin: 0; color: var(--muted-foreground); font-size: .82rem; line-height: 1.55; }
 .ops-empty { color: var(--muted-foreground); font-size: .82rem; margin: .7rem 0; }
+.ops-tour-trigger { display: inline-flex; align-items: center; gap: .4rem; margin-top: .7rem; }
 @media (max-width: 1200px) { .ops-hero-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .ops-grid { grid-template-columns: 1fr; } }
 @media (max-width: 700px) { .ops-hero-grid, .ops-grid-secondary, .ops-usage, .ops-quota-form { grid-template-columns: 1fr; } .ops-department-row { grid-template-columns: minmax(0, 1fr) repeat(2, minmax(0, 1fr)); } .ops-language-boundary { grid-template-columns: auto minmax(0, 1fr); } .ops-language-boundary .ops-link { grid-column: 2; } }
 @media (prefers-reduced-motion: no-preference) { .ops-connector { transition: border-color 160ms var(--ease-out, ease-out), transform 160ms var(--ease-out, ease-out); } .ops-connector:active { transform: scale(.98); } }
