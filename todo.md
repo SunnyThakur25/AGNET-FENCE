@@ -309,3 +309,12 @@
 - [x] Add high-risk incident alerts for governed blocks and containment events, with safe alert metadata and no secret or raw payload exposure.
 - [x] Add tenant-isolation, authorization, emergency-block, alert, and rendered-operator workflow regressions.
 - [x] Validate, checkpoint, and synchronize the incident-monitoring and containment release to GitHub.
+
+## Incident operations filtering, ownership, and escalation
+
+- [x] Add tenant-scoped date, severity, agent-ID, and decision filtering plus safe sorting to Incident Response alerts and high-risk governed-action evidence.
+- [x] Promote the intended incident commander through the existing team-management role model and verify the resulting administrator authorization for containment controls.
+- [x] Add tenant-owned Slack/PagerDuty routing ownership and readiness configuration without enabling live delivery until customer-controlled endpoint credentials are supplied securely.
+- [x] Add customer-specific containment runbook references and approval-escalation SLA targets with clear ownership and activation boundaries.
+- [x] Add tenant-isolation, role-promotion, filtering, routing-readiness, and rendered operator-workflow regressions.
+- [ ] Validate, checkpoint, and synchronize the completed incident-operations release to GitHub.

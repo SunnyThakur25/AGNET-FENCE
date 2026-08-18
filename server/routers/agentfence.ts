@@ -73,6 +73,7 @@ async function requireAgentInOrganization(organizationId: number, agentId: numbe
 
 async function createOperatorNotification(input: {
   organizationId: number;
+  agentId?: number | null;
   severity: "info" | "medium" | "high" | "critical";
   title: string;
   content: string;
@@ -83,6 +84,7 @@ async function createOperatorNotification(input: {
   if (!db) return;
   await db.insert(notifications).values({
     organizationId: input.organizationId,
+    agentId: input.agentId ?? null,
     severity: input.severity,
     title: input.title,
     content: input.content,
@@ -405,6 +407,7 @@ export const agentfenceRouter = router({
         if (evaluation.decision !== "allowed" || input.riskLevel === "critical") {
           await createOperatorNotification({
             organizationId: input.organizationId,
+            agentId: input.agentId,
             severity: evaluation.decision === "blocked" || input.riskLevel === "critical" ? "high" : "medium",
             title: evaluation.decision === "blocked" ? "High-risk action blocked" : "Human approval required",
             content: `${agent.name} requested ${input.toolName}.${input.action}. ${evaluation.reason}`,
@@ -420,6 +423,7 @@ export const agentfenceRouter = router({
           if (recentBlocks.length === 3) {
             await createOperatorNotification({
               organizationId: input.organizationId,
+              agentId: input.agentId,
               severity: "critical",
               title: "Policy-violation threshold reached",
               content: "Three actions were blocked in the last ten minutes. Review the Tool Gateway and audit ledger for a possible integration fault or malicious sequence.",

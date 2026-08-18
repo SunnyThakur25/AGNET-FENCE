@@ -66,6 +66,8 @@ export const auditExportScheduleStatus = mysqlEnum("auditExportScheduleStatus", 
 export const auditExportDeliveryMode = mysqlEnum("auditExportDeliveryMode", ["managed_archive", "customer_storage_activation_required"]);
 export const incidentContainmentStatus = mysqlEnum("incidentContainmentStatus", ["active", "released"]);
 export const incidentContainmentTrigger = mysqlEnum("incidentContainmentTrigger", ["manual", "critical_block"]);
+export const incidentRoutingProvider = mysqlEnum("incidentRoutingProvider", ["slack", "pagerduty"]);
+export const incidentRoutingStatus = mysqlEnum("incidentRoutingStatus", ["disabled", "activation_required", "configured"]);
 
 export const organizations = mysqlTable(
   "organizations",
@@ -98,7 +100,7 @@ export const teamMemberships = mysqlTable(
     organizationId: int("organizationId").notNull().references(() => organizations.id, { onDelete: "cascade" }),
     teamId: int("teamId").notNull().references(() => teams.id, { onDelete: "cascade" }),
     userId: int("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
-    role: membershipRole.notNull().default("operator"),
+    role: mysqlEnum("membershipRole", ["admin", "operator", "viewer", "billing_admin"]).notNull().default("operator"),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
   },
   table => [
@@ -336,6 +338,7 @@ export const notifications = mysqlTable(
     id: int("id").autoincrement().primaryKey(),
     organizationId: int("organizationId").notNull().references(() => organizations.id, { onDelete: "cascade" }),
     recipientUserId: int("recipientUserId").references(() => users.id, { onDelete: "cascade" }),
+    agentId: int("agentId").references(() => agents.id, { onDelete: "set null" }),
     severity: notificationSeverity.notNull().default("info"),
     title: varchar("title", { length: 180 }).notNull(),
     content: text("content").notNull(),
@@ -344,7 +347,7 @@ export const notifications = mysqlTable(
     readAt: timestamp("readAt"),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
   },
-  table => [index("notifications_org_created_idx").on(table.organizationId, table.createdAt)],
+  table => [index("notifications_org_created_idx").on(table.organizationId, table.createdAt), index("notifications_org_agent_created_idx").on(table.organizationId, table.agentId, table.createdAt)],
 );
 
 export const evidenceExports = mysqlTable(
@@ -408,11 +411,32 @@ export const incidentResponseSettings = mysqlTable(
     id: int("id").autoincrement().primaryKey(),
     organizationId: int("organizationId").notNull().references(() => organizations.id, { onDelete: "cascade" }),
     autoContainCriticalBlocks: boolean("autoContainCriticalBlocks").notNull().default(false),
+    incidentCommanderMembershipId: int("incidentCommanderMembershipId").references(() => teamMemberships.id, { onDelete: "set null" }),
+    containmentRunbookReference: varchar("containmentRunbookReference", { length: 500 }),
+    approvalEscalationMinutes: int("approvalEscalationMinutes").notNull().default(60),
     updatedBy: int("updatedBy").notNull().references(() => users.id, { onDelete: "restrict" }),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
     updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   },
   table => [uniqueIndex("incident_response_settings_org_unique").on(table.organizationId)],
+);
+
+/** Tenant-owned routing metadata. Webhook and integration-key material remains outside AgentFence in customer-controlled secret storage. */
+export const incidentRoutingProfiles = mysqlTable(
+  "incidentRoutingProfiles",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    organizationId: int("organizationId").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    provider: incidentRoutingProvider.notNull(),
+    status: incidentRoutingStatus.notNull().default("disabled"),
+    ownerMembershipId: int("ownerMembershipId").references(() => teamMemberships.id, { onDelete: "set null" }),
+    destinationReference: varchar("destinationReference", { length: 255 }),
+    vaultSecretPath: varchar("vaultSecretPath", { length: 255 }),
+    updatedBy: int("updatedBy").notNull().references(() => users.id, { onDelete: "restrict" }),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  table => [uniqueIndex("incident_routing_profiles_org_provider_unique").on(table.organizationId, table.provider)],
 );
 
 /** Active containment corresponds to a paused agent and revoked runtime credentials on AgentFence-supported integrated action paths. */

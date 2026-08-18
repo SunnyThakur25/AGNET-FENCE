@@ -48,7 +48,7 @@ export async function containAgent(input: {
   await db.update(agents).set({ status: "paused" }).where(and(eq(agents.id, input.agentId), eq(agents.organizationId, input.organizationId)));
   const revoked = await db.update(runtimeCredentials).set({ status: "revoked", revokedAt: new Date() }).where(and(eq(runtimeCredentials.organizationId, input.organizationId), eq(runtimeCredentials.agentId, input.agentId), eq(runtimeCredentials.status, "active")));
   const revokedCredentials = Number((Array.isArray(revoked) ? revoked[0] : revoked).affectedRows ?? 0);
-  await db.insert(notifications).values({ organizationId: input.organizationId, severity: "critical", title: "Agent emergency containment active", content: `${agent.name} is paused on AgentFence-supported integrated paths. ${reason}`, relatedType: "agent_containment", relatedId: containmentId });
+  await db.insert(notifications).values({ organizationId: input.organizationId, agentId: input.agentId, severity: "critical", title: "Agent emergency containment active", content: `${agent.name} is paused on AgentFence-supported integrated paths. ${reason}`, relatedType: "agent_containment", relatedId: containmentId });
   await notifyOwner({ title: "AgentFence — Agent emergency containment active", content: `${agent.name} was contained. ${reason}` });
   await appendAuditEvent({ organizationId: input.organizationId, eventType: "incident.agent_contained", actorType: input.trigger === "manual" ? "user" : "system", actorIdentity: input.actorIdentity, agentId: input.agentId, toolCallId: input.relatedToolCallId ?? undefined, outcome: "blocked", payload: { containmentId, trigger: input.trigger, revokedCredentials, reason } });
   return { containmentId, created: true, revokedCredentials };
