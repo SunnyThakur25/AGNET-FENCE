@@ -12,6 +12,7 @@ import { auditAnchoringRouter } from "./routers/auditAnchoring";
 import { siemDeliveryRouter } from "./routers/siemDelivery";
 import { operationalReadinessRouter } from "./routers/operationalReadiness";
 import { governanceOperationsRouter } from "./routers/governanceOperations";
+import { aiAssistantRouter } from "./routers/aiAssistant";
 import * as dbHelpers from "./db";
 import { parse as parseCookieHeader } from "cookie";
 
@@ -40,6 +41,7 @@ export const appRouter = router({
   siemDelivery: siemDeliveryRouter,
   operationalReadiness: operationalReadinessRouter,
   governanceOperations: governanceOperationsRouter,
+  aiAssistant: aiAssistantRouter,
 });
 
 export type AppRouter = typeof appRouter;
