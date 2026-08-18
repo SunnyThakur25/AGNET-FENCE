@@ -52,6 +52,16 @@ describe("AgentFence public authentication journey", () => {
     expect(css).toContain("@media (prefers-reduced-motion:reduce)");
   });
 
+  it("adds a mute-by-default product-motion loop with a reduced-motion boundary", () => {
+    const source = readFileSync(resolve(process.cwd(), "client/src/pages/Public.tsx"), "utf8");
+    const css = readFileSync(resolve(process.cwd(), "client/src/hero-product-loop.css"), "utf8");
+    expect(source).toContain("hero-product-loop");
+    expect(source).toContain("agentfence-hero-product-loop_3c9eda4e.mp4");
+    expect(source).toContain("video.muted = true");
+    expect(source).toContain("video.playsInline = true");
+    expect(css).toContain("prefers-reduced-motion: reduce");
+  });
+
   it("renders the enterprise architecture visual and guided cloud/browser control narrative", () => {
     const markup = renderToStaticMarkup(<Router ssrPath="/"><LandingPage /></Router>);
     expect(markup).toContain("Enterprise architecture");

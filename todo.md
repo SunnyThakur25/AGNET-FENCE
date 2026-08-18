@@ -341,3 +341,15 @@
 - [x] Improve expanded-to-compact sidebar motion using short, interruption-safe transitions and reduced-motion safeguards.
 - [x] Create a cinematic transparent-layer landing background with animated security topology, ambient scanning light, and motion-safe visual depth that preserves CTA legibility.
 - [x] Add rendered accessibility and motion regressions, then validate desktop and mobile visual composition.
+
+## Hero motion and rapid navigation
+
+- [x] Create and integrate a short mute-by-default AgentFence product-motion loop that accurately shows the registered-agent, policy decision, block/approval, and evidence flow without unsupported claims.
+- [x] Add an accessible sidebar command palette with search, keyboard shortcut, active-route awareness, and direct navigation across both primary and supplementary routes.
+- [x] Add regressions for video motion preferences, command-palette search and keyboard navigation, then validate desktop and mobile views.
+- [x] Validate, checkpoint, and synchronize the completed hero-motion and command-palette release to GitHub.
+
+## Hero video layer correction
+
+- [x] Rebalance the landing product-motion loop as a masked background texture so it cannot overlap or duplicate foreground decision-panel content.
+- [x] Validate desktop and mobile hero readability after the video-layer correction.

@@ -61,4 +61,13 @@ describe("SidebarCollapseToggle", () => {
     expect(css).toContain(".sidebar-nav-group.open .supplementary-navigation");
     expect(css).toContain("@media (prefers-reduced-motion:reduce)");
   });
+
+  it("provides a searchable command palette across primary and supplementary routes", () => {
+    const layout = readFileSync(resolve(process.cwd(), "client/src/components/DashboardLayout.tsx"), "utf8");
+    expect(layout).toContain("CommandDialog");
+    expect(layout).toContain("Search workspaces, controls, or evidence");
+    expect(layout).toContain("event.key.toLowerCase() === \"k\"");
+    expect(layout).toContain("Core operations");
+    expect(layout).toContain("Governance and evidence");
+  });
 });
