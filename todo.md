@@ -327,4 +327,4 @@
 - [x] Add an Endpoint Operations workspace documenting customer-controlled sensor installation, MDM deployment, privacy policy, integration health, and containment boundaries.
 - [x] Make the authenticated sidebar collapsible with a persistent accessible toggle, keyboard labels, responsive layout, and preserved route navigation.
 - [x] Add tenant-isolation, endpoint-containment, rendered Endpoint Operations, and sidebar-collapse accessibility regressions.
-- [ ] Validate, checkpoint, and synchronize the completed endpoint-readiness and navigation release to GitHub.
+- [x] Validate, checkpoint, and synchronize the completed endpoint-readiness and navigation release to GitHub.
