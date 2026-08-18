@@ -289,3 +289,23 @@
 - [x] Add authenticated operator acceptance coverage for the global assistant launcher, contextual policy guidance, and denial/redaction behavior.
 - [x] Preserve the customer Vault AppRole activation workflow in disconnected-safe readiness mode; live authentication remains intentionally deferred until the customer supplies protected deployment credentials.
 - [x] Validate, checkpoint, and synchronize the completed assistant-hardening release to GitHub.
+
+## AgentFence product demonstration video
+
+- [x] Create a claim-safe demonstration storyboard covering agent registration, from-scratch policies, Tool Gateway allow/block/approval decisions, Action Capture and Trace evidence, Data Guard, governance, and activation boundaries.
+- [x] Prepare product visuals and narration that accurately distinguish implemented controls from customer-controlled Vault and connector activation.
+- [x] Assemble and validate a concise hybrid AgentFence product demonstration video using the available generated opening motion, verified product visuals, and narration because the daily generative-video allowance was exhausted after one shot.
+
+## Animated policy-to-evidence workflow video
+
+- [x] Create a claim-safe animated storyboard showing from-scratch policy authoring, a structured integrated action, Data Guard and policy block evaluation, Action Capture, and Action Trace evidence.
+- [x] Prepare readable workflow visuals and narration that do not represent unintegrated direct calls as governed or claim target execution after a blocked decision.
+- [x] Render, technically validate, and deliver the focused AgentFence policy-to-evidence workflow animation.
+
+## Incident monitoring and emergency containment
+
+- [x] Add a tenant-scoped incident monitoring workspace that summarizes governed tool actions, high-risk decisions, agent posture, and containment state without claiming visibility into bypassed direct calls.
+- [x] Add administrator-only emergency containment controls to pause a registered agent and block its integrated action path, with a typed reason and tamper-evident audit evidence.
+- [x] Add high-risk incident alerts for governed blocks and containment events, with safe alert metadata and no secret or raw payload exposure.
+- [x] Add tenant-isolation, authorization, emergency-block, alert, and rendered-operator workflow regressions.
+- [ ] Validate, checkpoint, and synchronize the incident-monitoring and containment release to GitHub.

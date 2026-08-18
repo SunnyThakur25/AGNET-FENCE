@@ -37,6 +37,7 @@ import { createVaultAppRoleClient } from "../agentfence/vaultClient";
 import { buildActionTrace } from "../agentfence/actionTrace";
 import { aggregateActionSummary } from "../agentfence/actionMetrics";
 import { createEvidenceExport } from "../agentfence/evidenceExportService";
+import { maybeAutoContainCriticalBlock } from "../agentfence/incidentContainment";
 import { consumeTenantQuota } from "../agentfence/tenantQuotas";
 import { getDb } from "../db";
 import { notifyOwner } from "../_core/notification";
@@ -426,6 +427,7 @@ export const agentfenceRouter = router({
               relatedId: toolCallId,
             });
           }
+          await maybeAutoContainCriticalBlock({ organizationId: input.organizationId, agentId: input.agentId, toolCallId, riskLevel: input.riskLevel, actorIdentity: agent.identity });
         }
         return { toolCallId, approvalId, decision: evaluation.decision, matchedPolicy: evaluation.matchedPolicy?.name ?? null, reason: evaluation.reason, dataGuard: guardResult };
       }),
@@ -537,6 +539,7 @@ export const agentfenceRouter = router({
           if (finding.occurrences > 0) await db.insert(dataGuardFindings).values({ organizationId: claims.organizationId, toolCallId, classification: finding.classification, detector: finding.detectors.join(",") || "runtime-data-guard", actionTaken: "redacted", occurrences: finding.occurrences, destinationApproved: evaluation.decision === "allowed" });
         }
         await appendAuditEvent({ organizationId: claims.organizationId, eventType: "runtime.gateway_evaluated", actorType: "agent", actorIdentity: agent.identity, agentId: claims.agentId, toolCallId, policyId: evaluation.matchedPolicy?.id ?? null, outcome: evaluation.decision, payload: { toolName: input.toolName, action: input.action, destination: input.destination, outboundRedactions: outboundGuard.occurrences } });
+        if (evaluation.decision === "blocked") await maybeAutoContainCriticalBlock({ organizationId: claims.organizationId, agentId: claims.agentId, toolCallId, riskLevel: input.riskLevel, actorIdentity: agent.identity });
         return { toolCallId, decision: evaluation.decision, allowed: evaluation.decision === "allowed", reason: evaluation.reason, redactedParameters: inboundGuard.redactedValue, redactedOutboundPayload: outboundGuard.redactedValue, outboundFindings: outboundGuard.occurrences };
       }),
     reportOutcome: publicProcedure

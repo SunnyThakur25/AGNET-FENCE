@@ -10,6 +10,7 @@ import { evaluatePolicies } from "../agentfence/policyEngine";
 import { authorizeRuntimeGatewayRequest } from "../agentfence/runtimeGatewayGuard";
 import { isRuntimeCredentialUsable, scopeAllows, verifyRuntimeToken } from "../agentfence/runtimeAuth";
 import { createVaultAppRoleClient } from "../agentfence/vaultClient";
+import { maybeAutoContainCriticalBlock } from "../agentfence/incidentContainment";
 import { getDb } from "../db";
 import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
 
@@ -175,6 +176,7 @@ export const mcpGatewayRouter = router({
     let approvalId: number | null = null;
     if (evaluation.decision === "approval_required") approvalId = insertId(await db.insert(approvals).values({ organizationId: claims.organizationId, toolCallId, requestedBy: agent.identity, expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) }));
     await appendAuditEvent({ organizationId: claims.organizationId, eventType: "mcp.tool_evaluated", actorType: "agent", actorIdentity: agent.identity, agentId: agent.id, toolCallId, policyId: evaluation.matchedPolicy?.id ?? null, approvalId, outcome: evaluation.decision, payload: { serverId: server.id, toolName: tool.name, destination: new URL(server.endpoint).hostname, dataSensitivity: effectiveSensitivity, redactions: inbound.occurrences } });
+    if (evaluation.decision === "blocked") await maybeAutoContainCriticalBlock({ organizationId: claims.organizationId, agentId: claims.agentId, toolCallId, riskLevel: input.riskLevel, actorIdentity: agent.identity });
     if (evaluation.decision !== "allowed") return { toolCallId, approvalId, decision: evaluation.decision, reason: evaluation.reason, result: null };
     try {
       const upstream = await (await upstreamMcpClient(server)).callTool(tool.name, inbound.redactedValue as Record<string, unknown>);

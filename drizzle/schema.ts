@@ -64,6 +64,8 @@ export const resilienceExerciseOutcome = mysqlEnum("resilienceExerciseOutcome", 
 export const tenantUsageKind = mysqlEnum("tenantUsageKind", ["gateway_evaluations", "evidence_exports", "assistant_guidance"]);
 export const auditExportScheduleStatus = mysqlEnum("auditExportScheduleStatus", ["draft", "active", "paused", "unhealthy"]);
 export const auditExportDeliveryMode = mysqlEnum("auditExportDeliveryMode", ["managed_archive", "customer_storage_activation_required"]);
+export const incidentContainmentStatus = mysqlEnum("incidentContainmentStatus", ["active", "released"]);
+export const incidentContainmentTrigger = mysqlEnum("incidentContainmentTrigger", ["manual", "critical_block"]);
 
 export const organizations = mysqlTable(
   "organizations",
@@ -396,6 +398,42 @@ export const tenantUsageWindows = mysqlTable(
   table => [
     uniqueIndex("tenant_usage_windows_org_kind_start_unique").on(table.organizationId, table.kind, table.windowStartedAt),
     index("tenant_usage_windows_org_kind_idx").on(table.organizationId, table.kind),
+  ],
+);
+
+/** Organization-owned containment preference. Automatic containment is opt-in and triggers only after a critical-risk governed action is blocked. */
+export const incidentResponseSettings = mysqlTable(
+  "incidentResponseSettings",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    organizationId: int("organizationId").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    autoContainCriticalBlocks: boolean("autoContainCriticalBlocks").notNull().default(false),
+    updatedBy: int("updatedBy").notNull().references(() => users.id, { onDelete: "restrict" }),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  table => [uniqueIndex("incident_response_settings_org_unique").on(table.organizationId)],
+);
+
+/** Active containment corresponds to a paused agent and revoked runtime credentials on AgentFence-supported integrated action paths. */
+export const agentContainments = mysqlTable(
+  "agentContainments",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    organizationId: int("organizationId").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    agentId: int("agentId").notNull().references(() => agents.id, { onDelete: "cascade" }),
+    status: incidentContainmentStatus.notNull().default("active"),
+    trigger: incidentContainmentTrigger.notNull(),
+    reason: varchar("reason", { length: 500 }).notNull(),
+    relatedToolCallId: int("relatedToolCallId").references(() => toolCalls.id, { onDelete: "set null" }),
+    initiatedBy: int("initiatedBy").references(() => users.id, { onDelete: "set null" }),
+    releasedBy: int("releasedBy").references(() => users.id, { onDelete: "set null" }),
+    releasedAt: timestamp("releasedAt"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  table => [
+    index("agent_containments_org_status_idx").on(table.organizationId, table.status),
+    index("agent_containments_agent_idx").on(table.agentId),
   ],
 );
 

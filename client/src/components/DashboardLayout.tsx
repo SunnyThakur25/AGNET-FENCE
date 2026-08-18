@@ -1,7 +1,7 @@
 import React from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { SignInPage } from "@/pages/Public";
-import { Activity, Archive, BellRing, Building2, ChevronDown, ClipboardCheck, CreditCard, FileCheck2, Gauge, GitBranch, KeyRound, LayoutDashboard, LockKeyhole, LogOut, Moon, Network, Radar, ScanLine, Settings2, ShieldAlert, ShieldCheck, Sun, TerminalSquare, UserRound, UsersRound, Waypoints } from "lucide-react";
+import { Activity, Archive, BellRing, Building2, ChevronDown, ClipboardCheck, CreditCard, FileCheck2, Gauge, GitBranch, KeyRound, LayoutDashboard, LockKeyhole, LogOut, Moon, Network, Radar, ScanLine, Settings2, ShieldAlert, ShieldCheck, Siren, Sun, TerminalSquare, UserRound, UsersRound, Waypoints } from "lucide-react";
 import { useLocation } from "wouter";
 import { useState } from "react";
 import { AgentFenceLogo } from "./AgentFenceLogo";
@@ -19,6 +19,7 @@ const navigation = [
   { label: "Tool Gateway", path: "/gateway", icon: TerminalSquare },
   { label: "Native MCP Gateway", path: "/mcp-gateway", icon: Network },
   { label: "Operations center", path: "/operations", icon: Gauge },
+  { label: "Incident response", path: "/incident-response", icon: Siren },
   { label: "Coverage posture", path: "/coverage", icon: Waypoints },
   { label: "Integrations", path: "/integrations", icon: TerminalSquare },
   { label: "Enterprise pilot", path: "/enterprise", icon: Building2 },
